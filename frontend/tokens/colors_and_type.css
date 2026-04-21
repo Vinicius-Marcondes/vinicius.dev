@@ -1,0 +1,228 @@
+/* ============================================================
+   VINICIUS.DEV — Colors & Type tokens
+   Dark, CRT-flavored palette. Pixel for display, mono for body.
+   ============================================================ */
+
+/* Fonts — pixel display + monospace body.
+   VT323 / Press Start 2P sub for bitmap feel; JetBrains Mono body. */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+  /* ---------- CORE PALETTE ---------- */
+  /* Near-black backgrounds */
+  --bg-0: #07060b;            /* deepest, page */
+  --bg-1: #0d0b14;            /* surface */
+  --bg-2: #151122;            /* raised surface */
+  --bg-3: #1e1730;            /* hover surface */
+
+  /* Sunset gradient stops */
+  --sunset-violet: #2a0b4a;   /* deep purple */
+  --sunset-magenta: #8a1b6b;  /* bridge */
+  --sunset-orange: #ff6a2a;   /* warm orange */
+  --sunset-amber: #ffb347;    /* highlight */
+
+  /* Neon accents — arcade CRT */
+  --neon-pink:   #ff2e88;
+  --neon-cyan:   #22e3ff;
+  --neon-lime:   #b6ff3c;
+  --neon-yellow: #ffe74c;
+
+  /* Foreground (phosphor) */
+  --fg-0: #f5ecff;            /* pure phosphor white */
+  --fg-1: #d8c6ff;            /* body */
+  --fg-2: #8a7ab8;            /* muted */
+  --fg-3: #4b3f6d;            /* faint */
+
+  /* Hairlines / scanline ink */
+  --line-1: rgba(216, 198, 255, 0.14);
+  --line-2: rgba(216, 198, 255, 0.28);
+  --line-neon: rgba(255, 46, 136, 0.6);
+
+  /* Semantic */
+  --color-bg: var(--bg-0);
+  --color-fg: var(--fg-1);
+  --color-fg-strong: var(--fg-0);
+  --color-fg-muted: var(--fg-2);
+  --color-accent: var(--neon-pink);
+  --color-accent-2: var(--neon-cyan);
+  --color-link: var(--neon-cyan);
+  --color-success: var(--neon-lime);
+  --color-warn: var(--neon-yellow);
+  --color-danger: var(--neon-pink);
+
+  /* Signature gradient */
+  --sunset: linear-gradient(180deg,
+    var(--sunset-violet) 0%,
+    var(--sunset-magenta) 45%,
+    var(--sunset-orange) 100%);
+  --sunset-horizontal: linear-gradient(90deg,
+    var(--sunset-violet) 0%,
+    var(--sunset-magenta) 50%,
+    var(--sunset-orange) 100%);
+
+  /* ---------- TYPOGRAPHY ---------- */
+  --font-display: 'Press Start 2P', 'VT323', ui-monospace, monospace;
+  --font-pixel:   'VT323', 'Press Start 2P', ui-monospace, monospace;
+  --font-mono:    'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  --font-body:    var(--font-mono);
+
+  /* Display uses a short scale — pixel fonts don't scale gracefully */
+  --fs-display-xl: 64px;   /* hero name */
+  --fs-display-lg: 40px;
+  --fs-display-md: 28px;
+  --fs-display-sm: 20px;
+
+  /* VT323 is readable at larger sizes */
+  --fs-pixel-xl: 72px;
+  --fs-pixel-lg: 48px;
+  --fs-pixel-md: 32px;
+
+  /* Mono body scale */
+  --fs-body-lg: 18px;
+  --fs-body:    15px;
+  --fs-body-sm: 13px;
+  --fs-caption: 11px;
+
+  --lh-tight: 1.1;
+  --lh-body:  1.55;
+  --lh-loose: 1.75;
+
+  --tracking-tight: 0em;
+  --tracking-wide:  0.08em;
+  --tracking-caps:  0.16em;
+
+  /* ---------- SPACING / LAYOUT ---------- */
+  --sp-0:  2px;
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  24px;
+  --sp-6:  32px;
+  --sp-7:  48px;
+  --sp-8:  64px;
+  --sp-9:  96px;
+
+  /* No rounded corners — system is strictly rectangular */
+  --radius: 0px;
+
+  /* Borders */
+  --border-hair: 1px solid var(--line-1);
+  --border-line: 1px solid var(--line-2);
+  --border-neon: 1px solid var(--neon-pink);
+
+  /* Shadows — we do NOT use soft drop shadows.
+     Instead: neon glows and hard offset blocks. */
+  --glow-pink:   0 0 0 1px var(--neon-pink), 0 0 24px rgba(255, 46, 136, 0.55);
+  --glow-cyan:   0 0 0 1px var(--neon-cyan), 0 0 20px rgba(34, 227, 255, 0.45);
+  --glow-soft:   0 0 32px rgba(255, 106, 42, 0.25);
+  --block-pink:  4px 4px 0 0 var(--neon-pink);
+  --block-cyan:  4px 4px 0 0 var(--neon-cyan);
+
+  /* CRT ingredients (compose as needed) */
+  --scanlines: repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.035) 0px,
+    rgba(255,255,255,0.035) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  --vignette: radial-gradient(
+    ellipse at center,
+    transparent 55%,
+    rgba(0,0,0,0.55) 100%
+  );
+}
+
+/* ---------- SEMANTIC ELEMENTS ---------- */
+html, body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, .h1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-display-xl);
+  line-height: var(--lh-tight);
+  color: var(--fg-0);
+  letter-spacing: var(--tracking-tight);
+  margin: 0;
+}
+h2, .h2 {
+  font-family: var(--font-display);
+  font-size: var(--fs-display-lg);
+  line-height: var(--lh-tight);
+  color: var(--fg-0);
+  margin: 0;
+}
+h3, .h3 {
+  font-family: var(--font-display);
+  font-size: var(--fs-display-md);
+  line-height: var(--lh-tight);
+  color: var(--fg-0);
+  margin: 0;
+}
+h4, .h4 {
+  font-family: var(--font-pixel);
+  font-size: var(--fs-pixel-md);
+  line-height: var(--lh-tight);
+  color: var(--fg-0);
+  margin: 0;
+}
+
+p, .body { font-size: var(--fs-body); line-height: var(--lh-body); color: var(--fg-1); }
+small, .caption {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--fg-2);
+}
+
+code, kbd, pre, .code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-body-sm);
+  color: var(--neon-cyan);
+  background: var(--bg-2);
+  padding: 1px 6px;
+  border: var(--border-hair);
+}
+
+a, .link {
+  color: var(--color-link);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
+a:hover { color: var(--neon-pink); border-color: var(--neon-pink); }
+
+/* Display-only chromatic aberration.
+   Use sparingly — only on hero-scale text. */
+.crt-aberration {
+  text-shadow:
+    -1px 0 0 rgba(255, 46, 136, 0.9),
+     1px 0 0 rgba(34, 227, 255, 0.9);
+}
+
+/* Blinking cursor primitive */
+.cursor::after {
+  content: "▌";
+  display: inline-block;
+  margin-left: 2px;
+  color: var(--neon-pink);
+  animation: crt-blink 1s steps(1) infinite;
+}
+@keyframes crt-blink { 50% { opacity: 0; } }
+
+/* Glitch hover primitive — one-shot, restrained. */
+@keyframes crt-glitch {
+  0%, 100% { transform: translate(0,0); }
+  20% { transform: translate(-1px, 0.5px); }
+  40% { transform: translate(1px, -0.5px); }
+  60% { transform: translate(-0.5px, 0); }
+  80% { transform: translate(0.5px, 0); }
+}
+.glitch-hover:hover { animation: crt-glitch 240ms steps(4) 1; }

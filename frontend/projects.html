@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>projects · vinicius.dev</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="assets/logo-mark.svg">
+<link rel="stylesheet" href="tokens/colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; background: var(--bg-0); overflow-x: hidden; }
+  #app { min-height: 100vh; }
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 100;
+    background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.022) 0 1px, transparent 1px 3px);
+    mix-blend-mode: screen;
+  }
+  @keyframes crt-glitch {
+    0%,100% { transform: translate(0,0); }
+    20% { transform: translate(-1px,0.5px); }
+    40% { transform: translate(1px,-0.5px); }
+    60% { transform: translate(-0.5px,0); }
+    80% { transform: translate(0.5px,0); }
+  }
+  .glitch-hover:hover { animation: crt-glitch 240ms steps(4) 1; }
+  @media (prefers-reduced-motion: reduce) {
+    .glitch-hover:hover { animation: none !important; }
+  }
+  *::selection { background: var(--neon-pink); color: var(--bg-0); }
+</style>
+</head>
+<body>
+<div id="app" data-screen-label="02 Projects"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="landing/ChannelBug.jsx"></script>
+<script type="text/babel" src="landing/Footer.jsx"></script>
+<script type="text/babel" src="projects/data.jsx"></script>
+<script type="text/babel" src="projects/Thumbnail.jsx"></script>
+<script type="text/babel" src="projects/ProjectCard.jsx"></script>
+<script type="text/babel" src="projects/Controls.jsx"></script>
+<script type="text/babel" src="projects/PageBanner.jsx"></script>
+<script type="text/babel" src="projects/EmptyState.jsx"></script>
+<script type="text/babel" src="projects/PageNav.jsx"></script>
+<script type="text/babel" src="projects/Tweaks.jsx"></script>
+
+<script type="text/babel">
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "density": "comfy",
+    "columns": 3,
+    "pageSize": 9
+  }/*EDITMODE-END*/;
+
+  function App() {
+    const [tweaks, setTweaks] = React.useState(TWEAK_DEFAULTS);
+    const [all, setAll] = React.useState([]);
+    const [state, setState] = React.useState({
+      query: "", status: "all", tag: "all", sort: "recent", page: 1,
+    });
+
+    React.useEffect(() => {
+      ProjectsData.fetchProjects().then(setAll);
+    }, []);
+
+    const filtered = React.useMemo(
+      () => ProjectsData.filterAndSort(all, state),
+      [all, state.query, state.status, state.tag, state.sort]
+    );
+    const tags = React.useMemo(() => ProjectsData.allTags(all), [all]);
+
+    const pageSize = tweaks.pageSize;
+    const shown = filtered.slice(0, state.page * pageSize);
+    const hasMore = shown.length < filtered.length;
+
+    const resetFilters = () => setState({ query: "", status: "all", tag: "all", sort: "recent", page: 1 });
+
+    return (
+      <>
+        <div style={{ position: "relative" }}>
+          <ProjectsNav />
+          <ChannelBug channel={4} />
+          <ProjectsBanner count={all.length} />
+        </div>
+
+        <main style={{
+          maxWidth: 1120, margin: "0 auto", padding: "24px 32px 64px",
+        }}>
+          <ProjectsControls
+            state={state} setState={setState}
+            tags={tags}
+            count={filtered.length} total={all.length}
+          />
+
+          {filtered.length === 0 ? (
+            <ProjectsEmpty onReset={resetFilters} />
+          ) : (
+            <>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: `repeat(${tweaks.columns}, minmax(0, 1fr))`,
+                gap: 16,
+              }}>
+                {shown.map(p => (
+                  <ProjectCard key={p.id} p={p} density={tweaks.density} />
+                ))}
+              </div>
+
+              {hasMore && (
+                <div style={{ display: "flex", justifyContent: "center", marginTop: 28 }}>
+                  <button
+                    onClick={() => setState(s => ({ ...s, page: s.page + 1 }))}
+                    className="glitch-hover"
+                    style={{
+                      padding: "10px 20px",
+                      fontFamily: "var(--font-display)", fontSize: 11,
+                      letterSpacing: "0.2em", textTransform: "uppercase",
+                      background: "transparent",
+                      border: "1px solid var(--neon-pink)",
+                      color: "var(--neon-pink)",
+                      cursor: "pointer",
+                      boxShadow: "4px 4px 0 0 rgba(255,46,136,0.25)",
+                    }}>
+                    ► load more · {filtered.length - shown.length} remaining
+                  </button>
+                </div>
+              )}
+
+              <div style={{
+                marginTop: 28,
+                fontFamily: "var(--font-mono)", fontSize: 10,
+                letterSpacing: "0.18em", textTransform: "uppercase",
+                color: "var(--fg-3)",
+                textAlign: "center",
+              }}>
+                // showing {shown.length} of {filtered.length} · end of transmission
+              </div>
+            </>
+          )}
+        </main>
+
+        <Footer />
+        <ProjectsTweaks tweaks={tweaks} onChange={setTweaks} />
+      </>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('app')).render(<App />);
+
+  // responsive cols — clamp columns on narrow viewports.
+  const apply = () => {
+    const w = window.innerWidth;
+    document.documentElement.style.setProperty("--proj-cols-clamp",
+      w < 640 ? "1" : w < 1000 ? "2" : "");
+  };
+  apply();
+  window.addEventListener("resize", apply);
+</script>
+<style>
+  @media (max-width: 999px) {
+    main > div[style*="grid-template-columns"] { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+  }
+  @media (max-width: 639px) {
+    main > div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+  }
+</style>
+</body>
+</html>

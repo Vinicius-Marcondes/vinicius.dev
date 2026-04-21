@@ -1,0 +1,56 @@
+/* Photos-page palette override — "safelight".
+   A muted warm palette designed to coexist with real-world imagery:
+   deep charcoal, desaturated cream text, crimson/safelight red as primary,
+   warm amber as secondary. Sunset gradient stays for the landing only. */
+
+:root[data-theme="safelight"] {
+  --bg-0: #0c0908;        /* deep charcoal (warmer than neutral black) */
+  --bg-1: #14100e;
+  --bg-2: #1e1815;
+  --bg-3: #2a2320;
+
+  /* Primary — safelight crimson. Muted, not neon. */
+  --safelight:       #c43a3a;
+  --safelight-deep:  #7a1f1f;
+  --safelight-soft:  #e56060;
+
+  /* Warm secondary */
+  --warm-amber:      #d9a05a;
+  --warm-cream:      #f0e4cf;
+
+  /* Desaturated cool accent, used sparingly */
+  --cool-steel:      #6f8a92;
+
+  /* Remap semantic tokens so existing components look right */
+  --neon-pink:   var(--safelight);
+  --neon-cyan:   var(--cool-steel);
+  --sunset-amber: var(--warm-amber);
+  --sunset-orange: var(--safelight);
+  --sunset-magenta: var(--safelight-deep);
+
+  --fg-0: var(--warm-cream);
+  --fg-1: #cdbfaa;
+  --fg-2: #8a7d6a;
+  --fg-3: #5a4f42;
+
+  --line-1: rgba(240, 228, 207, 0.10);
+  --line-2: rgba(240, 228, 207, 0.22);
+  --line-neon: rgba(196, 58, 58, 0.55);
+
+  --color-accent:   var(--safelight);
+  --color-accent-2: var(--warm-amber);
+  --color-link:     var(--warm-amber);
+}
+
+/* Shadow / glow recomposition for the safelight theme */
+:root[data-theme="safelight"] {
+  --glow-pink: 0 0 0 1px var(--safelight), 0 0 24px rgba(196,58,58,0.45);
+  --glow-cyan: 0 0 0 1px var(--cool-steel), 0 0 20px rgba(111,138,146,0.35);
+  --block-pink: 4px 4px 0 0 var(--safelight);
+  --block-cyan: 4px 4px 0 0 var(--cool-steel);
+}
+
+html[data-theme="safelight"] *::selection {
+  background: var(--safelight);
+  color: var(--bg-0);
+}

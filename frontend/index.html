@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>vinicius.dev</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="assets/logo-mark.svg">
+<link rel="stylesheet" href="tokens/colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; background: var(--bg-0); overflow-x: hidden; }
+  #app { min-height: 100vh; }
+  /* global subtle scanline overlay — a CRT you forgot to turn off */
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 100;
+    background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.022) 0 1px, transparent 1px 3px);
+    mix-blend-mode: screen;
+  }
+  /* subtle crt flicker on page load */
+  @keyframes crt-boot {
+    0% { opacity: 0; }
+    20% { opacity: 0.2; }
+    22% { opacity: 0.05; }
+    40% { opacity: 0.8; }
+    42% { opacity: 0.3; }
+    60% { opacity: 1; }
+    75% { opacity: 0.85; }
+    100% { opacity: 1; }
+  }
+  .crt-boot { animation: crt-boot 900ms steps(9) 1; }
+  /* hover glitch — nav links only */
+  @keyframes crt-glitch {
+    0%,100% { transform: translate(0,0); }
+    20% { transform: translate(-1px,0.5px); }
+    40% { transform: translate(1px,-0.5px); }
+    60% { transform: translate(-0.5px,0); }
+    80% { transform: translate(0.5px,0); }
+  }
+  .glitch-hover:hover { animation: crt-glitch 240ms steps(4) 1; }
+  /* blink cursor */
+  .cursor::after {
+    content: "▌"; display: inline-block; margin-left: 2px;
+    color: var(--neon-pink); animation: crt-blink 1s steps(1) infinite;
+  }
+  @keyframes crt-blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) {
+    .crt-boot, .glitch-hover:hover, .cursor::after { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="app" data-screen-label="01 Landing"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="landing/ChannelBug.jsx"></script>
+<script type="text/babel" src="landing/Nav.jsx"></script>
+<script type="text/babel" src="landing/StatusStrip.jsx"></script>
+<script type="text/babel" src="landing/Hero.jsx"></script>
+<script type="text/babel" src="landing/Footer.jsx"></script>
+<script type="text/babel" src="landing/BootLoader.jsx"></script>
+<script type="text/babel" src="landing/ChannelChange.jsx"></script>
+<script type="text/babel" src="landing/TweaksPanel.jsx"></script>
+
+<script type="text/babel">
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "scanlines": "subtle",
+    "aberration": true,
+    "vignette": true,
+    "flicker": true,
+    "horizonLine": true,
+    "attractPrompt": true,
+    "bootLoader": true
+  }/*EDITMODE-END*/;
+
+  function App() {
+    const [tweaks, setTweaks] = React.useState(TWEAK_DEFAULTS);
+    const [booting, setBooting] = React.useState(TWEAK_DEFAULTS.bootLoader);
+    const [channelOpen, setChannelOpen] = React.useState(false);
+
+    // honor changes to bootLoader tweak on toggle (re-show on next load only;
+    // during current session the boot only plays once)
+    React.useEffect(() => {
+      document.body.classList.add("crt-boot");
+      const id = setTimeout(() => document.body.classList.remove("crt-boot"), 1000);
+      return () => clearTimeout(id);
+    }, []);
+
+    const triggerChannel = () => {
+      if (channelOpen) return;
+      setChannelOpen(true);
+    };
+
+    return (
+      <>
+        {booting && <BootLoader onDone={() => setBooting(false)} />}
+        <Hero tweaks={tweaks} onLogoClick={triggerChannel} />
+        <Footer />
+        <ChannelChange open={channelOpen} onClose={() => setChannelOpen(false)} />
+        <TweaksPanel tweaks={tweaks} onChange={setTweaks} />
+      </>
+    );
+  }
+  ReactDOM.createRoot(document.getElementById('app')).render(<App />);
+</script>
+</body>
+</html>
