@@ -23,6 +23,7 @@ The intake pass must answer:
 Required output:
 - update [frontend-analyzer-report.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer-report.md)
 - update [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md) gate statuses if repo state changed
+- if tasking assumptions change, update or block the related GitHub Issues before backend work starts
 
 ## Data/Contracts Touched
 - route inventory
@@ -53,4 +54,3 @@ Required output:
 ## Git Branch Implications
 - Frontend intake runs in its own `spec/` task branch.
 - Intake changes that alter task readiness must not be mixed with unrelated implementation changes.
-

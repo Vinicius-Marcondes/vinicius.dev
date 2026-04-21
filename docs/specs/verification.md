@@ -16,6 +16,7 @@ Spec verification, implementation verification, release gates, and cross-layer r
 - Validate that frontend intake gates are respected.
 - Validate that Bun is explicit in frontend and backend specs.
 - Validate that Git workflow constraints are referenced by all task decomposition.
+- Validate that GitHub Issue and Project execution rules are present before implementation starts.
 - Define cross-layer scenarios for public browsing, admin, chat, media, auth, and deployment.
 
 ## Data/Contracts Touched
@@ -27,10 +28,12 @@ Spec verification, implementation verification, release gates, and cross-layer r
 ## Acceptance Checklist
 - [ ] Every spec referenced in the tracker exists.
 - [ ] `git-workflow.md` is referenced by the harness and used by task decomposition.
+- [ ] `github-project-execution.md` is referenced by the harness and used by task decomposition.
 - [ ] Frontend intake is treated as a blocking gate for backend tasking.
 - [ ] Backend-facing specs cannot be task-split without frontend review state.
 - [ ] Bun is explicit in both frontend and backend specs.
 - [ ] Branch-per-task rules apply to specs, implementation, and hotfixes.
+- [ ] Issue-per-task and Project-item-per-task rules apply to implementation work.
 - [ ] Revert path depends on task/merge traceability rather than history rewriting.
 - [ ] Cross-layer scenarios cover public pages, admin auth, chat, uploads, and deployment readiness.
 
@@ -38,6 +41,7 @@ Spec verification, implementation verification, release gates, and cross-layer r
 - [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md)
 - [frontend-intake.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-intake.md)
 - [git-workflow.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/git-workflow.md)
+- [github-project-execution.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/github-project-execution.md)
 - [product-scope.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/product-scope.md)
 - [design-system.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/design-system.md)
 - [frontend-architecture.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-architecture.md)

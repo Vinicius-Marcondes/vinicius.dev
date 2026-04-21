@@ -40,6 +40,8 @@ Every implementation-facing spec must include, where relevant:
 Task-level acceptance should additionally include:
 - [ ] Branch name and task ID are defined
 - [ ] Base branch is defined
+- [ ] GitHub Issue title and body are defined
+- [ ] GitHub Project item fields are defined
 - [ ] Review requirement is stated
 - [ ] Verification method is stated
 
@@ -57,4 +59,3 @@ Task-level acceptance should additionally include:
 ## Git Branch Implications
 - Checklist updates that change task readiness require their own task branch.
 - Acceptance changes must be traceable to a task ID because they can affect revert scope.
-

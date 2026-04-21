@@ -9,6 +9,7 @@ This harness covers:
 - cross-layer product and technical specs
 - acceptance criteria and dependency tracking
 - mandatory Git branch and review rules
+- GitHub Issues and GitHub Project execution governance
 
 This harness does not contain implementation code.
 
@@ -18,6 +19,7 @@ This harness does not contain implementation code.
 - Deployment: Docker on a VPS behind `Caddy`
 - Public sections: landing page, Thoughts, Projects, Photos, Chat Room, Admin
 - Canonical tracker lives in this repo under `docs/specs`
+- Canonical execution board is a dedicated GitHub Project for this repo
 - `develop` is the active integration branch
 - `main` is the stable branch
 - Every task, including spec work, must use its own branch
@@ -28,8 +30,9 @@ This harness does not contain implementation code.
 2. Read [git-workflow.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/git-workflow.md).
 3. Check [frontend-intake.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-intake.md) and the latest [frontend-analyzer-report.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer-report.md).
 4. Work only from specs that are in `Approved` or explicitly assigned for spec authoring/review.
-5. Map each task to one spec, one task ID, one branch, and one acceptance source.
+5. Map each task to one spec, one task ID, one GitHub Issue, one Project item, one branch, and one acceptance source.
 6. Refresh the analyzer report with `bun scripts/frontend-analyzer.ts` whenever frontend files are added or materially changed.
+7. For execution work, update both the linked GitHub Issue and the linked Project item.
 
 ## Spec Lifecycle
 - `Draft`: not ready for task splitting
@@ -44,6 +47,7 @@ No backend-facing spec may move to `Tasked` until frontend intake is complete or
 - [dependency-matrix.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/dependency-matrix.md)
 - [acceptance-criteria.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/acceptance-criteria.md)
 - [git-workflow.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/git-workflow.md)
+- [github-project-execution.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/github-project-execution.md)
 - [frontend-intake.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-intake.md)
 - [frontend-analyzer.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer.md)
 - [frontend-analyzer-report.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer-report.md)
@@ -60,5 +64,6 @@ No backend-facing spec may move to `Tasked` until frontend intake is complete or
 ## Task Authoring Rules
 - Use the spec template sections defined in [acceptance-criteria.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/acceptance-criteria.md).
 - Reference task IDs in branch names, commits, and PR titles.
+- Reference task IDs and source specs in GitHub Issues and Project fields.
 - Do not silently override locked product decisions when adapting specs to an existing frontend.
 - Update the tracker and analyzer report when spec assumptions change.
