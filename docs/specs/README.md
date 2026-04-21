@@ -1,0 +1,64 @@
+# Spec Harness
+
+## Purpose
+This directory is the canonical planning and execution harness for `vinicius.dev`. Future agents should treat these files as the source of truth before creating tasks, branches, or implementation changes.
+
+## Scope
+This harness covers:
+- frontend intake and reconciliation when a Claude-generated frontend already exists
+- cross-layer product and technical specs
+- acceptance criteria and dependency tracking
+- mandatory Git branch and review rules
+
+This harness does not contain implementation code.
+
+## Locked Decisions
+- Frontend stack: `React + Vite + Bun`
+- Backend stack: `Bun + Hono + Prisma + Postgres`
+- Deployment: Docker on a VPS behind `Caddy`
+- Public sections: landing page, Thoughts, Projects, Photos, Chat Room, Admin
+- Canonical tracker lives in this repo under `docs/specs`
+- `develop` is the active integration branch
+- `main` is the stable branch
+- Every task, including spec work, must use its own branch
+- Implementation branches do not self-merge without review
+
+## Agent Workflow
+1. Read [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md).
+2. Read [git-workflow.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/git-workflow.md).
+3. Check [frontend-intake.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-intake.md) and the latest [frontend-analyzer-report.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer-report.md).
+4. Work only from specs that are in `Approved` or explicitly assigned for spec authoring/review.
+5. Map each task to one spec, one task ID, one branch, and one acceptance source.
+6. Refresh the analyzer report with `bun scripts/frontend-analyzer.ts` whenever frontend files are added or materially changed.
+
+## Spec Lifecycle
+- `Draft`: not ready for task splitting
+- `Review`: authored and awaiting review
+- `Approved`: ready to drive tasks
+- `Tasked`: already split into implementation work
+
+No backend-facing spec may move to `Tasked` until frontend intake is complete or explicitly marked not applicable.
+
+## Canonical Files
+- [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md)
+- [dependency-matrix.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/dependency-matrix.md)
+- [acceptance-criteria.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/acceptance-criteria.md)
+- [git-workflow.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/git-workflow.md)
+- [frontend-intake.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-intake.md)
+- [frontend-analyzer.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer.md)
+- [frontend-analyzer-report.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer-report.md)
+- [product-scope.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/product-scope.md)
+- [design-system.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/design-system.md)
+- [frontend-architecture.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-architecture.md)
+- [backend-architecture.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/backend-architecture.md)
+- [data-model.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/data-model.md)
+- [media-storage.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/media-storage.md)
+- [admin-cms.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/admin-cms.md)
+- [infra-deployment.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/infra-deployment.md)
+- [verification.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/verification.md)
+
+## Task Authoring Rules
+- Use the spec template sections defined in [acceptance-criteria.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/acceptance-criteria.md).
+- Reference task IDs in branch names, commits, and PR titles.
+- Do not silently override locked product decisions when adapting specs to an existing frontend.
+- Update the tracker and analyzer report when spec assumptions change.
