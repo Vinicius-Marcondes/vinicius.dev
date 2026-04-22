@@ -6,6 +6,7 @@ This directory is the canonical planning and execution harness for `vinicius.dev
 ## Scope
 This harness covers:
 - frontend intake and reconciliation when a Claude-generated frontend already exists
+- repo structure plus frontend and backend architectural policy
 - cross-layer product and technical specs
 - acceptance criteria and dependency tracking
 - mandatory Git branch and review rules
@@ -20,6 +21,8 @@ This harness does not contain implementation code.
 - Public sections: landing page, Thoughts, Projects, Photos, Chat Room, Admin
 - Canonical tracker lives in this repo under `docs/specs`
 - Canonical execution board is a dedicated GitHub Project for this repo
+- `frontend-structure.md` is the top-priority structural policy for frontend-facing specs and tasks
+- `project-structure.md` is the top-priority structural policy for backend-facing specs and tasks
 - `develop` is the active integration branch
 - `main` is the stable branch
 - Every task, including spec work, must use its own branch
@@ -29,10 +32,12 @@ This harness does not contain implementation code.
 1. Read [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md).
 2. Read [git-workflow.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/git-workflow.md).
 3. Check [frontend-intake.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-intake.md) and the latest [frontend-analyzer-report.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer-report.md).
-4. Work only from specs that are in `Approved` or explicitly assigned for spec authoring/review.
-5. Map each task to one spec, one task ID, one GitHub Issue, one Project item, one branch, and one acceptance source.
-6. Refresh the analyzer report with `bun scripts/frontend-analyzer.ts` whenever frontend files are added or materially changed.
-7. For execution work, update both the linked GitHub Issue and the linked Project item.
+4. Read [frontend-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-structure.md) before frontend, admin UI, or verification work.
+5. Read [project-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/project-structure.md) before backend, data, media, infra, or verification work.
+6. Work only from specs that are in `Approved` or explicitly assigned for spec authoring/review.
+7. Map each task to one spec, one task ID, one GitHub Issue, one Project item, one branch, and one acceptance source.
+8. Refresh the analyzer report with `bun scripts/frontend-analyzer.ts` whenever frontend files are added or materially changed.
+9. For execution work, update both the linked GitHub Issue and the linked Project item.
 
 ## Spec Lifecycle
 - `Draft`: not ready for task splitting
@@ -40,7 +45,8 @@ This harness does not contain implementation code.
 - `Approved`: ready to drive tasks
 - `Tasked`: already split into implementation work
 
-No backend-facing spec may move to `Tasked` until frontend intake is complete or explicitly marked not applicable.
+No frontend-facing spec may move to `Tasked` until [frontend-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-structure.md) is approved and frontend intake is complete or explicitly marked not applicable.
+No backend-facing spec may move to `Tasked` until [project-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/project-structure.md) is approved and frontend intake is complete or explicitly marked not applicable.
 
 ## Canonical Files
 - [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md)
@@ -53,7 +59,9 @@ No backend-facing spec may move to `Tasked` until frontend intake is complete or
 - [frontend-analyzer-report.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer-report.md)
 - [product-scope.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/product-scope.md)
 - [design-system.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/design-system.md)
+- [frontend-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-structure.md)
 - [frontend-architecture.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-architecture.md)
+- [project-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/project-structure.md)
 - [backend-architecture.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/backend-architecture.md)
 - [data-model.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/data-model.md)
 - [media-storage.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/media-storage.md)
