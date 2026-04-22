@@ -9,11 +9,14 @@ Applies to spec authoring, harness updates, frontend work, backend work, infrast
 ## Locked Decisions
 - `main` is the stable branch.
 - `develop` is the active integration branch.
+- Pull requests must pass required validation before merge.
 - Every task gets its own branch.
 - Every executable task gets its own GitHub Issue and Project item.
 - No implementation agent self-merges without review.
 - Merge commits are used for branch integration.
 - Hotfixes start from `main`.
+- Development deployment is manual on the VPS and does not happen from CI.
+- Production releases are created by tagging `main` with `v*`.
 - Reverts happen by reverting commits or merge commits, not by rewriting shared history.
 
 ## Interfaces and Responsibilities
@@ -63,6 +66,13 @@ Examples:
 - Milestone promotions move reviewed batches from `develop` to `main`.
 - Hotfix branches merge into both `main` and `develop`.
 
+### CI/CD rules
+- Pull requests targeting `develop` or `main` must pass the required GitHub Actions validation checks before merge.
+- Pushes to `develop` or `main` may run validation, but do not deploy any environment.
+- `develop` is the integration branch and may be deployed manually to `development.viniciuslab.dev` outside CI.
+- Production deployment is triggered by pushing a `v*` tag that points to a commit already on `main`.
+- Production deployment must not trigger from branch pushes.
+
 ## Data/Contracts Touched
 - Branch names
 - Commit messages
@@ -77,8 +87,11 @@ Examples:
 - [ ] Every task branch has a defined base branch.
 - [ ] Every executable task has a linked GitHub Issue and Project item.
 - [ ] No implementation work is merged without review.
+- [ ] Required CI validation passes before merge.
 - [ ] Merge commits are used for integrating task branches.
 - [ ] Hotfixes start from `main` and merge back into both `main` and `develop`.
+- [ ] `develop` remains manual-deploy only.
+- [ ] Production release tags are created from `main` and use the `v*` convention.
 - [ ] Reverts target identifiable task or merge commits instead of rewriting shared history.
 - [ ] Task branches are deleted after merge.
 - [ ] Commit messages and PR titles reference the task ID.

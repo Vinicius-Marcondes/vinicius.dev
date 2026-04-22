@@ -40,6 +40,7 @@ Applies to task decomposition, GitHub Issue creation, GitHub Project setup, Proj
 - Use the issue Task ID in branch name, commit messages, and PR title.
 - Comment on the issue at task start.
 - Comment on the issue immediately when blocked, with blocker details.
+- Treat `In Review` as requiring the PR's expected CI validation status to be visible and up to date once workflows exist.
 - Comment on the issue at completion or handoff.
 - Update Project status during execution.
 
@@ -63,6 +64,7 @@ Applies to task decomposition, GitHub Issue creation, GitHub Project setup, Proj
 - [ ] Task-definition flow creates issues instead of draft project items.
 - [ ] Implementation agents are required to comment at start, blocker, and completion or handoff.
 - [ ] Project status flow is defined as `Spec-ready -> Todo -> In Progress -> In Review -> Done`.
+- [ ] `In Review` includes CI validation status awareness once GitHub Actions workflows exist.
 - [ ] Explicit non-goal: GitHub Project automation is not considered active until `gh` has `project` scope.
 
 ## Dependencies

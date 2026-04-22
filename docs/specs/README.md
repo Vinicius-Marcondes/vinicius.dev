@@ -8,6 +8,7 @@ This harness covers:
 - frontend intake and reconciliation when a Claude-generated frontend already exists
 - repo structure plus frontend and backend architectural policy
 - cross-layer product and technical specs
+- validation and release-automation policy
 - acceptance criteria and dependency tracking
 - mandatory Git branch and review rules
 - GitHub Issues and GitHub Project execution governance
@@ -23,6 +24,8 @@ This harness does not contain implementation code.
 - Canonical execution board is a dedicated GitHub Project for this repo
 - `frontend-structure.md` is the top-priority structural policy for frontend-facing specs and tasks
 - `project-structure.md` is the top-priority structural policy for backend-facing specs and tasks
+- Development deployment is manual on the VPS at `development.viniciuslab.dev`
+- Production deployment is automated from pushed `v*` tags to `viniciuslab.dev`
 - `develop` is the active integration branch
 - `main` is the stable branch
 - Every task, including spec work, must use its own branch
@@ -34,10 +37,11 @@ This harness does not contain implementation code.
 3. Check [frontend-intake.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-intake.md) and the latest [frontend-analyzer-report.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer-report.md).
 4. Read [frontend-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-structure.md) before frontend, admin UI, or verification work.
 5. Read [project-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/project-structure.md) before backend, data, media, infra, or verification work.
-6. Work only from specs that are in `Approved` or explicitly assigned for spec authoring/review.
-7. Map each task to one spec, one task ID, one GitHub Issue, one Project item, one branch, and one acceptance source.
-8. Refresh the analyzer report with `bun scripts/frontend-analyzer.ts` whenever frontend files are added or materially changed.
-9. For execution work, update both the linked GitHub Issue and the linked Project item.
+6. Read [ci-cd.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/ci-cd.md) before release automation, deployment automation, or final verification work.
+7. Work only from specs that are in `Approved` or explicitly assigned for spec authoring/review.
+8. Map each task to one spec, one task ID, one GitHub Issue, one Project item, one branch, and one acceptance source.
+9. Refresh the analyzer report with `bun scripts/frontend-analyzer.ts` whenever frontend files are added or materially changed.
+10. For execution work, update both the linked GitHub Issue and the linked Project item.
 
 ## Spec Lifecycle
 - `Draft`: not ready for task splitting
@@ -67,6 +71,7 @@ No backend-facing spec may move to `Tasked` until [project-structure.md](/Users/
 - [media-storage.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/media-storage.md)
 - [admin-cms.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/admin-cms.md)
 - [infra-deployment.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/infra-deployment.md)
+- [ci-cd.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/ci-cd.md)
 - [verification.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/verification.md)
 
 ## Task Authoring Rules

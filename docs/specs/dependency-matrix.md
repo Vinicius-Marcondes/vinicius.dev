@@ -10,6 +10,7 @@ This matrix defines spec-level dependencies, not implementation-level subtasks.
 - Product and design decisions feed every other layer.
 - Frontend structure defines the frontend project layout, FSD rules, and routing/data placement policy.
 - Project structure defines the repo topology and the backend hexagonal boundary policy.
+- CI/CD defines validation triggers, manual-vs-automated deployment boundaries, and production release automation.
 - Frontend intake can block backend-facing specs if a frontend exists.
 - Git workflow is cross-cutting and mandatory for all task decomposition.
 
@@ -24,6 +25,7 @@ This matrix defines spec-level dependencies, not implementation-level subtasks.
 - Media storage defines upload and persistence rules.
 - Admin CMS defines operational editing surfaces.
 - Infra deployment defines runtime topology.
+- CI/CD defines workflow families, GitHub environments, and release/deploy policy.
 - Verification defines cross-layer quality gates.
 
 ## Data/Contracts Touched
@@ -32,6 +34,7 @@ This matrix defines spec-level dependencies, not implementation-level subtasks.
 - API contracts
 - Upload and filesystem contracts
 - Auth and moderation contracts
+- workflow and release contracts
 
 ## Dependency Table
 | From | Depends on | Reason |
@@ -48,12 +51,14 @@ This matrix defines spec-level dependencies, not implementation-level subtasks.
 | Media Storage | Project Structure, Backend Architecture, Data Model | Storage layout depends on backend port boundaries and persistence ownership. |
 | Admin CMS | Product Scope, Design System, Frontend Structure, Frontend Architecture, Project Structure, Backend Architecture, Data Model | Admin depends on user flows, frontend shells, backend ports, and data rules. |
 | Infra Deployment | Project Structure, Backend Architecture, Media Storage, Git Workflow | Infra reflects runtime services, backend composition-root needs, and release process. |
-| Verification | Design System, Frontend Structure, Frontend Architecture, Project Structure, Backend Architecture, Data Model, Media Storage, Admin CMS, Infra Deployment | QA criteria derive from every implementation-facing layer and both structural policies. |
+| GitHub Actions CI/CD | Frontend Structure, Frontend Architecture, Project Structure, Backend Architecture, Infra Deployment, Git Workflow, GitHub Project Execution | Release automation depends on runtime topology, validation ownership, review flow, and structural policy. |
+| Verification | Design System, Frontend Structure, Frontend Architecture, Project Structure, Backend Architecture, Data Model, Media Storage, Admin CMS, Infra Deployment, GitHub Actions CI/CD | QA criteria derive from every implementation-facing layer, both structural policies, and the release-automation rules. |
 
 ## Acceptance Checklist
 - [ ] Every spec in the tracker appears here with explicit upstream dependencies.
 - [ ] `frontend-structure.md` appears as a hard dependency for frontend-facing specs.
 - [ ] `project-structure.md` appears as a hard dependency for backend-facing specs.
+- [ ] `ci-cd.md` appears as a hard dependency for release automation and final verification.
 - [ ] No backend-facing spec omits frontend intake/analyzer dependencies.
 - [ ] Cross-cutting specs are identified as blockers where appropriate.
 - [ ] Dependency edges are compatible with the tasking rule in the tracker.

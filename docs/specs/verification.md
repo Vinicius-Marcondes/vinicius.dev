@@ -12,16 +12,19 @@ Spec verification, implementation verification, release gates, and cross-layer r
 - No implementation slice is complete without mapping back to approved specs and branch traceability.
 - `SPEC-017 Frontend Structure` is a hard gate for frontend-facing spec and task readiness.
 - `SPEC-016 Project Structure` is a hard gate for backend-facing spec and task readiness.
+- `SPEC-018 GitHub Actions CI/CD` is the hard gate for release automation and final release-readiness checks.
 
 ## Interfaces and Responsibilities
 - Validate that all spec files exist and align with the tracker.
 - Validate that frontend intake gates are respected.
 - Validate that `frontend-structure.md` is referenced by frontend-facing specs and task decomposition.
 - Validate that `project-structure.md` is referenced by backend-facing specs and task decomposition.
+- Validate that `ci-cd.md` is referenced by release automation and verification work.
 - Validate that Bun is explicit in frontend and backend specs.
 - Validate that Git workflow constraints are referenced by all task decomposition.
 - Validate that GitHub Issue and Project execution rules are present before implementation starts.
 - Validate that frontend structure rules cover FSD layer discipline, route tree ownership, and public/admin shell separation.
+- Validate that CI/CD rules cover PR validation, branch validation, manual development deployment, and tag-based production deployment.
 - Define cross-layer scenarios for public browsing, admin, chat, media, auth, and deployment.
 - Define frontend structural scenarios for the six route families and the three canonical frontend interaction flows.
 - Define backend architectural scenarios for `publish thought`, `post chat message`, and `admin login`.
@@ -39,6 +42,7 @@ Spec verification, implementation verification, release gates, and cross-layer r
 - [ ] Every spec referenced in the tracker exists.
 - [ ] `frontend-structure.md` exists and is treated as a hard dependency for frontend-facing specs.
 - [ ] `project-structure.md` exists and is treated as a hard dependency for backend-facing specs.
+- [ ] `ci-cd.md` exists and is treated as a hard dependency for release automation and final verification.
 - [ ] `git-workflow.md` is referenced by the harness and used by task decomposition.
 - [ ] `github-project-execution.md` is referenced by the harness and used by task decomposition.
 - [ ] Frontend intake is treated as a blocking gate for backend tasking.
@@ -48,11 +52,12 @@ Spec verification, implementation verification, release gates, and cross-layer r
 - [ ] Bun is explicit in both frontend and backend specs.
 - [ ] Verification expectations include future frontend structural checks for FSD layers, page public APIs, `app/routes` ownership, shell separation, and the absence of `processes`.
 - [ ] Verification expectations include future architectural-boundary checks without selecting the tool yet.
+- [ ] Verification expectations include the CI/CD trigger matrix, the manual-development-deploy rule, and the tag-based production release rule.
 - [ ] Legacy React architecture, missing TypeScript, and missing planned screens are treated as backend blockers until resolved.
 - [ ] Branch-per-task rules apply to specs, implementation, and hotfixes.
 - [ ] Issue-per-task and Project-item-per-task rules apply to implementation work.
 - [ ] Revert path depends on task/merge traceability rather than history rewriting.
-- [ ] Cross-layer scenarios cover public pages, admin auth, chat, uploads, deployment readiness, the six frontend route families, and the three canonical backend flow examples.
+- [ ] Cross-layer scenarios cover public pages, admin auth, chat, uploads, deployment readiness, the six frontend route families, the three canonical backend flow examples, and the CI/CD trigger matrix.
 
 ## Dependencies
 - [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md)
@@ -69,6 +74,7 @@ Spec verification, implementation verification, release gates, and cross-layer r
 - [media-storage.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/media-storage.md)
 - [admin-cms.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/admin-cms.md)
 - [infra-deployment.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/infra-deployment.md)
+- [ci-cd.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/ci-cd.md)
 
 ## Open Questions
 - Which automated checks will later backstop the architectural boundary rules can be decided during implementation.
