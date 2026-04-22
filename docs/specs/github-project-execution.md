@@ -13,6 +13,7 @@ Applies to task decomposition, GitHub Issue creation, GitHub Project setup, Proj
 - Every implementation task maps to one issue, one Project item, one task ID, one branch, and one acceptance source.
 - Agents must report progress in both the issue thread and the Project board.
 - Project automation is blocked until local `gh` auth has the `project` scope.
+- Frontend migration issues must be created before backend issues when the imported frontend is legacy-shaped or incomplete.
 
 ## Interfaces and Responsibilities
 ### Required GitHub Project fields
@@ -30,6 +31,7 @@ Applies to task decomposition, GitHub Issue creation, GitHub Project setup, Proj
 ### Task-definition agent behavior
 - Read `tracker.md`, `dependency-matrix.md`, `acceptance-criteria.md`, `git-workflow.md`, and all approved specs.
 - Refuse to create backend-facing tasks while frontend reconciliation is unresolved.
+- Create migration-first frontend issues before any backend issues when the analyzer reports legacy React, missing TypeScript, or missing planned screens.
 - Create one GitHub Issue per approved implementation task.
 - Add each issue to the dedicated GitHub Project.
 - Set required Project fields when the item is created.
@@ -40,9 +42,11 @@ Applies to task decomposition, GitHub Issue creation, GitHub Project setup, Proj
 - Use the issue Task ID in branch name, commit messages, and PR title.
 - Comment on the issue at task start.
 - Comment on the issue immediately when blocked, with blocker details.
-- Treat `In Review` as requiring the PR's expected CI validation status to be visible and up to date once workflows exist.
 - Comment on the issue at completion or handoff.
 - Update Project status during execution.
+- Treat `In Review` as requiring the PR's expected CI validation status to be visible and up to date once workflows exist.
+- Frontend validator agents must read both the imported legacy frontend and the migrated frontend target when both exist.
+- Frontend migration agents must report against the migration gate, not only visual parity.
 
 ### Setup behavior
 - Create the dedicated GitHub Project for `vinicius.dev`.
@@ -62,6 +66,7 @@ Applies to task decomposition, GitHub Issue creation, GitHub Project setup, Proj
 - [ ] Project fields match the required list in this spec.
 - [ ] Project number and URL are documented below.
 - [ ] Task-definition flow creates issues instead of draft project items.
+- [ ] Task-definition flow creates frontend migration issues before backend issues when the analyzer still reports frontend blockers.
 - [ ] Implementation agents are required to comment at start, blocker, and completion or handoff.
 - [ ] Project status flow is defined as `Spec-ready -> Todo -> In Progress -> In Review -> Done`.
 - [ ] `In Review` includes CI validation status awareness once GitHub Actions workflows exist.
@@ -74,11 +79,12 @@ Applies to task decomposition, GitHub Issue creation, GitHub Project setup, Proj
 - [acceptance-criteria.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/acceptance-criteria.md)
 
 ## Open Questions
-- None at the workflow level. The only live blocker is GitHub auth scope.
+- None at the workflow level.
 
 ## Task-Splitting Notes
 - Do not split implementation tasks until this spec is `Approved`.
 - Use a setup task to create the Project and fields before creating normal implementation issues.
+- Use migration-first tasks when the imported frontend is legacy React: archive legacy frontend, scaffold clean typed app, migrate landing/projects/photos, implement Thoughts/Chat/Admin, rerun analyzer.
 - Changes to Project fields or status semantics should happen in dedicated `spec/` branches.
 
 ## Git Branch Implications

@@ -23,6 +23,11 @@ const IGNORE_DIRS = new Set([
 
 const EXPECTED_ROUTES = ["/", "/thoughts", "/projects", "/photos", "/chat", "/admin"];
 const CODE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".css", ".scss", ".mdx", ".html"]);
+const LEGACY_HTML_ROUTE_MAP: Record<string, string> = {
+  "frontend/index.html": "/",
+  "frontend/projects.html": "/projects",
+  "frontend/photos.html": "/photos",
+};
 
 type PackageInfo = {
   name?: string;
@@ -105,6 +110,7 @@ function hasFrontendSignals(files: string[], pkg: PackageInfo | null): boolean {
     const rp = rel(file);
     return (
       rp === "index.html" ||
+      rp.startsWith("frontend/") ||
       rp.startsWith("src/") ||
       rp.startsWith("app/") ||
       rp.startsWith("pages/") ||
@@ -118,6 +124,9 @@ function hasFrontendSignals(files: string[], pkg: PackageInfo | null): boolean {
 
 function routeFromFile(relativePath: string): string | null {
   const normalized = relativePath.replace(/\\/g, "/");
+  if (LEGACY_HTML_ROUTE_MAP[normalized]) {
+    return LEGACY_HTML_ROUTE_MAP[normalized];
+  }
   const patterns = [
     /^src\/pages\/(.+)\.(tsx|jsx|ts|js|mdx)$/,
     /^src\/routes\/(.+)\.(tsx|jsx|ts|js|mdx)$/,
@@ -154,7 +163,12 @@ function summarizeRoutes(files: string[]): RouteMatch[] {
 function summarizeComponents(files: string[]): string[] {
   return files
     .map((file) => rel(file))
-    .filter((file) => /(^|\/)(components|ui|layouts)\//.test(file) && /\.(tsx|jsx|ts|js)$/.test(file))
+    .filter(
+      (file) =>
+        ((/(^|\/)(components|ui|layouts)\//.test(file) ||
+          /^frontend\/(landing|projects|photos)\//.test(file)) &&
+          /\.(tsx|jsx|ts|js)$/.test(file)),
+    )
     .sort();
 }
 
@@ -192,6 +206,42 @@ async function main() {
     codeFiles,
     /\bthoughts?\b|\bprojects?\b|\bphotos?\b|\bchat\b|\bstatus\b|\badmin\b/i,
   );
+  const reactImportFiles = await collectRegexMatches(codeFiles, /from\s+["']react["']|import\s+React/i);
+  const reactHookFiles = await collectRegexMatches(codeFiles, /React\.useState|React\.useEffect|useState\(|useEffect\(/i);
+  const reactDomFiles = await collectRegexMatches(codeFiles, /ReactDOM\.createRoot|createRoot\(/i);
+  const browserBabelFiles = await collectRegexMatches(codeFiles, /@babel\/standalone|type=["']text\/babel["']/i);
+  const cdnReactFiles = await collectRegexMatches(codeFiles, /unpkg\.com\/react|unpkg\.com\/react-dom|esm\.sh\/react/i);
+  const windowExportFiles = await collectRegexMatches(codeFiles, /window\.[A-Z][A-Za-z0-9_]+\s*=/);
+  const typescriptFiles = allFiles
+    .map((file) => rel(file))
+    .filter((file) => /\.(ts|tsx)$/.test(file))
+    .sort();
+  const htmlEntrypoints = allFiles
+    .map((file) => rel(file))
+    .filter((file) => /^frontend\/.+\.html$/.test(file) || file === "frontend/index.html")
+    .sort();
+  const viteConfigFiles = allFiles.map((file) => rel(file)).filter((file) => /(^|\/)vite\.config\./.test(file));
+  const bunSignals = unique(
+    allFiles
+      .map((file) => rel(file))
+      .filter((file) => /(^|\/)bunfig\.toml$/.test(file) || /(^|\/)bun\.lockb$/.test(file)),
+  );
+  const missingRoutes = EXPECTED_ROUTES.filter((expectedRoute) => !routes.some((route) => route.route === expectedRoute));
+  const hasLegacyReactArchitecture = browserBabelFiles.length > 0 || cdnReactFiles.length > 0 || windowExportFiles.length > 0;
+  const hasTypeScript = typescriptFiles.length > 0;
+  const hasVite = viteConfigFiles.length > 0 || Boolean(pkg?.dependencies?.vite || pkg?.devDependencies?.vite);
+  const hasBun = bunSignals.length > 0;
+  const migrationRecommendation = frontendPresent
+    ? hasLegacyReactArchitecture || !hasTypeScript || !hasVite || !hasBun || missingRoutes.length > 0
+      ? [
+          "Archive current `frontend/` into a tracked legacy snapshot such as `frontend-legacy/`.",
+          "Scaffold a clean `Vite + React + TypeScript + Bun` app.",
+          "Migrate landing, projects, and photos into typed module-based React screens.",
+          "Implement fully designed Thoughts, Chat Room, and Admin screens.",
+          "Re-run the analyzer and keep backend tasking blocked until no migration blockers remain.",
+        ]
+      : ["No migration blockers detected. Current frontend is close to target architecture."]
+    : ["No frontend present. Planned frontend specs remain authoritative."];
 
   const findings: SectionFinding[] = [];
 
@@ -215,12 +265,70 @@ async function main() {
             }
           : {
               area: `Route ${expectedRoute}`,
-              klass: "missing-surface",
-              notes: "Expected route not detected in current frontend files.",
-              specAction: "review frontend-architecture.md and product-scope.md",
+              klass: "blocks-backend",
+              notes: "Expected planned screen is not present in current frontend files.",
+              specAction: "create or migrate the missing screen before backend tasking",
             },
       );
     }
+
+    findings.push({
+      area: "React presence",
+      klass: reactHookFiles.length > 0 || reactDomFiles.length > 0 || cdnReactFiles.length > 0 || reactImportFiles.length > 0
+        ? "matches-spec"
+        : "blocks-backend",
+      notes:
+        reactHookFiles.length > 0 || reactDomFiles.length > 0 || cdnReactFiles.length > 0 || reactImportFiles.length > 0
+          ? "React usage was detected in the imported frontend."
+          : "React usage was not detected clearly in the imported frontend.",
+      specAction: reactHookFiles.length > 0 || reactDomFiles.length > 0 || cdnReactFiles.length > 0 || reactImportFiles.length > 0 ? "none" : "verify the frontend runtime before tasking",
+    });
+
+    findings.push({
+      area: "Vite/Bun runtime",
+      klass: hasVite && hasBun ? "matches-spec" : "blocks-backend",
+      notes: hasVite && hasBun
+        ? "Frontend shows Vite and Bun signals."
+        : "Frontend is not yet aligned to the target Vite + Bun runtime.",
+      specAction: hasVite && hasBun
+        ? "none"
+        : "scaffold a clean Vite + Bun frontend before backend tasking",
+    });
+
+    findings.push({
+      area: "TypeScript readiness",
+      klass: hasTypeScript ? "matches-spec" : "blocks-backend",
+      notes: hasTypeScript
+        ? `TypeScript source files detected in ${typescriptFiles.slice(0, 5).join(", ")}.`
+        : "No TypeScript source files detected in the frontend.",
+      specAction: hasTypeScript ? "none" : "migrate frontend source to TypeScript before backend tasking",
+    });
+
+    findings.push({
+      area: "React architecture correctness",
+      klass: hasLegacyReactArchitecture ? "blocks-backend" : "matches-spec",
+      notes: hasLegacyReactArchitecture
+        ? "Frontend uses browser Babel, CDN React, or global `window.*` component exports."
+        : "Frontend appears to use module-based React rather than legacy global composition.",
+      specAction: hasLegacyReactArchitecture
+        ? "archive legacy frontend and migrate to typed module-based React"
+        : "none",
+    });
+
+    findings.push({
+      area: "Static multi-page entrypoints",
+      klass: htmlEntrypoints.length > 1 ? "blocks-backend" : "adapt-spec",
+      notes: htmlEntrypoints.length > 1
+        ? `Multiple static HTML entrypoints detected: ${htmlEntrypoints.join(", ")}.`
+        : htmlEntrypoints.length === 1
+          ? `Single HTML entrypoint detected: ${htmlEntrypoints[0]}.`
+          : "No static HTML entrypoints detected.",
+      specAction: htmlEntrypoints.length > 1
+        ? "replace static entrypoints with routed Vite React screens"
+        : htmlEntrypoints.length === 1
+          ? "confirm whether this HTML entrypoint belongs to the target app structure"
+          : "none",
+    });
 
     if (apiFiles.length > 0) {
       findings.push({
@@ -246,6 +354,9 @@ async function main() {
       packagePath ? `package manifest: ${rel(packagePath)}` : null,
       pkg?.dependencies?.react || pkg?.devDependencies?.react ? "react detected" : null,
       pkg?.dependencies?.vite || pkg?.devDependencies?.vite ? "vite detected" : null,
+      reactHookFiles.length > 0 || reactDomFiles.length > 0 || cdnReactFiles.length > 0 ? "react runtime usage detected" : null,
+      browserBabelFiles.length > 0 ? "browser Babel detected" : null,
+      cdnReactFiles.length > 0 ? "CDN React detected" : null,
       allFiles.some((file) => /bunfig\.toml$/.test(file)) ? "bunfig.toml detected" : null,
       allFiles.some((file) => /bun\.lockb$/.test(file)) ? "bun.lockb detected" : null,
     ].filter((value): value is string => Boolean(value)),
@@ -264,8 +375,31 @@ ${frontendPresent ? "Frontend-related files were detected and analyzed." : "Init
 ## Tooling and Runtime Detection
 ${toolingBits.length ? toolingBits.map((item) => `- ${item}`).join("\n") : "- No frontend tooling signals detected"}
 
+## Runtime and Migration Risk
+- Target runtime: \`Vite + React + TypeScript + Bun\`
+- Vite present: ${hasVite ? "yes" : "no"}
+- Bun present: ${hasBun ? "yes" : "no"}
+- TypeScript present: ${hasTypeScript ? "yes" : "no"}
+- Browser Babel present: ${browserBabelFiles.length > 0 ? "yes" : "no"}
+- CDN React present: ${cdnReactFiles.length > 0 ? "yes" : "no"}
+- Global \`window.*\` exports present: ${windowExportFiles.length > 0 ? "yes" : "no"}
+
+## React Usage Correctness
+${reactImportFiles.length ? reactImportFiles.map((file) => `- module/import-based React signal in \`${file}\``).join("\n") : "- No React module import signals detected"}
+${reactHookFiles.length ? reactHookFiles.map((file) => `\n- React hook usage in \`${file}\``).join("") : "\n- No React hook usage detected"}
+${reactDomFiles.length ? reactDomFiles.map((file) => `\n- ReactDOM/createRoot usage in \`${file}\``).join("") : "\n- No createRoot usage detected"}
+${browserBabelFiles.length ? browserBabelFiles.map((file) => `\n- browser Babel usage in \`${file}\``).join("") : "\n- No browser Babel usage detected"}
+${windowExportFiles.length ? windowExportFiles.map((file) => `\n- global component export in \`${file}\``).join("") : "\n- No global component exports detected"}
+
+## TypeScript Readiness
+${typescriptFiles.length ? typescriptFiles.map((file) => `- \`${file}\``).join("\n") : "- No TypeScript files detected"}
+
 ## Route Inventory
 ${routes.length ? routes.map((route) => `- \`${route.route}\` -> \`${route.file}\``).join("\n") : "- None detected"}
+
+## Route and Screen Completeness
+- Expected planned routes: ${EXPECTED_ROUTES.map((route) => `\`${route}\``).join(", ")}
+${missingRoutes.length ? `- Missing planned routes/screens: ${missingRoutes.map((route) => `\`${route}\``).join(", ")}` : "- All planned routes/screens are currently present"}
 
 ## Layout and Component Structure
 ${componentFiles.length ? componentFiles.slice(0, 20).map((file) => `- \`${file}\``).join("\n") : "- No component or layout files detected"}
@@ -291,6 +425,9 @@ ${findings.some((finding) => finding.klass === "blocks-backend" || finding.klass
         .map((finding) => `- ${finding.area}: ${finding.notes}`)
         .join("\n")
     : "- None detected in this pass"}
+
+## Migration Recommendation
+${migrationRecommendation.map((step) => `- ${step}`).join("\n")}
 
 ## Recommended Spec Updates
 - Re-run this analyzer after any material frontend change.
