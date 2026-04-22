@@ -1,0 +1,143 @@
+:root {
+  color-scheme: dark;
+  font-family: 'IBM Plex Mono', 'SFMono-Regular', ui-monospace, monospace;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #f7e6c4;
+  background:
+    radial-gradient(circle at top, rgba(255, 134, 61, 0.16), transparent 30%),
+    linear-gradient(180deg, #060609 0%, #0b0813 42%, #160b19 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --bg-0: #060609;
+  --line-0: rgba(255, 157, 92, 0.45);
+  --line-1: rgba(231, 192, 255, 0.2);
+  --fg-0: #fff3d8;
+  --fg-1: #f0c68a;
+  --fg-2: #b29ec6;
+  --neon-cyan: #62e8ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg-0);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.04) 0,
+    rgba(255, 255, 255, 0.04) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  opacity: 0.22;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.bootstrap-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+}
+
+.bootstrap-frame {
+  width: min(720px, 100%);
+  padding: 32px;
+  border: 1px solid var(--line-0);
+  background:
+    linear-gradient(180deg, rgba(255, 78, 163, 0.1), transparent 30%),
+    linear-gradient(180deg, rgba(8, 8, 12, 0.96), rgba(8, 8, 12, 0.92));
+  box-shadow:
+    0 0 0 1px rgba(255, 78, 163, 0.12),
+    0 18px 60px rgba(0, 0, 0, 0.55);
+}
+
+.bootstrap-kicker {
+  margin: 0 0 12px;
+  color: var(--neon-cyan);
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.bootstrap-frame h1 {
+  margin: 0 0 16px;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 0.95;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bootstrap-copy {
+  max-width: 44rem;
+  margin: 0 0 24px;
+  color: var(--fg-1);
+}
+
+.bootstrap-checklist {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+}
+
+.bootstrap-checklist div {
+  display: grid;
+  gap: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-1);
+}
+
+.bootstrap-checklist dt {
+  color: var(--fg-2);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.bootstrap-checklist dd {
+  margin: 0;
+  color: var(--fg-0);
+}
+
+@media (max-width: 640px) {
+  .bootstrap-screen {
+    padding: 20px;
+  }
+
+  .bootstrap-frame {
+    padding: 24px 20px;
+  }
+}
