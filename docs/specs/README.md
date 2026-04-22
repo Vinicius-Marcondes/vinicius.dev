@@ -54,6 +54,7 @@ No backend-facing spec may move to `Tasked` until [project-structure.md](/Users/
 
 ## Canonical Files
 - [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md)
+- [implementation-playbook.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/implementation-playbook.md)
 - [dependency-matrix.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/dependency-matrix.md)
 - [acceptance-criteria.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/acceptance-criteria.md)
 - [git-workflow.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/git-workflow.md)
