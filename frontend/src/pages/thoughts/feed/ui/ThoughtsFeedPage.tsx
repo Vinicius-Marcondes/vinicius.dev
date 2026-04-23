@@ -1,25 +1,46 @@
+import { useDeferredValue, useState } from 'react'
+import { allThoughtTags, filterThoughts, thoughtFixtures } from '../../../../entities/thought'
+import { ThoughtsControls, defaultThoughtsFilterState } from '../../../../features/filter-thoughts'
 import { PageBanner } from '../../../../widgets/page-banner'
-import { ActionButton, Container, ScreenFrame, Section, Stack } from '../../../../shared/ui'
+import { Container, Section } from '../../../../shared/ui'
+import { ThoughtCard } from './ThoughtCard'
+import { ThoughtsEmptyState } from './ThoughtsEmptyState'
 
 export function ThoughtsFeedPage() {
+  const [filters, setFilters] = useState(defaultThoughtsFilterState)
+  const deferredQuery = useDeferredValue(filters.query)
+  const thoughts = thoughtFixtures
+  const publishedThoughts = thoughts.filter((thought) => thought.status === 'published')
+  const filteredThoughts = filterThoughts(publishedThoughts, { ...filters, query: deferredQuery })
+  const tags = allThoughtTags(publishedThoughts)
+
   return (
-    <Container>
+    <>
       <PageBanner
         label="thoughts"
-        title="Feed route placeholder"
-        description="FE-007 will design and populate the public thoughts feed."
+        title="thoughts. // ch.06"
+        description="One feed for notes and essays: small transmissions, longer field reports, and the occasional suspiciously organized opinion."
       />
       <Section>
-        <ScreenFrame>
-          <Stack gap={16}>
-            <p className="page-copy">
-              This stub exists so the public route tree is complete before the
-              real thoughts screen lands.
-            </p>
-            <ActionButton to="/">Back to signal</ActionButton>
-          </Stack>
-        </ScreenFrame>
+        <Container>
+          <ThoughtsControls
+            state={filters}
+            onChange={setFilters}
+            tags={tags}
+            count={filteredThoughts.length}
+            total={publishedThoughts.length}
+          />
+          {filteredThoughts.length > 0 ? (
+            <div className="thoughts-feed">
+              {filteredThoughts.map((thought) => (
+                <ThoughtCard key={thought.id} thought={thought} />
+              ))}
+            </div>
+          ) : (
+            <ThoughtsEmptyState onReset={() => setFilters(defaultThoughtsFilterState)} />
+          )}
+        </Container>
       </Section>
-    </Container>
+    </>
   )
 }
