@@ -3,19 +3,30 @@ import type {
   ThoughtCursor,
   ThoughtDetailRepositoryRow,
   ThoughtRepositoryRow,
+  ProjectDetailRepositoryRow,
+  ProjectRepositoryRow,
 } from "@/modules/content/ports/outbound";
 
 import type {
+  GetPublishedProjectBySlugPort,
   GetPublishedThoughtBySlugPort,
+  ListPublishedProjectsInput,
+  ListPublishedProjectsOutput,
+  ListPublishedProjectsPort,
   ListPublishedThoughtsInput,
   ListPublishedThoughtsOutput,
   ListPublishedThoughtsPort,
+  PublishedProjectDetail,
+  PublishedProjectSummary,
   PublishedThoughtDetail,
   PublishedThoughtSummary,
 } from "../ports/inbound";
 
 const DEFAULT_THOUGHTS_PAGE_SIZE = 6;
 const MAX_THOUGHTS_PAGE_SIZE = 24;
+const DEFAULT_PROJECTS_PAGE = 1;
+const DEFAULT_PROJECTS_PAGE_SIZE = 12;
+const MAX_PROJECTS_PAGE_SIZE = 48;
 
 export class InvalidThoughtCursorError extends Error {
   constructor() {
@@ -59,12 +70,73 @@ const mapThoughtDetail = (row: ThoughtDetailRepositoryRow): PublishedThoughtDeta
   source: row.source,
 });
 
+const mapProjectHue = (value: number): "amber" | "cyan" | "pink" => {
+  if (value <= 90) {
+    return "amber";
+  }
+
+  if (value <= 270) {
+    return "cyan";
+  }
+
+  return "pink";
+};
+
+const mapProjectKind = (value: string): "bars" | "grid" | "noise" | "sig" => {
+  if (value === "bars" || value === "grid" || value === "noise" || value === "sig") {
+    return value;
+  }
+
+  return "bars";
+};
+
+const mapProjectSummary = (row: ProjectRepositoryRow): PublishedProjectSummary => ({
+  channel: row.channel,
+  description: row.description,
+  id: row.id,
+  links: {
+    github: row.githubUrl,
+    site: row.siteUrl,
+  },
+  slug: row.slug,
+  status: row.status,
+  tags: [...row.tags],
+  thumbnail: {
+    hue: mapProjectHue(row.thumbnailHue),
+    kind: mapProjectKind(row.thumbnailKind),
+  },
+  title: row.title,
+  year: row.year,
+});
+
+const mapProjectDetail = (row: ProjectDetailRepositoryRow): PublishedProjectDetail => ({
+  ...mapProjectSummary(row),
+  body: row.body,
+  source: row.source,
+});
+
 const normalizeLimit = (value?: number): number => {
   if (typeof value !== "number" || Number.isNaN(value)) {
     return DEFAULT_THOUGHTS_PAGE_SIZE;
   }
 
   return Math.min(Math.max(Math.trunc(value), 1), MAX_THOUGHTS_PAGE_SIZE);
+};
+
+const normalizeProjectPage = (value?: number): number => {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return DEFAULT_PROJECTS_PAGE;
+  }
+
+  return Math.max(Math.trunc(value), 1);
+};
+
+const normalizeProjectPageSize = (value?: number): number => {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return DEFAULT_PROJECTS_PAGE_SIZE;
+  }
+
+  return Math.min(Math.max(Math.trunc(value), 1), MAX_PROJECTS_PAGE_SIZE);
 };
 
 const encodeThoughtCursor = (cursor: ThoughtCursor): string => {
@@ -136,5 +208,40 @@ export const createGetPublishedThoughtBySlugUseCase = ({
     const thought = await repository.findPublishedThoughtBySlug(slug);
 
     return thought ? mapThoughtDetail(thought) : null;
+  },
+});
+
+export const createListPublishedProjectsUseCase = ({
+  repository,
+}: ContentApplicationDependencies): ListPublishedProjectsPort => ({
+  execute: async (input: ListPublishedProjectsInput): Promise<ListPublishedProjectsOutput> => {
+    const result = await repository.findPublishedProjects({
+      page: normalizeProjectPage(input.page),
+      pageSize: normalizeProjectPageSize(input.pageSize),
+      search: input.search?.trim() || undefined,
+      sort: input.sort,
+      status: input.status,
+      tags: input.tags?.filter(Boolean),
+    });
+
+    return {
+      items: result.items.map(mapProjectSummary),
+      pageInfo: {
+        page: result.page,
+        pageSize: result.pageSize,
+        totalItems: result.totalItems,
+        totalPages: result.totalPages,
+      },
+    };
+  },
+});
+
+export const createGetPublishedProjectBySlugUseCase = ({
+  repository,
+}: ContentApplicationDependencies): GetPublishedProjectBySlugPort => ({
+  execute: async ({ slug }) => {
+    const project = await repository.findPublishedProjectBySlug(slug);
+
+    return project ? mapProjectDetail(project) : null;
   },
 });

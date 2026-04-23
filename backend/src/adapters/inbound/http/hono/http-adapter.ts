@@ -153,6 +153,122 @@ const createThoughtsFamily = (container: BootstrapContainer) => {
   return thoughtsApp;
 };
 
+const parseProjectsQuery = (query: Record<string, string | undefined>) => {
+  const status = query.status;
+
+  if (status && status !== "live" && status !== "archived" && status !== "in-progress") {
+    return {
+      error: {
+        error: "invalid_query",
+        field: "status",
+      },
+    } as const;
+  }
+
+  const sort = query.sort;
+
+  if (sort && sort !== "recent" && sort !== "alpha" && sort !== "channel") {
+    return {
+      error: {
+        error: "invalid_query",
+        field: "sort",
+      },
+    } as const;
+  }
+
+  const page = parsePositiveInteger(query.page);
+
+  if (typeof query.page !== "undefined" && typeof page === "undefined") {
+    return {
+      error: {
+        error: "invalid_query",
+        field: "page",
+      },
+    } as const;
+  }
+
+  const pageSize = parsePositiveInteger(query.pageSize);
+
+  if (typeof query.pageSize !== "undefined" && typeof pageSize === "undefined") {
+    return {
+      error: {
+        error: "invalid_query",
+        field: "pageSize",
+      },
+    } as const;
+  }
+
+  const tags = [query.tag, query.tags]
+    .filter((value): value is string => typeof value === "string")
+    .flatMap((value) => value.split(","))
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  const normalizedStatus: "live" | "archived" | "in-progress" | undefined =
+    status === "live" || status === "archived" || status === "in-progress"
+      ? status
+      : undefined;
+  const normalizedSort: "recent" | "alpha" | "channel" | undefined =
+    sort === "recent" || sort === "alpha" || sort === "channel" ? sort : undefined;
+
+  return {
+    value: {
+      page,
+      pageSize,
+      search: query.search,
+      sort: normalizedSort,
+      status: normalizedStatus,
+      tags,
+    },
+  } as const;
+};
+
+const createProjectsFamily = (container: BootstrapContainer) => {
+  const projectsApp = new Hono();
+
+  projectsApp.get("/", async (c) => {
+    const parsed = parseProjectsQuery(c.req.query());
+
+    if ("error" in parsed) {
+      return c.json(parsed.error, 400);
+    }
+
+    const response = await container.content.listPublishedProjects.execute(parsed.value);
+
+    return c.json(response);
+  });
+
+  projectsApp.get("/:slug", async (c) => {
+    const slug = c.req.param("slug")?.trim();
+
+    if (!slug) {
+      return c.json(
+        {
+          error: "invalid_path",
+          field: "slug",
+        },
+        400,
+      );
+    }
+
+    const project = await container.content.getPublishedProjectBySlug.execute({ slug });
+
+    if (!project) {
+      return c.json(
+        {
+          error: "not_found",
+          resource: "project",
+        },
+        404,
+      );
+    }
+
+    return c.json({ item: project });
+  });
+
+  return projectsApp;
+};
+
 export const createHonoHttpAdapter = (container: BootstrapContainer) => {
   const app = new Hono();
 
@@ -166,7 +282,7 @@ export const createHonoHttpAdapter = (container: BootstrapContainer) => {
   );
 
   app.route("/api/thoughts", createThoughtsFamily(container));
-  mountPlaceholderFamily(app, "/api/projects", "public content");
+  app.route("/api/projects", createProjectsFamily(container));
   mountPlaceholderFamily(app, "/api/photos", "public content");
   mountPlaceholderFamily(app, "/api/status-strip", "status strip");
   mountPlaceholderFamily(app, "/api/chat", "chat");

@@ -43,3 +43,57 @@ export interface ListPublishedThoughtsPort
 
 export interface GetPublishedThoughtBySlugPort
   extends UseCase<GetPublishedThoughtBySlugInput, PublishedThoughtDetail | null> {}
+
+export type PublishedProjectSummary = Readonly<{
+  id: string;
+  channel: string;
+  title: string;
+  slug: string;
+  year: number;
+  status: "live" | "archived" | "in-progress";
+  description: string;
+  tags: readonly string[];
+  links: Readonly<{
+    github?: string | null;
+    site?: string | null;
+  }>;
+  thumbnail: Readonly<{
+    hue: "amber" | "cyan" | "pink";
+    kind: "bars" | "grid" | "noise" | "sig";
+  }>;
+}>;
+
+export type PublishedProjectDetail = PublishedProjectSummary &
+  Readonly<{
+    body: string;
+    source: string | null;
+  }>;
+
+export type ListPublishedProjectsInput = Readonly<{
+  page?: number;
+  pageSize?: number;
+  status?: "live" | "archived" | "in-progress";
+  tags?: readonly string[];
+  search?: string;
+  sort?: "recent" | "alpha" | "channel";
+}>;
+
+export type ListPublishedProjectsOutput = Readonly<{
+  items: readonly PublishedProjectSummary[];
+  pageInfo: Readonly<{
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+  }>;
+}>;
+
+export type GetPublishedProjectBySlugInput = Readonly<{
+  slug: string;
+}>;
+
+export interface ListPublishedProjectsPort
+  extends UseCase<ListPublishedProjectsInput, ListPublishedProjectsOutput> {}
+
+export interface GetPublishedProjectBySlugPort
+  extends UseCase<GetPublishedProjectBySlugInput, PublishedProjectDetail | null> {}

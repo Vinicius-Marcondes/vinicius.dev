@@ -72,6 +72,61 @@ const createTestContainer = (): BootstrapContainer => ({
         },
       }),
     },
+    getPublishedProjectBySlug: {
+      execute: async ({ slug }) =>
+        slug === "crt-shader-kit"
+          ? {
+              body: "Shader notes",
+              channel: "07",
+              description: "a tiny webgl shader kit",
+              id: "project_1",
+              links: {
+                github: "#",
+                site: "#",
+              },
+              slug,
+              source: null,
+              status: "live",
+              tags: ["webgl", "glsl"],
+              thumbnail: {
+                hue: "cyan",
+                kind: "grid",
+              },
+              title: "crt.shader",
+              year: 2025,
+            }
+          : null,
+    },
+    listPublishedProjects: {
+      execute: async () => ({
+        items: [
+          {
+            channel: "07",
+            description: "a tiny webgl shader kit",
+            id: "project_1",
+            links: {
+              github: "#",
+              site: "#",
+            },
+            slug: "crt-shader-kit",
+            status: "live",
+            tags: ["webgl", "glsl"],
+            thumbnail: {
+              hue: "cyan",
+              kind: "grid",
+            },
+            title: "crt.shader",
+            year: 2025,
+          },
+        ],
+        pageInfo: {
+          page: 1,
+          pageSize: 12,
+          totalItems: 1,
+          totalPages: 1,
+        },
+      }),
+    },
   },
 });
 
@@ -121,8 +176,38 @@ describe("backend server scaffold", () => {
       },
     });
 
+    const projectsResponse = await app.request("/api/projects");
+    expect(projectsResponse.status).toBe(200);
+    await expect(projectsResponse.json()).resolves.toEqual({
+      items: [
+        {
+          channel: "07",
+          description: "a tiny webgl shader kit",
+          id: "project_1",
+          links: {
+            github: "#",
+            site: "#",
+          },
+          slug: "crt-shader-kit",
+          status: "live",
+          tags: ["webgl", "glsl"],
+          thumbnail: {
+            hue: "cyan",
+            kind: "grid",
+          },
+          title: "crt.shader",
+          year: 2025,
+        },
+      ],
+      pageInfo: {
+        page: 1,
+        pageSize: 12,
+        totalItems: 1,
+        totalPages: 1,
+      },
+    });
+
     const placeholderRoutes = [
-      ["/api/projects", "public content"],
       ["/api/photos", "public content"],
       ["/api/status-strip", "status strip"],
       ["/api/chat", "chat"],

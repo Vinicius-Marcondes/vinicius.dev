@@ -2,7 +2,9 @@ import type {
   ContentRepositoryPort,
   PhotoListQuery,
   PhotoRepositoryRow,
+  ProjectDetailRepositoryRow,
   ProjectListQuery,
+  ProjectListPage,
   ProjectRepositoryRow,
   StatusStripEntryRepositoryRow,
   ThoughtDetailRepositoryRow,
@@ -10,7 +12,7 @@ import type {
   ThoughtListPage,
   ThoughtRepositoryRow,
 } from "@/modules/content/ports/outbound";
-import { Prisma, ThoughtStatus } from "../../../../../generated/prisma/client";
+import { Prisma, ProjectStatus, ThoughtStatus } from "../../../../../generated/prisma/client";
 
 import type { PrismaDatabaseClient } from "./prisma-client";
 
@@ -66,6 +68,64 @@ const mapThoughtDetailRow = (row: {
   updatedAt: Date;
 }): ThoughtDetailRepositoryRow => ({
   ...mapThoughtRow(row),
+  body: row.body,
+  source: row.source,
+});
+
+const mapProjectRow = (row: {
+  channel: string;
+  createdAt: Date;
+  description: string;
+  featured: boolean;
+  githubUrl: string | null;
+  id: string;
+  siteUrl: string | null;
+  slug: string;
+  status: ProjectStatus;
+  tags: string[];
+  thumbnailHue: number;
+  thumbnailKind: string;
+  title: string;
+  updatedAt: Date;
+  year: number;
+}): ProjectRepositoryRow => ({
+  channel: row.channel,
+  createdAt: row.createdAt,
+  description: row.description,
+  featured: row.featured,
+  githubUrl: row.githubUrl,
+  id: row.id,
+  siteUrl: row.siteUrl,
+  slug: row.slug,
+  status: row.status === ProjectStatus.in_progress ? "in-progress" : row.status,
+  tags: [...row.tags],
+  thumbnailHue: row.thumbnailHue,
+  thumbnailKind: row.thumbnailKind,
+  title: row.title,
+  updatedAt: row.updatedAt,
+  year: row.year,
+});
+
+const mapProjectDetailRow = (row: {
+  body: string;
+  channel: string;
+  createdAt: Date;
+  description: string;
+  featured: boolean;
+  githubUrl: string | null;
+  id: string;
+  siteUrl: string | null;
+  slug: string;
+  source: string | null;
+  status: ProjectStatus;
+  tags: string[];
+  thumbnailHue: number;
+  thumbnailKind: string;
+  title: string;
+  updatedAt: Date;
+  year: number;
+}): ProjectDetailRepositoryRow => ({
+  ...mapProjectRow(row),
   body: row.body,
   source: row.source,
 });
@@ -139,6 +199,16 @@ const buildThoughtBaseWhere = (query: ThoughtListQuery): Prisma.ThoughtWhereInpu
   status: ThoughtStatus.published,
 });
 
+const mapProjectStatusFilter = (
+  value: "live" | "archived" | "in-progress" | undefined,
+): ProjectStatus | undefined => {
+  if (value === "in-progress") {
+    return ProjectStatus.in_progress;
+  }
+
+  return value;
+};
+
 export const createPrismaContentRepository = (client: PrismaDatabaseClient): ContentRepositoryPort => ({
   findPublishedThoughts: async (query: ThoughtListQuery): Promise<ThoughtListPage> => {
     const limit = query.limit ?? 6;
@@ -208,8 +278,100 @@ export const createPrismaContentRepository = (client: PrismaDatabaseClient): Con
 
     return row ? mapThoughtDetailRow(row) : null;
   },
-  findPublishedProjects: (_query: ProjectListQuery): Promise<readonly ProjectRepositoryRow[]> =>
-    notImplemented("findPublishedProjects"),
+  findPublishedProjects: async (query: ProjectListQuery): Promise<ProjectListPage> => {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 12;
+    const rows = await client.project.findMany({
+      orderBy:
+        query.sort === "alpha"
+          ? [{ title: "asc" }]
+          : query.sort === "channel"
+            ? [{ channel: "asc" }]
+            : [{ year: "desc" }, { createdAt: "desc" }],
+      select: {
+        channel: true,
+        createdAt: true,
+        description: true,
+        featured: true,
+        githubUrl: true,
+        id: true,
+        siteUrl: true,
+        slug: true,
+        status: true,
+        tags: true,
+        thumbnailHue: true,
+        thumbnailKind: true,
+        title: true,
+        updatedAt: true,
+        year: true,
+      },
+      where: {
+        ...(query.status
+          ? {
+              status: mapProjectStatusFilter(query.status),
+            }
+          : {}),
+        ...(query.tags?.length
+          ? {
+              tags: {
+                hasEvery: [...query.tags],
+              },
+            }
+          : {}),
+      },
+    });
+
+    const normalizedSearch = query.search?.trim().toLowerCase();
+    const filteredRows = normalizedSearch
+      ? rows.filter((row) => {
+          return (
+            row.title.toLowerCase().includes(normalizedSearch) ||
+            row.description.toLowerCase().includes(normalizedSearch) ||
+            row.channel.toLowerCase().includes(normalizedSearch) ||
+            row.tags.some((tag) => tag.toLowerCase().includes(normalizedSearch))
+          );
+        })
+      : rows;
+    const totalItems = filteredRows.length;
+    const totalPages = Math.max(Math.ceil(totalItems / pageSize), 1);
+    const startIndex = (page - 1) * pageSize;
+
+    return {
+      items: filteredRows.slice(startIndex, startIndex + pageSize).map(mapProjectRow),
+      page,
+      pageSize,
+      totalItems,
+      totalPages,
+    };
+  },
+  findPublishedProjectBySlug: async (slug: string): Promise<ProjectDetailRepositoryRow | null> => {
+    const row = await client.project.findFirst({
+      select: {
+        body: true,
+        channel: true,
+        createdAt: true,
+        description: true,
+        featured: true,
+        githubUrl: true,
+        id: true,
+        siteUrl: true,
+        slug: true,
+        source: true,
+        status: true,
+        tags: true,
+        thumbnailHue: true,
+        thumbnailKind: true,
+        title: true,
+        updatedAt: true,
+        year: true,
+      },
+      where: {
+        OR: [{ id: slug }, { slug }],
+      },
+    });
+
+    return row ? mapProjectDetailRow(row) : null;
+  },
   findPublishedPhotos: (_query: PhotoListQuery): Promise<readonly PhotoRepositoryRow[]> =>
     notImplemented("findPublishedPhotos"),
   listStatusStripEntries: (): Promise<readonly StatusStripEntryRepositoryRow[]> =>
