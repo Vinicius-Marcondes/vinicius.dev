@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import { createHonoHttpAdapter } from "../adapters/inbound/http/hono/http-adapter";
+import { createContainer } from "./container";
 
 export const createServer = () => {
   const app = new Hono();
@@ -17,17 +18,16 @@ export const createServer = () => {
   return app;
 };
 
+const container = createContainer();
 const app = createServer();
 
 if (import.meta.main) {
-  const port = Number(Bun.env.PORT ?? 3000);
-
   Bun.serve({
     fetch: app.fetch,
-    port,
+    port: container.config.server.port,
   });
 
-  console.info(`vinicius.dev backend listening on :${port}`);
+  console.info(`vinicius.dev backend listening on :${container.config.server.port}`);
 }
 
 export default app;
