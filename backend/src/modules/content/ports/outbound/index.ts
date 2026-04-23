@@ -1,3 +1,8 @@
+export type ThoughtCursor = Readonly<{
+  publishedAt: Date;
+  id: string;
+}>;
+
 export type ThoughtRepositoryRow = Readonly<{
   id: string;
   title: string;
@@ -12,6 +17,17 @@ export type ThoughtRepositoryRow = Readonly<{
   featured: boolean;
   createdAt: Date;
   updatedAt: Date;
+}>;
+
+export type ThoughtDetailRepositoryRow = ThoughtRepositoryRow &
+  Readonly<{
+    body: string;
+    source: string | null;
+  }>;
+
+export type ThoughtListPage = Readonly<{
+  items: readonly ThoughtRepositoryRow[];
+  nextCursor: ThoughtCursor | null;
 }>;
 
 export type ProjectRepositoryRow = Readonly<{
@@ -57,7 +73,7 @@ export type StatusStripEntryRepositoryRow = Readonly<{
 }>;
 
 export type ThoughtListQuery = Readonly<{
-  cursor?: string;
+  cursor?: ThoughtCursor;
   limit?: number;
   type?: "essay" | "note";
   tags?: readonly string[];
@@ -82,7 +98,8 @@ export type PhotoListQuery = Readonly<{
 }>;
 
 export interface ContentRepositoryPort {
-  findPublishedThoughts(query: ThoughtListQuery): Promise<readonly ThoughtRepositoryRow[]>;
+  findPublishedThoughts(query: ThoughtListQuery): Promise<ThoughtListPage>;
+  findPublishedThoughtBySlug(slug: string): Promise<ThoughtDetailRepositoryRow | null>;
   findPublishedProjects(query: ProjectListQuery): Promise<readonly ProjectRepositoryRow[]>;
   findPublishedPhotos(query: PhotoListQuery): Promise<readonly PhotoRepositoryRow[]>;
   listStatusStripEntries(): Promise<readonly StatusStripEntryRepositoryRow[]>;

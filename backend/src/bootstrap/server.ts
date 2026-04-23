@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 
 import { createHonoHttpAdapter } from "../adapters/inbound/http/hono/http-adapter";
-import { createContainer } from "./container";
+import { createContainer, type BootstrapContainer } from "./container";
 
-export const createServer = () => {
+export const createServer = (container: BootstrapContainer = createContainer()) => {
   const app = new Hono();
 
   app.get("/health", (c) =>
@@ -13,15 +13,15 @@ export const createServer = () => {
     }),
   );
 
-  app.route("/", createHonoHttpAdapter());
+  app.route("/", createHonoHttpAdapter(container));
 
   return app;
 };
 
-const container = createContainer();
-const app = createServer();
-
 if (import.meta.main) {
+  const container = createContainer();
+  const app = createServer(container);
+
   Bun.serve({
     fetch: app.fetch,
     port: container.config.server.port,
@@ -30,4 +30,4 @@ if (import.meta.main) {
   console.info(`vinicius.dev backend listening on :${container.config.server.port}`);
 }
 
-export default app;
+export default createServer;
