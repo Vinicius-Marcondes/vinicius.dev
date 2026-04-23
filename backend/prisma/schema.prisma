@@ -1,0 +1,11 @@
+// DATA-001 establishes the Prisma/Postgres baseline.
+// Product models are introduced by later persistence tasks.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
