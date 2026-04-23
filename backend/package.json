@@ -8,7 +8,9 @@
     "start": "bun src/bootstrap/server.ts",
     "build": "bun build src/bootstrap/server.ts --target bun --outdir dist",
     "typecheck": "tsc --noEmit",
-    "test": "bun test"
+    "test": "bun test",
+    "verify:boundary": "bun scripts/boundary-check.ts",
+    "verify": "bun scripts/verify.ts"
   },
   "dependencies": {
     "hono": "^4.6.17"
