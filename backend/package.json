@@ -1,0 +1,20 @@
+{
+  "name": "@vinicius-dev/backend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/bootstrap/server.ts",
+    "start": "bun src/bootstrap/server.ts",
+    "build": "bun build src/bootstrap/server.ts --target bun --outdir dist",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "hono": "^4.6.17"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.14",
+    "typescript": "^5.7.2"
+  }
+}
