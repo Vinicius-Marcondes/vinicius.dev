@@ -8,12 +8,12 @@ type PageBannerProps = {
 
 export function PageBanner({ label, title, description }: PageBannerProps) {
   return (
-    <Section>
+    <Section className="page-banner">
       <Container>
-        <ScreenFrame>
+        <ScreenFrame className="page-banner__frame">
           <Stack gap={12}>
             <InlineLabel>{label}</InlineLabel>
-            <ScreenTitle>{title}</ScreenTitle>
+            <ScreenTitle className="fx-crt-title">{title}</ScreenTitle>
             <p className="page-copy">{description}</p>
           </Stack>
         </ScreenFrame>
