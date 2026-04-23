@@ -5,22 +5,31 @@ import path from "node:path";
 import { checkBoundaryViolations } from "./boundary-check";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "../..");
+const BACKEND_ROOT = path.resolve(import.meta.dir, "..");
 const FRONTEND_ANALYZER = path.join(REPO_ROOT, "scripts", "frontend-analyzer.ts");
 const FRONTEND_ANALYZER_OUTPUT = "/tmp/vinicius-dev-frontend-analyzer-be005.md";
 
-async function runFrontendAnalyzer(): Promise<number> {
-  console.log(`Running frontend analyzer to ${FRONTEND_ANALYZER_OUTPUT}`);
-  const proc = Bun.spawn([
-    "bun",
-    FRONTEND_ANALYZER,
-    `--output=${FRONTEND_ANALYZER_OUTPUT}`,
-  ], {
-    cwd: REPO_ROOT,
+async function runCommand(
+  command: readonly string[],
+  cwd: string,
+  description: string,
+): Promise<number> {
+  console.log(description);
+  const proc = Bun.spawn(command, {
+    cwd,
     stdout: "inherit",
     stderr: "inherit",
   });
 
   return await proc.exited;
+}
+
+async function runFrontendAnalyzer(): Promise<number> {
+  return runCommand(
+    ["bun", FRONTEND_ANALYZER, `--output=${FRONTEND_ANALYZER_OUTPUT}`],
+    REPO_ROOT,
+    `Running frontend analyzer to ${FRONTEND_ANALYZER_OUTPUT}`,
+  );
 }
 
 export async function main(): Promise<number> {
@@ -34,6 +43,13 @@ export async function main(): Promise<number> {
   }
 
   console.log("Backend boundary check passed.");
+  const persistenceExitCode = await runCommand(
+    ["bun", "run", "prisma:check"],
+    BACKEND_ROOT,
+    "Running persistence verification",
+  );
+  if (persistenceExitCode !== 0) return persistenceExitCode;
+
   const analyzerExitCode = await runFrontendAnalyzer();
   if (analyzerExitCode !== 0) return analyzerExitCode;
 

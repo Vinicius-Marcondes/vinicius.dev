@@ -9,10 +9,12 @@
     "build": "bun build src/bootstrap/server.ts --target bun --outdir dist",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
+    "seed": "bun prisma/seed.ts",
     "prisma:format": "prisma format",
     "prisma:validate": "prisma validate",
     "prisma:generate": "prisma generate",
     "prisma:migrate:status": "prisma migrate status",
+    "prisma:check": "bun scripts/persistence-check.ts",
     "verify:boundary": "bun scripts/boundary-check.ts",
     "verify": "bun scripts/verify.ts"
   },
