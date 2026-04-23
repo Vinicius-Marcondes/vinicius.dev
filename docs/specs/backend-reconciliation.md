@@ -19,20 +19,36 @@ Validate backend-facing specs against the migrated frontend and record the durab
 - `frontend/src/pages/**`
 
 ## Summary Status
-No backend task decomposition should start yet.
+No backend implementation task decomposition should start yet.
 
-The migrated frontend is stable enough to approve backend-facing specs after targeted edits, but the current drafts do not yet pin the frontend-derived API, DTO, upload, and admin/chat contracts tightly enough. The FE-010 analyzer reports no frontend migration blockers, but its `adapt-spec` API and upload/media findings remain unresolved inputs for backend, data, media, admin, infra, CI/CD, and verification specs.
+The migrated frontend is stable enough to approve backend-facing specs after targeted edits. Vinicius accepted the reconciliation decisions on 2026-04-23, so the report now serves as the source input for applying those edits to backend, data, media, admin, infra, CI/CD, and verification specs.
 
-## Spec Classification
+Backend implementation remains blocked until the edited specs are reviewed and approved.
+
+## Owner Decisions Accepted
+- Frontend-facing backend routes are mounted under `/api`.
+- Public list filtering is server-side for Thoughts, Projects, and Photos.
+- Pagination is included from day one: cursor pagination for Thoughts and Chat, page pagination for Projects and Photos.
+- Chat uploads allow `image/jpeg`, `image/png`, and `image/webp`, max `5 MB`, one image per message.
+- Chat uploaded images are room-gated, not public.
+- Deleted chat messages and media metadata are soft-hidden with audit records; physical file cleanup can be deferred.
+- Public photo originals use backend media URLs such as `/media/photos/:id/original`.
+- Admin draft preview is deferred beyond Wave 2.
+- Thoughts RSS and sitemap are included in Wave 2.
+- Frontend analyzer freshness is required for spec/frontend-impacting PRs; backend-only PRs run analyzer as a non-mutating validation check.
+
+## Validation Classification Before Reconciliation Edits
+These classifications record the validation findings that drove SPEC-019. Current post-edit review status is tracked in `tracker.md`.
+
 | Spec | Classification | Rationale |
 | --- | --- | --- |
 | `project-structure.md` | ready-for-task-decomposition | Structurally aligned with the migrated frontend/backend split and one-hexagon backend policy. It still needs formal approval in the tracker, but no frontend-derived contract edit is required. |
 | `backend-architecture.md` | needs-edit-before-approval | It names public, auth, admin, chat, and media responsibilities, but does not explicitly anchor HTTP APIs under `/api` or define frontend DTO compatibility for content, chat, admin auth, uploads, status strip, RSS, and sitemap. |
 | `data-model.md` | needs-edit-before-approval | It covers the right entities, but several field-level contracts differ from or underspecify the migrated frontend DTOs. Projects, photos, thoughts, chat messages, uploads, and status strip need explicit API-facing fields. |
-| `media-storage.md` | blocked-by-decision | It aligns on filesystem media and image uploads, but upload limits, accepted image types, public URL/reference shape, derivative policy, and moderation retention behavior need owner decisions before approval. |
+| `media-storage.md` | needs-edit-before-approval | Owner decisions are now accepted for upload limits, accepted image types, public URL/reference shape, room-gated access, and moderation retention behavior. |
 | `admin-cms.md` | needs-edit-before-approval | It aligns with the admin shell and admin dashboard, but should explicitly include the migrated frontend's login/MFA states, dashboard queues, status strip fields, chat moderation commands, and curation controls. |
 | `infra-deployment.md` | needs-edit-before-approval | Runtime topology is aligned, but Caddy/backend routing must explicitly reserve `/api`, static frontend fallback behavior, media serving paths, and environment-specific media volumes. |
-| `ci-cd.md` | blocked-by-decision | Policy is aligned, but concrete validation commands cannot be approved until backend command names, boundary checks, and frontend analyzer invocation policy are selected. |
+| `ci-cd.md` | needs-edit-before-approval | Owner decisions are now accepted for analyzer freshness and backend-only non-mutating analyzer validation; exact package script names can be selected during implementation. |
 | `verification.md` | needs-edit-before-approval | It includes the right gate categories, but must add explicit FE-010 reconciliation checks for `/api`, content DTOs, chat image uploads, media storage, admin auth/MFA, and status strip contracts. |
 
 ## Frontend-Derived Contracts Backend Specs Must Honor
@@ -121,7 +137,7 @@ The migrated frontend is stable enough to approve backend-facing specs after tar
 - Needs upload verification scenarios for image accept policy, storage reference persistence, moderation deletion/disable behavior, and media backup.
 - Needs admin auth/MFA and moderation scenario details tied to the migrated admin shell.
 
-## Exact Proposed Spec Edits
+## Accepted Spec Edits To Apply
 ### `project-structure.md`
 - Add no frontend-driven edits.
 - Approval action only: mark as approved once Vinicius accepts the structural gate.
@@ -142,18 +158,21 @@ The migrated frontend is stable enough to approve backend-facing specs after tar
 - Add an acceptance item requiring repository DTO mapping to preserve frontend filter/sort behavior without leaking Prisma types.
 
 ### `media-storage.md`
-- Add a decision placeholder for accepted image MIME types and max file size before approval.
+- Add accepted chat image MIME types: `image/jpeg`, `image/png`, and `image/webp`.
+- Add accepted chat image max file size: `5 MB`.
+- Add accepted one-image-per-message rule.
+- Add accepted room-gated access rule for chat uploaded images.
 - Add explicit storage roots for public photo originals and chat uploads per environment.
 - Add required metadata/reference shape for API responses: at minimum stable id or storage key, displayed filename, kind `image`, and public/private access URL policy.
-- Add moderation semantics for chat upload removal: hard delete, soft disable, or hidden-with-retention must be selected before approval.
-- Add a note that public photo originals require stable public delivery paths while chat uploads may require room/session-gated access.
+- Add accepted moderation semantics: soft-hide chat message and media metadata, keep audit records, and defer physical cleanup.
+- Add accepted public photo delivery route policy: `/media/photos/:id/original`.
 
 ### `admin-cms.md`
 - Add route compatibility language for `/admin`, `/admin/login`, and `/admin/dashboard`.
 - Add admin auth state machine: credentials, email-code MFA challenge, verified session.
 - Add dashboard contract for content queues, draft thought counts, featured slots, photo records, chat flags, status strip editing, and moderation commands.
 - Add curation contract for manually pinned homepage previews and ordered status strip entries.
-- Add an open decision on draft preview scope for Wave 2.
+- Add accepted deferral: draft preview is outside Wave 2.
 
 ### `infra-deployment.md`
 - Add Caddy routing rule: `/api/*` proxies to backend; non-API routes fall back to the frontend app.
@@ -162,8 +181,9 @@ The migrated frontend is stable enough to approve backend-facing specs after tar
 - Add environment variables for API base/routing, upload limits, media roots, media public URL base, and room password/auth secrets.
 
 ### `ci-cd.md`
-- Add a pre-approval decision list for canonical commands: frontend typecheck/lint/build, frontend analyzer, backend test/lint/typecheck, backend boundary check, and migration check.
+- Add required command families: frontend typecheck/lint/build, frontend analyzer, backend test/lint/typecheck, backend boundary check, and Prisma migration check.
 - Add acceptance language that CI must fail on stale analyzer report or contract drift once analyzer automation exists.
+- Add accepted analyzer policy: spec/frontend-impacting PRs require analyzer freshness; backend-only PRs run analyzer as non-mutating validation.
 - Add a note that deployment workflow tasks remain blocked until runtime commands and deploy descriptors are defined.
 
 ### `verification.md`
@@ -172,15 +192,10 @@ The migrated frontend is stable enough to approve backend-facing specs after tar
 - Add boundary verification for core use cases without HTTP/Postgres and adapter contract tests for HTTP DTO mapping.
 - Add release-readiness checks tying CI/CD, infra routing, media backup, and environment separation together.
 
-## Decisions Required From Vinicius
-- Approve `project-structure.md` as the backend structural hard gate, or request structural changes before any backend tasking.
-- Decide API DTO naming and endpoint style under `/api`: resource names, pagination strategy, and whether filters are server-side in Wave 2 or initially client-side.
-- Decide chat upload policy: allowed MIME types, max file size, one-or-many attachments per message, filename sanitization, and whether uploads are public, signed, or room-gated.
-- Decide chat moderation retention: hard-delete uploads/messages, soft-hide with audit trail, or mixed policy.
-- Decide public photo delivery field: direct public original URL, backend media route, or opaque media reference resolved by frontend.
-- Decide whether admin draft preview is in Wave 2 or explicitly deferred.
-- Decide CI command names and whether frontend analyzer freshness becomes a required PR gate immediately after spec approval.
-- Decide whether RSS and sitemap are included in Wave 2 backend decomposition or deferred until public content persistence lands.
+## Remaining Approval Actions
+- Review and approve `project-structure.md` as the backend structural hard gate, or request structural changes before backend tasking.
+- Review and approve the SPEC-019 edits applied to `backend-architecture.md`, `data-model.md`, `media-storage.md`, `admin-cms.md`, `infra-deployment.md`, `ci-cd.md`, `verification.md`, and `tracker.md`.
+- Keep backend implementation issues blocked until the reconciled specs are approved in the tracker.
 
 ## Recommended Wave 2 Task Clusters And Dependency Order
 These are planning clusters only, not implementation tasks.
@@ -195,12 +210,11 @@ These are planning clusters only, not implementation tasks.
 8. Infra/CI/verification cluster: Caddy `/api` and static fallback routing, Docker/VPS topology, environment media volumes, GitHub Actions validation, production tag deploy, and cross-layer verification.
 
 ## Go/No-Go For Backend Task Decomposition
-Status: no-go.
+Status: no-go for backend implementation; go for spec approval review.
 
 Backend task decomposition should wait until:
 - `project-structure.md` is approved as the structural gate.
-- The proposed reconciliation edits are applied to backend-facing specs.
-- Vinicius resolves the media/upload, DTO/API, admin preview, CI command, and RSS/sitemap decisions listed above.
+- The proposed reconciliation edits are reviewed and approved in backend-facing specs.
 - Backend-facing specs are reclassified from `needs-edit-before-approval` or `blocked-by-decision` to `ready-for-task-decomposition`.
 
 Once those conditions are met, Wave 2 can start from the task clusters above without reopening the completed frontend migration wave.
