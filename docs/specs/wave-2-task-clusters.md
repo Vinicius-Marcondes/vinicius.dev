@@ -65,7 +65,7 @@ Complete. `BE-001`, `BE-002`, `BE-003`, `BE-004`, and `BE-005` were implemented,
 Create the Prisma/Postgres persistence foundation and schema baseline needed before public content, media, admin, or chat behavior can use durable state.
 
 ### Status
-Ready for issue creation and implementation.
+Complete. `DATA-001`, `DATA-002`, `DATA-003`, `DATA-004`, and `DATA-005` were implemented, reviewed, merged to `develop`, and verified together.
 
 ### Tasks
 | Task ID | Title | Layer | Base Branch | Branch Name | Merge Target | Source Specs | Acceptance Source |
@@ -93,6 +93,36 @@ Ready for issue creation and implementation.
 - Docker/Caddy deployment descriptors.
 - Production GitHub Actions workflow YAML.
 
+## Cluster 3: Public Content APIs
+### Goal
+Implement the public read APIs and metadata endpoints that feed the migrated frontend, using the persistence foundation from Cluster 2 and the DTO/filter/pagination contracts from the approved specs.
+
+### Status
+Ready for issue creation and implementation.
+
+### Tasks
+| Task ID | Title | Layer | Base Branch | Branch Name | Merge Target | Source Specs | Acceptance Source |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| BE-006 | Implement Thoughts public list detail API | backend | develop | backend/BE-006-thoughts-public-api | develop | SPEC-006, SPEC-007, SPEC-011, SPEC-016 | backend-architecture.md |
+| BE-007 | Implement Projects public list detail API | backend | develop | backend/BE-007-projects-public-api | develop | SPEC-006, SPEC-007, SPEC-011, SPEC-016 | backend-architecture.md |
+| BE-008 | Implement Photos public list detail API | backend | develop | backend/BE-008-photos-public-api | develop | SPEC-006, SPEC-007, SPEC-011, SPEC-016 | backend-architecture.md |
+| BE-009 | Implement Status Strip public API | backend | develop | backend/BE-009-status-strip-public-api | develop | SPEC-006, SPEC-007, SPEC-011, SPEC-016 | backend-architecture.md |
+| BE-010 | Implement Thoughts RSS feed | backend | develop | backend/BE-010-thoughts-rss-feed | develop | SPEC-006, SPEC-011, SPEC-018 | verification.md |
+| BE-011 | Implement public sitemap generation API | backend | develop | backend/BE-011-public-sitemap-api | develop | SPEC-006, SPEC-011, SPEC-018 | verification.md |
+
+### Dependency Rules
+- `BE-006` runs first because the Thoughts API establishes the first public list/detail flow and the RSS input contract.
+- `BE-007`, `BE-008`, `BE-009`, and `BE-010` start only after `BE-006` lands on `develop`.
+- `BE-011` starts only after `BE-007`, `BE-008`, and `BE-009` land on `develop` because sitemap generation depends on the final public route and content endpoint contracts.
+- Cluster 4 media storage and delivery tasks remain blocked until Cluster 3 is merged and validated.
+
+### Non-Scope
+- `/media/photos/:id/original` binary delivery.
+- Chat room APIs, uploads, or moderation.
+- Admin authentication, sessions, or dashboard CRUD.
+- Docker/Caddy deployment descriptors.
+- Production GitHub Actions workflow YAML.
+
 ## Acceptance Checklist
 - [ ] Cluster order follows the approved Wave 2 dependency sequence.
 - [ ] Cluster 1 tasks each have one task ID, branch, issue, Project item, and acceptance source.
@@ -100,10 +130,14 @@ Ready for issue creation and implementation.
 - [ ] Backend foundation tasks cite approved specs and branch rules.
 - [ ] Cluster 2 tasks each have one task ID, branch, issue, Project item, and acceptance source.
 - [ ] Cluster 2 keeps Prisma schema edits sequential to avoid merge conflicts.
+- [ ] Cluster 3 tasks each have one task ID, branch, issue, Project item, and acceptance source.
+- [ ] Cluster 3 keeps the Thoughts API ahead of the other public content endpoints.
+- [ ] RSS remains coupled to Thoughts and sitemap remains coupled to the finalized public content contracts.
 - [ ] Future clusters remain blocked until their dependencies land.
 
 ## Git Branch Implications
 - Cluster definition changes use `spec/` branches.
 - Cluster 1 implementation uses `backend/` branches.
 - Cluster 2 implementation uses `data/` branches.
+- Cluster 3 implementation uses `backend/` branches.
 - Future infra-only work uses `infra/` branches and future verification-only work may use `qa/` branches if the harness adopts that prefix; until then, use the closest approved prefix from `git-workflow.md`.
