@@ -5,10 +5,10 @@
 | --- | --- | --- |
 | Frontend presence checked | yes | Active frontend now exists under `frontend/` as the Vite React TypeScript Bun app; the imported legacy artifact is preserved under `frontend-legacy/`. |
 | Analyzer report current | yes | FE-010 refreshed the analyzer against the migrated frontend and currently reports no migration blockers. |
-| Spec reconciliation complete | yes | SPEC-019 accepted decisions have been applied to backend-facing specs; edited specs are ready for owner review/approval before backend tasking. |
+| Spec reconciliation complete | yes | SPEC-019 accepted decisions have been applied and approved for Wave 2 tasking. |
 | Frontend structure spec approved | yes | `SPEC-017 Frontend Structure` is approved for frontend-facing specs and tasks. |
-| Project structure spec approved | no | `SPEC-016 Project Structure` is the new hard gate for backend-facing specs and tasks. |
-| CI/CD spec approved | no | `SPEC-018 GitHub Actions CI/CD` is the release-automation and final verification gate. |
+| Project structure spec approved | yes | `SPEC-016 Project Structure` is approved as the hard gate for backend-facing specs and tasks. |
+| CI/CD spec approved | yes | `SPEC-018 GitHub Actions CI/CD` is approved as the release-automation and final verification gate. |
 | GitHub Project auth available | yes | `gh auth status` now includes the `project` scope for `Vinicius-Marcondes`. |
 | Dedicated GitHub Project exists | yes | Project `vinicius.dev` exists as `Vinicius-Marcondes` Project `#2`. |
 | GitHub Project id and url documented | yes | See [github-project-execution.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/github-project-execution.md). |
@@ -36,29 +36,35 @@
 - Admin draft preview is deferred beyond Wave 2.
 - Thoughts RSS and sitemap are included in Wave 2.
 - Frontend analyzer freshness is required for spec/frontend-impacting PRs; backend-only PRs run the analyzer as a non-mutating validation check.
-- Backend, data, media, admin backend, and deployment task creation may now use the FE-010 analyzer report as frontend input, subject to their own spec approval gates.
+- Backend, data, media, admin backend, CI/CD, verification, and deployment task creation may now use the FE-010 analyzer report and SPEC-019 reconciliation as approved Wave 2 input.
 
 ## Cross-Cutting Risks
 - Public photo delivery is intentionally originals-only, which may create performance and bandwidth pressure.
 - Chat room image uploads are allowed for anyone with the room password, which increases moderation and storage risk.
 - CI/CD workflows are not defined yet, so merge validation and release automation are still policy-only at the harness level.
-- The FE-010 analyzer `adapt-spec` findings have been reconciled into backend-facing specs, but those specs still need owner approval before task decomposition.
+- The FE-010 analyzer `adapt-spec` findings have been reconciled into backend-facing specs and approved for Wave 2 task decomposition.
 - The frontend migration wave cleared the previous browser Babel, CDN React, global `window.*`, missing TypeScript, and missing screen blockers.
 
-## Next Spec Queue
-1. Review and approve `project-structure.md` as the structural hard gate for backend-facing work.
-2. Review and approve reconciled `backend-architecture.md`, `data-model.md`, `media-storage.md`, `admin-cms.md`, and `infra-deployment.md` against `SPEC-016` and the stabilized frontend.
-3. Review and approve reconciled `ci-cd.md` so analyzer freshness, backend checks, branch policy, review flow, and release automation stay aligned.
-4. Review and approve reconciled `verification.md` against `SPEC-016`, `SPEC-017`, `SPEC-018`, and the FE-010 analyzer report.
-5. Cut Wave 2 implementation tasks only from approved backend/data/media/admin/infra/CI/verification specs.
+## Next Task Queue
+1. Cut Wave 2 Cluster 1 implementation tasks from approved backend architecture, project structure, CI/CD, and verification specs.
+2. Implement backend foundation before persistence, public content, media, admin, chat, infra, or CI hardening tasks.
+3. Run frontend analyzer as non-mutating validation for backend-only PRs.
+4. Keep one issue, one Project item, one branch, and one acceptance source per implementation task.
 
 ## Current Executable Cluster
 ### SPEC-019 Backend Spec Reconciliation
-- Status: in review after accepted decision application.
+- Status: approved for Wave 2 tasking.
 - Scope: apply accepted backend reconciliation decisions to backend-facing specs.
 - Branch: `spec/SPEC-019-backend-spec-validation`.
 - GitHub issue: `#14`.
-- Backend implementation task creation remains blocked until the reconciled specs are approved.
+- Backend implementation task creation is unblocked for approved Wave 2 Cluster 1 tasks.
+
+### Wave 2 Cluster 1 Backend Foundation
+- Status: ready for issue creation and implementation.
+- Primary specs: `SPEC-006`, `SPEC-011`, `SPEC-016`, `SPEC-018`.
+- Scope: create the backend Bun/Hono/TypeScript scaffold, hexagonal module skeleton, `/api` HTTP shell, bootstrap/config container, and initial verification/boundary checks.
+- Non-scope: Prisma schema, public content APIs, media storage, admin auth, chat persistence, infra deployment, and production CI workflows.
+- Required ordering: `BE-001` first; `BE-002`, `BE-003`, `BE-004`, and `BE-005` may proceed after `BE-001` lands on `develop`.
 
 ### Frontend Migration Wave 1
 - Status: complete after FE-010 analyzer reconciliation.
@@ -87,19 +93,19 @@ Cluster rules:
 | SPEC-003 | Product Scope | Product | Approved | unassigned | README | SPEC-004, SPEC-005, SPEC-006, SPEC-007, SPEC-009 | yes | yes | yes | Locked user-facing scope. |
 | SPEC-004 | Design System | Design | Approved | unassigned | SPEC-003 | SPEC-005, SPEC-009, SPEC-011 | yes | yes | yes | Retro CRT/VHS visual rules. |
 | SPEC-005 | Frontend Architecture | Frontend | Approved | unassigned | SPEC-002, SPEC-003, SPEC-004, SPEC-017 | SPEC-006, SPEC-007, SPEC-009, SPEC-011, SPEC-018 | yes | yes | yes | Applies the frontend structure policy to runtime, routes, and migration gates. |
-| SPEC-006 | Backend Architecture | Backend | Review | unassigned | SPEC-001, SPEC-002, SPEC-003, SPEC-005, SPEC-012, SPEC-016 | SPEC-007, SPEC-008, SPEC-009, SPEC-010, SPEC-011, SPEC-018 | yes | yes | no | Reconciled through SPEC-019; ready for owner approval after project structure gate. |
-| SPEC-007 | Data Model | Data | Review | unassigned | SPEC-001, SPEC-002, SPEC-003, SPEC-005, SPEC-006, SPEC-016 | SPEC-008, SPEC-009, SPEC-011 | yes | yes | no | Reconciled with frontend DTO/filter/pagination contracts through SPEC-019. |
-| SPEC-008 | Media Storage | Storage | Review | unassigned | SPEC-006, SPEC-007, SPEC-016 | SPEC-010, SPEC-011 | yes | yes | no | Reconciled with accepted upload, access, URL, and soft-hide decisions through SPEC-019. |
-| SPEC-009 | Admin CMS | Admin | Review | unassigned | SPEC-003, SPEC-004, SPEC-005, SPEC-006, SPEC-007, SPEC-016, SPEC-017 | SPEC-011 | yes | yes | no | Reconciled with admin auth/MFA, dashboard, curation, and draft-preview deferral decisions. |
-| SPEC-010 | Infra Deployment | Infra | Review | unassigned | SPEC-006, SPEC-008, SPEC-012, SPEC-016 | SPEC-011, SPEC-018 | yes | yes | no | Reconciled with `/api`, static fallback, media routing, and dev/prod volume contracts. |
-| SPEC-011 | Verification | QA | Review | unassigned | SPEC-004, SPEC-005, SPEC-006, SPEC-007, SPEC-008, SPEC-009, SPEC-010, SPEC-016, SPEC-017, SPEC-018 | none | yes | yes | no | Reconciled with FE-010, backend boundary, media/upload, RSS, sitemap, and deployment scenarios. |
+| SPEC-006 | Backend Architecture | Backend | Approved | unassigned | SPEC-001, SPEC-002, SPEC-003, SPEC-005, SPEC-012, SPEC-016 | SPEC-007, SPEC-008, SPEC-009, SPEC-010, SPEC-011, SPEC-018 | yes | yes | yes | Approved for Wave 2 after SPEC-019 reconciliation. |
+| SPEC-007 | Data Model | Data | Approved | unassigned | SPEC-001, SPEC-002, SPEC-003, SPEC-005, SPEC-006, SPEC-016 | SPEC-008, SPEC-009, SPEC-011 | yes | yes | yes | Approved for Wave 2 after frontend DTO/filter/pagination reconciliation. |
+| SPEC-008 | Media Storage | Storage | Approved | unassigned | SPEC-006, SPEC-007, SPEC-016 | SPEC-010, SPEC-011 | yes | yes | yes | Approved for Wave 2 after accepted upload, access, URL, and soft-hide decisions. |
+| SPEC-009 | Admin CMS | Admin | Approved | unassigned | SPEC-003, SPEC-004, SPEC-005, SPEC-006, SPEC-007, SPEC-016, SPEC-017 | SPEC-011 | yes | yes | yes | Approved for Wave 2 after admin auth/MFA, dashboard, curation, and draft-preview deferral decisions. |
+| SPEC-010 | Infra Deployment | Infra | Approved | unassigned | SPEC-006, SPEC-008, SPEC-012, SPEC-016 | SPEC-011, SPEC-018 | yes | yes | yes | Approved for Wave 2 after `/api`, static fallback, media routing, and dev/prod volume reconciliation. |
+| SPEC-011 | Verification | QA | Approved | unassigned | SPEC-004, SPEC-005, SPEC-006, SPEC-007, SPEC-008, SPEC-009, SPEC-010, SPEC-016, SPEC-017, SPEC-018 | none | yes | yes | yes | Approved for Wave 2 after FE-010, backend boundary, media/upload, RSS, sitemap, and deployment scenario reconciliation. |
 | SPEC-012 | Git Workflow | Process | Approved | unassigned | README | all specs | n/a | yes | yes | Mandatory for every task branch. |
-| SPEC-013 | Acceptance Criteria | Process | Review | unassigned | README | all specs | n/a | yes | yes | Shared checklist format. |
-| SPEC-014 | Dependency Matrix | Process | Review | unassigned | README | all specs | n/a | yes | yes | Central dependency map. |
+| SPEC-013 | Acceptance Criteria | Process | Approved | unassigned | README | all specs | n/a | yes | yes | Shared checklist format. |
+| SPEC-014 | Dependency Matrix | Process | Approved | unassigned | README | all specs | n/a | yes | yes | Central dependency map. |
 | SPEC-015 | GitHub Project Execution | Process | Approved | unassigned | README, SPEC-012 | all implementation tasks, SPEC-018 | n/a | yes | yes | Defines issue + project execution workflow. |
-| SPEC-016 | Project Structure | Architecture | Review | unassigned | README | SPEC-006, SPEC-007, SPEC-008, SPEC-009, SPEC-010, SPEC-011, SPEC-018 | n/a | yes | yes | Defines repo topology and the backend hexagonal boundary policy. |
+| SPEC-016 | Project Structure | Architecture | Approved | unassigned | README | SPEC-006, SPEC-007, SPEC-008, SPEC-009, SPEC-010, SPEC-011, SPEC-018 | n/a | yes | yes | Approved structural hard gate for backend-facing specs and tasks. |
 | SPEC-017 | Frontend Structure | Frontend | Approved | unassigned | SPEC-002, SPEC-003, SPEC-004 | SPEC-005, SPEC-009, SPEC-011, SPEC-018 | yes | yes | yes | Defines strict FSD, Data Router placement, and public/admin shell structure. |
-| SPEC-018 | GitHub Actions CI/CD | Process | Review | unassigned | SPEC-005, SPEC-006, SPEC-010, SPEC-012, SPEC-015, SPEC-016, SPEC-017 | SPEC-011 | yes | yes | no | Reconciled with Bun checks, analyzer freshness, backend non-mutating analyzer validation, and tag-based production release automation. |
+| SPEC-018 | GitHub Actions CI/CD | Process | Approved | unassigned | SPEC-005, SPEC-006, SPEC-010, SPEC-012, SPEC-015, SPEC-016, SPEC-017 | SPEC-011 | yes | yes | yes | Approved after Bun checks, analyzer freshness, backend non-mutating analyzer validation, and tag-based production release automation reconciliation. |
 
 ## Tasking Rule
 A spec may only move to `Tasked` when:
