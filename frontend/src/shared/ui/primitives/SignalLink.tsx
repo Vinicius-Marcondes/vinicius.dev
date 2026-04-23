@@ -20,7 +20,11 @@ export function SignalLink({
     return (
       <NavLink
         to={to}
-        className={typeof className === 'string' ? cx('signal-link', className) : className}
+        className={
+          typeof className === 'function'
+            ? (args) => cx('signal-link', className(args))
+            : cx('signal-link', className)
+        }
       >
         {children}
       </NavLink>

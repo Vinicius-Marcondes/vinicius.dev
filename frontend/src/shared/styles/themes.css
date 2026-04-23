@@ -1,10 +1,14 @@
 :root,
 [data-theme='sunset'] {
   --surface-bg: var(--bg-1);
+  --surface-bg-strong: rgba(7, 6, 11, 0.94);
   --surface-border: var(--line-2);
+  --surface-border-soft: var(--line-1);
 }
 
 [data-theme='safelight'] {
   --surface-bg: #180e0a;
+  --surface-bg-strong: rgba(24, 14, 10, 0.94);
   --surface-border: rgba(255, 168, 92, 0.28);
+  --surface-border-soft: rgba(255, 168, 92, 0.14);
 }
