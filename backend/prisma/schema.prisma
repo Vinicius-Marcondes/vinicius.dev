@@ -1,5 +1,6 @@
 // DATA-001 establishes the Prisma/Postgres baseline.
 // DATA-002 adds public content and status strip models.
+// DATA-003 adds auth, chat, media moderation, and audit models.
 
 generator client {
   provider = "prisma-client"
@@ -48,6 +49,309 @@ enum StatusStripAccent {
   amber
   cyan
   pink
+}
+
+enum AdminSessionStatus {
+  active
+  revoked
+  expired
+}
+
+enum AdminMfaChallengeStatus {
+  pending
+  verified
+  expired
+  canceled
+}
+
+enum ChatHandleStatus {
+  active
+  banned
+}
+
+enum ChatRoomSessionStatus {
+  active
+  revoked
+  expired
+}
+
+enum ChatMessageTone {
+  cyan
+  pink
+  system
+}
+
+enum ChatModerationState {
+  visible
+  hidden
+  deleted
+}
+
+enum ChatUploadKind {
+  image
+}
+
+enum ChatUploadMimeType {
+  image_jpeg @map("image/jpeg")
+  image_png  @map("image/png")
+  image_webp @map("image/webp")
+}
+
+enum ChatBanStatus {
+  active
+  lifted
+}
+
+enum ChatModerationAuditAction {
+  delete_message
+  hide_media_metadata
+  ban_handle
+  room_password_rotation
+}
+
+model AdminUser {
+  id                    String   @id @default(cuid())
+  email                 String   @unique
+  passwordHash          String   @db.Text
+  passwordHashAlgorithm String
+  passwordHashParams    Json?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  sessions              AdminSession[]
+  mfaChallenges         AdminMfaChallenge[]
+  moderationAudits      ChatModerationAuditRecord[]
+  roomPasswordRotations ChatRoomPasswordRotation[]
+  chatBans              ChatBan[]
+}
+
+model AdminSession {
+  id          String             @id @default(cuid())
+  adminUserId String
+  tokenHash   String             @unique
+  status      AdminSessionStatus @default(active)
+  issuedAt    DateTime           @default(now())
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  lastSeenAt  DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id])
+
+  @@index([adminUserId, status])
+  @@index([expiresAt])
+}
+
+model AdminMfaChallenge {
+  id          String                  @id @default(cuid())
+  adminUserId String
+  codeHash    String                  @db.Text
+  status      AdminMfaChallengeStatus @default(pending)
+  sentAt      DateTime                @default(now())
+  expiresAt   DateTime
+  verifiedAt  DateTime?
+  canceledAt  DateTime?
+  attempts    Int                     @default(0)
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id])
+
+  @@index([adminUserId, status])
+  @@index([expiresAt])
+}
+
+model ChatRoom {
+  id                String    @id @default(cuid())
+  slug              String    @unique
+  passwordHash      String    @db.Text
+  passwordVersion   Int       @default(1)
+  passwordRotatedAt DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  handles           ChatHandle[]
+  sessions          ChatRoomSession[]
+  messages          ChatMessage[]
+  uploads           ChatUpload[]
+  bans              ChatBan[]
+  passwordRotations ChatRoomPasswordRotation[]
+  moderationAudits  ChatModerationAuditRecord[]
+
+  @@index([slug])
+}
+
+model ChatHandle {
+  id               String           @id @default(cuid())
+  roomId           String
+  handle           String
+  normalizedHandle String
+  status           ChatHandleStatus @default(active)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  room     ChatRoom                    @relation(fields: [roomId], references: [id])
+  sessions ChatRoomSession[]
+  messages ChatMessage[]
+  uploads  ChatUpload[]
+  bans     ChatBan[]                   @relation("ChatBanTargetHandle")
+  audits   ChatModerationAuditRecord[] @relation("ChatAuditTargetHandle")
+
+  @@unique([roomId, normalizedHandle])
+  @@index([roomId, status])
+}
+
+model ChatRoomSession {
+  id               String                @id @default(cuid())
+  roomId           String
+  handleId         String
+  sessionTokenHash String                @unique
+  status           ChatRoomSessionStatus @default(active)
+  joinedAt         DateTime              @default(now())
+  lastSeenAt       DateTime?
+  expiresAt        DateTime?
+  leftAt           DateTime?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  room     ChatRoom                    @relation(fields: [roomId], references: [id])
+  handle   ChatHandle                  @relation(fields: [handleId], references: [id])
+  messages ChatMessage[]
+  uploads  ChatUpload[]
+  audits   ChatModerationAuditRecord[] @relation("ChatAuditTargetSession")
+
+  @@index([roomId, status, joinedAt(sort: Desc)])
+  @@index([handleId, joinedAt(sort: Desc)])
+}
+
+model ChatMessage {
+  id              String              @id @default(cuid())
+  roomId          String
+  roomSessionId   String
+  authorHandleId  String
+  body            String              @db.Text
+  sentAt          DateTime            @default(now())
+  tone            ChatMessageTone?
+  moderationState ChatModerationState @default(visible)
+  hiddenAt        DateTime?
+  deletedAt       DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  room         ChatRoom                    @relation(fields: [roomId], references: [id])
+  roomSession  ChatRoomSession             @relation(fields: [roomSessionId], references: [id])
+  authorHandle ChatHandle                  @relation(fields: [authorHandleId], references: [id])
+  upload       ChatUpload?                 @relation("ChatMessageUpload")
+  audits       ChatModerationAuditRecord[] @relation("ChatAuditTargetMessage")
+
+  @@index([roomId, sentAt(sort: Desc)])
+  @@index([roomSessionId, sentAt(sort: Desc)])
+  @@index([authorHandleId, sentAt(sort: Desc)])
+  @@index([moderationState, sentAt(sort: Desc)])
+}
+
+model ChatUpload {
+  id                String              @id @default(cuid())
+  roomId            String
+  displayFilename   String
+  mimeType          ChatUploadMimeType
+  byteSize          Int
+  kind              ChatUploadKind      @default(image)
+  storageKey        String
+  storagePath       String              @db.Text
+  uploaderHandleId  String
+  uploaderSessionId String?
+  messageId         String?             @unique
+  moderationState   ChatModerationState @default(visible)
+  hiddenAt          DateTime?
+  deletedAt         DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  room            ChatRoom                    @relation(fields: [roomId], references: [id])
+  uploaderHandle  ChatHandle                  @relation(fields: [uploaderHandleId], references: [id])
+  uploaderSession ChatRoomSession?            @relation(fields: [uploaderSessionId], references: [id])
+  roomMessage     ChatMessage?                @relation("ChatMessageUpload", fields: [messageId], references: [id])
+  audits          ChatModerationAuditRecord[] @relation("ChatAuditTargetUpload")
+
+  @@index([roomId, createdAt(sort: Desc)])
+  @@index([uploaderHandleId, createdAt(sort: Desc)])
+  @@index([uploaderSessionId, createdAt(sort: Desc)])
+  @@index([moderationState, createdAt(sort: Desc)])
+}
+
+model ChatBan {
+  id               String        @id @default(cuid())
+  roomId           String
+  targetHandleId   String
+  actorAdminUserId String
+  reason           String?       @db.Text
+  status           ChatBanStatus @default(active)
+  bannedAt         DateTime      @default(now())
+  liftedAt         DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  room           ChatRoom                    @relation(fields: [roomId], references: [id])
+  targetHandle   ChatHandle                  @relation("ChatBanTargetHandle", fields: [targetHandleId], references: [id])
+  actorAdminUser AdminUser                   @relation(fields: [actorAdminUserId], references: [id])
+  audits         ChatModerationAuditRecord[] @relation("ChatAuditTargetBan")
+
+  @@index([roomId, status, bannedAt(sort: Desc)])
+  @@index([targetHandleId, bannedAt(sort: Desc)])
+  @@index([actorAdminUserId, bannedAt(sort: Desc)])
+}
+
+model ChatRoomPasswordRotation {
+  id                      String   @id @default(cuid())
+  roomId                  String
+  actorAdminUserId        String
+  reason                  String?  @db.Text
+  previousPasswordHash    String   @db.Text
+  nextPasswordHash        String   @db.Text
+  previousPasswordVersion Int
+  nextPasswordVersion     Int
+  rotatedAt               DateTime @default(now())
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  room           ChatRoom                   @relation(fields: [roomId], references: [id])
+  actorAdminUser AdminUser                  @relation(fields: [actorAdminUserId], references: [id])
+  audit          ChatModerationAuditRecord? @relation("ChatAuditTargetRotation")
+
+  @@index([roomId, rotatedAt(sort: Desc)])
+  @@index([actorAdminUserId, rotatedAt(sort: Desc)])
+}
+
+model ChatModerationAuditRecord {
+  id                           String                    @id @default(cuid())
+  action                       ChatModerationAuditAction
+  roomId                       String?
+  actorAdminUserId             String
+  targetHandleId               String?
+  targetSessionId              String?
+  targetMessageId              String?
+  targetUploadId               String?
+  targetBanId                  String?
+  targetRoomPasswordRotationId String?                   @unique
+  reason                       String?                   @db.Text
+  previousState                Json?
+  nextState                    Json?
+  createdAt                    DateTime                  @default(now())
+
+  room           ChatRoom?                 @relation(fields: [roomId], references: [id])
+  actorAdminUser AdminUser                 @relation(fields: [actorAdminUserId], references: [id])
+  targetHandle   ChatHandle?               @relation("ChatAuditTargetHandle", fields: [targetHandleId], references: [id])
+  targetSession  ChatRoomSession?          @relation("ChatAuditTargetSession", fields: [targetSessionId], references: [id])
+  targetMessage  ChatMessage?              @relation("ChatAuditTargetMessage", fields: [targetMessageId], references: [id])
+  targetUpload   ChatUpload?               @relation("ChatAuditTargetUpload", fields: [targetUploadId], references: [id])
+  targetBan      ChatBan?                  @relation("ChatAuditTargetBan", fields: [targetBanId], references: [id])
+  targetRotation ChatRoomPasswordRotation? @relation("ChatAuditTargetRotation", fields: [targetRoomPasswordRotationId], references: [id])
+
+  @@index([roomId, createdAt(sort: Desc)])
+  @@index([actorAdminUserId, createdAt(sort: Desc)])
+  @@index([action, createdAt(sort: Desc)])
 }
 
 model Thought {
