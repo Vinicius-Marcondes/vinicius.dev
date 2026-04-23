@@ -1,5 +1,7 @@
 import { Hono } from "hono";
 
+import { createHonoHttpAdapter } from "../adapters/inbound/http/hono/http-adapter";
+
 export const createServer = () => {
   const app = new Hono();
 
@@ -9,6 +11,8 @@ export const createServer = () => {
       status: "ok",
     }),
   );
+
+  app.route("/", createHonoHttpAdapter());
 
   return app;
 };
