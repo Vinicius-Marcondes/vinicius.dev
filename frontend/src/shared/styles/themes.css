@@ -1,0 +1,10 @@
+:root,
+[data-theme='sunset'] {
+  --surface-bg: var(--bg-1);
+  --surface-border: var(--line-2);
+}
+
+[data-theme='safelight'] {
+  --surface-bg: #180e0a;
+  --surface-border: rgba(255, 168, 92, 0.28);
+}

@@ -1,0 +1,24 @@
+.fx-scanlines::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.03) 0,
+    rgba(255, 255, 255, 0.03) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  opacity: 0.18;
+}
+
+.glitch-hover:hover {
+  animation: subtle-glitch 180ms steps(2) 1;
+}
+
+.fx-crt-title {
+  text-shadow:
+    -1px 0 0 rgba(255, 46, 136, 0.9),
+    1px 0 0 rgba(34, 227, 255, 0.9);
+}
