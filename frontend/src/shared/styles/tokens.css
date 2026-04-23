@@ -17,6 +17,10 @@
   --neon-cyan: #22e3ff;
   --neon-lime: #b6ff3c;
   --neon-yellow: #ffe74c;
+  --safelight-deep: #2a0808;
+  --safelight: #c43a3a;
+  --safelight-soft: #d9a05a;
+  --warm-amber: #f0b35a;
   --line-1: rgba(216, 198, 255, 0.14);
   --line-2: rgba(216, 198, 255, 0.28);
   --line-neon: rgba(255, 46, 136, 0.58);
