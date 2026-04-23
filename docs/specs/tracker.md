@@ -46,8 +46,8 @@
 - The frontend migration wave cleared the previous browser Babel, CDN React, global `window.*`, missing TypeScript, and missing screen blockers.
 
 ## Next Task Queue
-1. Cut Wave 2 Cluster 1 implementation tasks from approved backend architecture, project structure, CI/CD, and verification specs.
-2. Implement backend foundation before persistence, public content, media, admin, chat, infra, or CI hardening tasks.
+1. Cut Wave 2 Cluster 2 persistence tasks from approved data model, backend architecture, project structure, CI/CD, and verification specs.
+2. Implement Prisma/Postgres persistence foundation before public content, media, admin, or chat persistence behavior.
 3. Run frontend analyzer as non-mutating validation for backend-only PRs.
 4. Keep one issue, one Project item, one branch, and one acceptance source per implementation task.
 
@@ -60,11 +60,20 @@
 - Backend implementation task creation is unblocked for approved Wave 2 Cluster 1 tasks.
 
 ### Wave 2 Cluster 1 Backend Foundation
-- Status: ready for issue creation and implementation.
+- Status: complete.
 - Primary specs: `SPEC-006`, `SPEC-011`, `SPEC-016`, `SPEC-018`.
 - Scope: create the backend Bun/Hono/TypeScript scaffold, hexagonal module skeleton, `/api` HTTP shell, bootstrap/config container, and initial verification/boundary checks.
 - Non-scope: Prisma schema, public content APIs, media storage, admin auth, chat persistence, infra deployment, and production CI workflows.
-- Required ordering: `BE-001` first; `BE-002`, `BE-003`, `BE-004`, and `BE-005` may proceed after `BE-001` lands on `develop`.
+- Completed tasks: `BE-001`, `BE-002`, `BE-003`, `BE-004`, and `BE-005`.
+- Merged PRs: `#20`, `#22`, `#21`, `#24`, and `#23`.
+- Integrated verification: backend typecheck, tests, build, and `bun run verify` passed on `develop`.
+
+### Wave 2 Cluster 2 Persistence Foundation
+- Status: next cluster to define.
+- Primary specs: `SPEC-007`, `SPEC-006`, `SPEC-011`, `SPEC-016`, `SPEC-018`.
+- Scope: Prisma/Postgres setup, migration baseline, repository adapter patterns, schema for approved first-class entities, and seed strategy.
+- Non-scope: public endpoint behavior, media binary storage, admin auth flows, chat room behavior, Docker/Caddy deployment, and production CI workflows.
+- Required ordering: task definition must happen before implementation; split one issue, one branch, and one acceptance source per persistence task.
 
 ### Frontend Migration Wave 1
 - Status: complete after FE-010 analyzer reconciliation.
