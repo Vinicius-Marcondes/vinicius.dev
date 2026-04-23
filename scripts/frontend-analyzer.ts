@@ -28,6 +28,14 @@ const LEGACY_HTML_ROUTE_MAP: Record<string, string> = {
   "frontend/projects.html": "/projects",
   "frontend/photos.html": "/photos",
 };
+const FSD_PAGE_ROUTE_MAP: Array<[RegExp, string]> = [
+  [/^frontend\/src\/pages\/home\//, "/"],
+  [/^frontend\/src\/pages\/thoughts\//, "/thoughts"],
+  [/^frontend\/src\/pages\/projects\//, "/projects"],
+  [/^frontend\/src\/pages\/photos\//, "/photos"],
+  [/^frontend\/src\/pages\/chat\//, "/chat"],
+  [/^frontend\/src\/pages\/admin\//, "/admin"],
+];
 
 type PackageInfo = {
   name?: string;
@@ -82,7 +90,8 @@ function unique<T>(values: T[]): T[] {
 }
 
 function findPackage(files: string[]): string | null {
-  return files.find((file) => path.basename(file) === "package.json") ?? null;
+  const packages = files.filter((file) => path.basename(file) === "package.json");
+  return packages.find((file) => rel(file) === "frontend/package.json") ?? packages[0] ?? null;
 }
 
 async function loadPackage(packagePath: string | null): Promise<PackageInfo | null> {
@@ -124,6 +133,10 @@ function hasFrontendSignals(files: string[], pkg: PackageInfo | null): boolean {
 
 function routeFromFile(relativePath: string): string | null {
   const normalized = relativePath.replace(/\\/g, "/");
+  const fsdRoute = FSD_PAGE_ROUTE_MAP.find(([pattern]) => pattern.test(normalized));
+  if (fsdRoute) {
+    return fsdRoute[1];
+  }
   if (LEGACY_HTML_ROUTE_MAP[normalized]) {
     return LEGACY_HTML_ROUTE_MAP[normalized];
   }
@@ -166,6 +179,7 @@ function summarizeComponents(files: string[]): string[] {
     .filter(
       (file) =>
         ((/(^|\/)(components|ui|layouts)\//.test(file) ||
+          /^frontend\/src\/.+\/ui\//.test(file) ||
           /^frontend\/(landing|projects|photos)\//.test(file)) &&
           /\.(tsx|jsx|ts|js)$/.test(file)),
     )
@@ -190,12 +204,14 @@ async function collectRegexMatches(files: string[], regex: RegExp, limit = 20): 
 
 async function main() {
   const allFiles = await walk(cwd);
-  const codeFiles = pickCodeFiles(allFiles);
-  const packagePath = findPackage(allFiles);
+  const legacySnapshotFiles = allFiles.filter((file) => rel(file).startsWith("frontend-legacy/"));
+  const activeFiles = allFiles.filter((file) => !rel(file).startsWith("frontend-legacy/"));
+  const codeFiles = pickCodeFiles(activeFiles);
+  const packagePath = findPackage(activeFiles);
   const pkg = await loadPackage(packagePath);
-  const frontendPresent = hasFrontendSignals(allFiles, pkg);
-  const routes = summarizeRoutes(allFiles);
-  const componentFiles = summarizeComponents(allFiles);
+  const frontendPresent = hasFrontendSignals(activeFiles, pkg);
+  const routes = summarizeRoutes(activeFiles);
+  const componentFiles = summarizeComponents(activeFiles);
 
   const cssFiles = codeFiles.filter((file) => [".css", ".scss"].includes(path.extname(file)));
   const tokenFiles = await collectRegexMatches(cssFiles, /:root|--[a-z0-9-]+/i);
@@ -212,25 +228,25 @@ async function main() {
   const browserBabelFiles = await collectRegexMatches(codeFiles, /@babel\/standalone|type=["']text\/babel["']/i);
   const cdnReactFiles = await collectRegexMatches(codeFiles, /unpkg\.com\/react|unpkg\.com\/react-dom|esm\.sh\/react/i);
   const windowExportFiles = await collectRegexMatches(codeFiles, /window\.[A-Z][A-Za-z0-9_]+\s*=/);
-  const typescriptFiles = allFiles
+  const typescriptFiles = activeFiles
     .map((file) => rel(file))
     .filter((file) => /\.(ts|tsx)$/.test(file))
     .sort();
-  const htmlEntrypoints = allFiles
+  const htmlEntrypoints = activeFiles
     .map((file) => rel(file))
     .filter((file) => /^frontend\/.+\.html$/.test(file) || file === "frontend/index.html")
     .sort();
-  const viteConfigFiles = allFiles.map((file) => rel(file)).filter((file) => /(^|\/)vite\.config\./.test(file));
+  const viteConfigFiles = activeFiles.map((file) => rel(file)).filter((file) => /(^|\/)vite\.config\./.test(file));
   const bunSignals = unique(
-    allFiles
+    activeFiles
       .map((file) => rel(file))
-      .filter((file) => /(^|\/)bunfig\.toml$/.test(file) || /(^|\/)bun\.lockb$/.test(file)),
+      .filter((file) => /(^|\/)bunfig\.toml$/.test(file) || /(^|\/)bun\.lockb?$/.test(file)),
   );
   const missingRoutes = EXPECTED_ROUTES.filter((expectedRoute) => !routes.some((route) => route.route === expectedRoute));
   const hasLegacyReactArchitecture = browserBabelFiles.length > 0 || cdnReactFiles.length > 0 || windowExportFiles.length > 0;
   const hasTypeScript = typescriptFiles.length > 0;
   const hasVite = viteConfigFiles.length > 0 || Boolean(pkg?.dependencies?.vite || pkg?.devDependencies?.vite);
-  const hasBun = bunSignals.length > 0;
+  const hasBun = bunSignals.length > 0 || Boolean(pkg && /^bun@/.test(String((pkg as Record<string, unknown>).packageManager ?? "")));
   const migrationRecommendation = frontendPresent
     ? hasLegacyReactArchitecture || !hasTypeScript || !hasVite || !hasBun || missingRoutes.length > 0
       ? [
@@ -317,16 +333,16 @@ async function main() {
 
     findings.push({
       area: "Static multi-page entrypoints",
-      klass: htmlEntrypoints.length > 1 ? "blocks-backend" : "adapt-spec",
+      klass: htmlEntrypoints.length > 1 ? "blocks-backend" : "matches-spec",
       notes: htmlEntrypoints.length > 1
         ? `Multiple static HTML entrypoints detected: ${htmlEntrypoints.join(", ")}.`
         : htmlEntrypoints.length === 1
-          ? `Single HTML entrypoint detected: ${htmlEntrypoints[0]}.`
+          ? `Single app HTML entrypoint detected: ${htmlEntrypoints[0]}.`
           : "No static HTML entrypoints detected.",
       specAction: htmlEntrypoints.length > 1
         ? "replace static entrypoints with routed Vite React screens"
         : htmlEntrypoints.length === 1
-          ? "confirm whether this HTML entrypoint belongs to the target app structure"
+          ? "none"
           : "none",
     });
 
@@ -357,8 +373,8 @@ async function main() {
       reactHookFiles.length > 0 || reactDomFiles.length > 0 || cdnReactFiles.length > 0 ? "react runtime usage detected" : null,
       browserBabelFiles.length > 0 ? "browser Babel detected" : null,
       cdnReactFiles.length > 0 ? "CDN React detected" : null,
-      allFiles.some((file) => /bunfig\.toml$/.test(file)) ? "bunfig.toml detected" : null,
-      allFiles.some((file) => /bun\.lockb$/.test(file)) ? "bun.lockb detected" : null,
+      bunSignals.length > 0 ? `bun signal detected: ${bunSignals.join(", ")}` : null,
+      pkg && /^bun@/.test(String((pkg as Record<string, unknown>).packageManager ?? "")) ? "packageManager declares Bun" : null,
     ].filter((value): value is string => Boolean(value)),
   );
 
@@ -371,6 +387,9 @@ async function main() {
 
 ## Frontend Presence Result
 ${frontendPresent ? "Frontend-related files were detected and analyzed." : "Initial scan found no frontend implementation. Planned frontend specs remain authoritative until UI files are added."}
+
+## Legacy Snapshot
+${legacySnapshotFiles.length ? `- Tracked legacy snapshot detected in \`frontend-legacy/\` with ${legacySnapshotFiles.length} files. It is treated as migration reference material, not active runtime code.` : "- No tracked legacy snapshot detected."}
 
 ## Tooling and Runtime Detection
 ${toolingBits.length ? toolingBits.map((item) => `- ${item}`).join("\n") : "- No frontend tooling signals detected"}

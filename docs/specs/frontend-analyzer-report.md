@@ -2,176 +2,288 @@
 
 ## Repo State Summary
 - Report status: current
-- Generated at: 2026-04-21T20:46:29.210Z
+- Generated at: 2026-04-23T09:52:03.394Z
 - Frontend presence: detected
 
 ## Frontend Presence Result
 Frontend-related files were detected and analyzed.
 
+## Legacy Snapshot
+- Tracked legacy snapshot detected in `frontend-legacy/` with 35 files. It is treated as migration reference material, not active runtime code.
+
 ## Tooling and Runtime Detection
+- package manifest: frontend/package.json
+- react detected
+- vite detected
 - react runtime usage detected
-- browser Babel detected
-- CDN React detected
+- bun signal detected: frontend/bun.lock
+- packageManager declares Bun
 
 ## Runtime and Migration Risk
 - Target runtime: `Vite + React + TypeScript + Bun`
-- Vite present: no
-- Bun present: no
-- TypeScript present: no
-- Browser Babel present: yes
-- CDN React present: yes
-- Global `window.*` exports present: yes
+- Vite present: yes
+- Bun present: yes
+- TypeScript present: yes
+- Browser Babel present: no
+- CDN React present: no
+- Global `window.*` exports present: no
 
 ## React Usage Correctness
-- No React module import signals detected
+- module/import-based React signal in `frontend/eslint.config.js`
+- module/import-based React signal in `frontend/vite.config.ts`
+- module/import-based React signal in `frontend/src/app/providers/index.tsx`
+- module/import-based React signal in `frontend/src/app/entrypoint/main.tsx`
+- module/import-based React signal in `frontend/src/features/filter-photos/ui/PhotosControls.tsx`
+- module/import-based React signal in `frontend/src/features/filter-projects/ui/ProjectsControls.tsx`
+- module/import-based React signal in `frontend/src/features/filter-thoughts/ui/ThoughtsControls.tsx`
+- module/import-based React signal in `frontend/src/shared/ui/layout/Container.tsx`
+- module/import-based React signal in `frontend/src/shared/ui/layout/Section.tsx`
+- module/import-based React signal in `frontend/src/shared/ui/layout/Stack.tsx`
+- module/import-based React signal in `frontend/src/shared/ui/primitives/SignalLink.tsx`
+- module/import-based React signal in `frontend/src/shared/ui/primitives/ScreenFrame.tsx`
+- module/import-based React signal in `frontend/src/shared/ui/primitives/InlineLabel.tsx`
+- module/import-based React signal in `frontend/src/shared/ui/primitives/ActionButton.tsx`
+- module/import-based React signal in `frontend/src/shared/ui/primitives/ScreenTitle.tsx`
+- module/import-based React signal in `frontend/src/pages/home/ui/ChannelChangeOverlay.tsx`
+- module/import-based React signal in `frontend/src/pages/home/ui/HomePage.tsx`
+- module/import-based React signal in `frontend/src/pages/chat/room/ui/ChatRoomPage.tsx`
+- module/import-based React signal in `frontend/src/pages/chat/room/ui/ChatGate.tsx`
+- module/import-based React signal in `frontend/src/pages/chat/room/ui/ChatComposer.tsx`
 
-- React hook usage in `frontend/landing/StatusStrip.jsx`
-- React hook usage in `frontend/landing/ChannelChange.jsx`
-- React hook usage in `frontend/landing/BootLoader.jsx`
-- React hook usage in `frontend/landing/Nav.jsx`
-- React hook usage in `frontend/landing/Hero.jsx`
-- React hook usage in `frontend/landing/TweaksPanel.jsx`
-- React hook usage in `frontend/index.html`
-- React hook usage in `frontend/projects/PageNav.jsx`
-- React hook usage in `frontend/projects/Tweaks.jsx`
-- React hook usage in `frontend/projects/ProjectCard.jsx`
-- React hook usage in `frontend/projects.html`
-- React hook usage in `frontend/photos.html`
-- React hook usage in `frontend/photos/Lightbox.jsx`
-- React hook usage in `frontend/photos/PageNav.jsx`
-- React hook usage in `frontend/photos/ContactFrame.jsx`
-- React hook usage in `frontend/photos/Tweaks.jsx`
+- React hook usage in `frontend/src/pages/home/ui/ChannelChangeOverlay.tsx`
+- React hook usage in `frontend/src/pages/home/ui/HomePage.tsx`
+- React hook usage in `frontend/src/pages/chat/room/ui/ChatRoomPage.tsx`
+- React hook usage in `frontend/src/pages/projects/catalog/ui/ProjectsCatalogPage.tsx`
+- React hook usage in `frontend/src/pages/admin/login/ui/AdminLoginPage.tsx`
+- React hook usage in `frontend/src/pages/thoughts/feed/ui/ThoughtsFeedPage.tsx`
+- React hook usage in `frontend/src/pages/photos/gallery/ui/PhotoLightbox.tsx`
+- React hook usage in `frontend/src/pages/photos/gallery/ui/PhotosGalleryPage.tsx`
+- React hook usage in `frontend/src/widgets/status-strip/ui/StatusStrip.tsx`
 
-- ReactDOM/createRoot usage in `frontend/index.html`
-- ReactDOM/createRoot usage in `frontend/projects.html`
-- ReactDOM/createRoot usage in `frontend/photos.html`
+- ReactDOM/createRoot usage in `frontend/src/app/entrypoint/main.tsx`
 
-- browser Babel usage in `frontend/index.html`
-- browser Babel usage in `frontend/projects.html`
-- browser Babel usage in `frontend/photos.html`
+- No browser Babel usage detected
 
-- global component export in `frontend/landing/StatusStrip.jsx`
-- global component export in `frontend/landing/ChannelBug.jsx`
-- global component export in `frontend/landing/Footer.jsx`
-- global component export in `frontend/landing/ChannelChange.jsx`
-- global component export in `frontend/landing/BootLoader.jsx`
-- global component export in `frontend/landing/Nav.jsx`
-- global component export in `frontend/landing/Hero.jsx`
-- global component export in `frontend/landing/TweaksPanel.jsx`
-- global component export in `frontend/projects/Thumbnail.jsx`
-- global component export in `frontend/projects/data.jsx`
-- global component export in `frontend/projects/Controls.jsx`
-- global component export in `frontend/projects/EmptyState.jsx`
-- global component export in `frontend/projects/PageBanner.jsx`
-- global component export in `frontend/projects/PageNav.jsx`
-- global component export in `frontend/projects/Tweaks.jsx`
-- global component export in `frontend/projects/ProjectCard.jsx`
-- global component export in `frontend/photos/data.jsx`
-- global component export in `frontend/photos/Lightbox.jsx`
-- global component export in `frontend/photos/Controls.jsx`
-- global component export in `frontend/photos/PageBanner.jsx`
+- No global component exports detected
 
 ## TypeScript Readiness
-- No TypeScript files detected
+- `frontend/src/app/admin-shell/index.ts`
+- `frontend/src/app/admin-shell/ui/AdminShell.tsx`
+- `frontend/src/app/entrypoint/main.tsx`
+- `frontend/src/app/providers/index.tsx`
+- `frontend/src/app/public-shell/index.ts`
+- `frontend/src/app/public-shell/ui/PublicShell.tsx`
+- `frontend/src/app/routes/admin.tsx`
+- `frontend/src/app/routes/public.tsx`
+- `frontend/src/app/routes/router.tsx`
+- `frontend/src/entities/chat/index.ts`
+- `frontend/src/entities/chat/lib/fixtures.ts`
+- `frontend/src/entities/chat/model/types.ts`
+- `frontend/src/entities/photo/index.ts`
+- `frontend/src/entities/photo/lib/filters.ts`
+- `frontend/src/entities/photo/lib/fixtures.ts`
+- `frontend/src/entities/photo/lib/mappers.ts`
+- `frontend/src/entities/photo/model/types.ts`
+- `frontend/src/entities/project/index.ts`
+- `frontend/src/entities/project/lib/filters.ts`
+- `frontend/src/entities/project/lib/fixtures.ts`
+- `frontend/src/entities/project/lib/mappers.ts`
+- `frontend/src/entities/project/model/types.ts`
+- `frontend/src/entities/status-strip/index.ts`
+- `frontend/src/entities/status-strip/lib/mappers.ts`
+- `frontend/src/entities/status-strip/model/types.ts`
+- `frontend/src/entities/thought/index.ts`
+- `frontend/src/entities/thought/lib/filters.ts`
+- `frontend/src/entities/thought/lib/fixtures.ts`
+- `frontend/src/entities/thought/lib/mappers.ts`
+- `frontend/src/entities/thought/model/types.ts`
+- `frontend/src/features/filter-photos/index.ts`
+- `frontend/src/features/filter-photos/lib/defaults.ts`
+- `frontend/src/features/filter-photos/model/types.ts`
+- `frontend/src/features/filter-photos/ui/PhotosControls.tsx`
+- `frontend/src/features/filter-projects/index.ts`
+- `frontend/src/features/filter-projects/lib/defaults.ts`
+- `frontend/src/features/filter-projects/model/types.ts`
+- `frontend/src/features/filter-projects/ui/ProjectsControls.tsx`
+- `frontend/src/features/filter-thoughts/index.ts`
+- `frontend/src/features/filter-thoughts/lib/defaults.ts`
+- `frontend/src/features/filter-thoughts/model/types.ts`
+- `frontend/src/features/filter-thoughts/ui/ThoughtsControls.tsx`
+- `frontend/src/main.tsx`
+- `frontend/src/pages/admin/dashboard/index.ts`
+- `frontend/src/pages/admin/dashboard/ui/AdminDashboardPage.tsx`
+- `frontend/src/pages/admin/login/index.ts`
+- `frontend/src/pages/admin/login/ui/AdminLoginPage.tsx`
+- `frontend/src/pages/chat/room/index.ts`
+- `frontend/src/pages/chat/room/ui/ChatComposer.tsx`
+- `frontend/src/pages/chat/room/ui/ChatGate.tsx`
+- `frontend/src/pages/chat/room/ui/ChatMessageBubble.tsx`
+- `frontend/src/pages/chat/room/ui/ChatRoomPage.tsx`
+- `frontend/src/pages/home/index.ts`
+- `frontend/src/pages/home/ui/ChannelBug.tsx`
+- `frontend/src/pages/home/ui/ChannelChangeOverlay.tsx`
+- `frontend/src/pages/home/ui/HomePage.tsx`
+- `frontend/src/pages/photos/gallery/index.ts`
+- `frontend/src/pages/photos/gallery/ui/FilmFrame.tsx`
+- `frontend/src/pages/photos/gallery/ui/PhotoCard.tsx`
+- `frontend/src/pages/photos/gallery/ui/PhotoLightbox.tsx`
+- `frontend/src/pages/photos/gallery/ui/PhotosEmptyState.tsx`
+- `frontend/src/pages/photos/gallery/ui/PhotosGalleryPage.tsx`
+- `frontend/src/pages/projects/catalog/index.ts`
+- `frontend/src/pages/projects/catalog/ui/ProjectCard.tsx`
+- `frontend/src/pages/projects/catalog/ui/ProjectThumbnail.tsx`
+- `frontend/src/pages/projects/catalog/ui/ProjectsCatalogPage.tsx`
+- `frontend/src/pages/projects/catalog/ui/ProjectsEmptyState.tsx`
+- `frontend/src/pages/thoughts/feed/index.ts`
+- `frontend/src/pages/thoughts/feed/ui/ThoughtCard.tsx`
+- `frontend/src/pages/thoughts/feed/ui/ThoughtsEmptyState.tsx`
+- `frontend/src/pages/thoughts/feed/ui/ThoughtsFeedPage.tsx`
+- `frontend/src/shared/api/index.ts`
+- `frontend/src/shared/config/index.ts`
+- `frontend/src/shared/lib/index.ts`
+- `frontend/src/shared/ui/index.ts`
+- `frontend/src/shared/ui/layout/Container.tsx`
+- `frontend/src/shared/ui/layout/Section.tsx`
+- `frontend/src/shared/ui/layout/Stack.tsx`
+- `frontend/src/shared/ui/primitives/ActionButton.tsx`
+- `frontend/src/shared/ui/primitives/InlineLabel.tsx`
+- `frontend/src/shared/ui/primitives/ScreenFrame.tsx`
+- `frontend/src/shared/ui/primitives/ScreenTitle.tsx`
+- `frontend/src/shared/ui/primitives/SignalLink.tsx`
+- `frontend/src/vite-env.d.ts`
+- `frontend/src/widgets/page-banner/index.ts`
+- `frontend/src/widgets/page-banner/ui/PageBanner.tsx`
+- `frontend/src/widgets/site-footer/index.ts`
+- `frontend/src/widgets/site-footer/ui/SiteFooter.tsx`
+- `frontend/src/widgets/site-header/index.ts`
+- `frontend/src/widgets/site-header/ui/SiteHeader.tsx`
+- `frontend/src/widgets/status-strip/index.ts`
+- `frontend/src/widgets/status-strip/ui/StatusStrip.tsx`
+- `frontend/vite.config.ts`
 
 ## Route Inventory
 - `/` -> `frontend/index.html`
-- `/photos` -> `frontend/photos.html`
-- `/projects` -> `frontend/projects.html`
+- `/` -> `frontend/src/pages/home/ui/ChannelBug.tsx`
+- `/` -> `frontend/src/pages/home/ui/ChannelChangeOverlay.tsx`
+- `/` -> `frontend/src/pages/home/ui/HomePage.tsx`
+- `/` -> `frontend/src/pages/home/index.ts`
+- `/admin` -> `frontend/src/pages/admin/dashboard/ui/AdminDashboardPage.tsx`
+- `/admin` -> `frontend/src/pages/admin/dashboard/index.ts`
+- `/admin` -> `frontend/src/pages/admin/login/ui/AdminLoginPage.tsx`
+- `/admin` -> `frontend/src/pages/admin/login/index.ts`
+- `/chat` -> `frontend/src/pages/chat/room/ui/ChatRoomPage.tsx`
+- `/chat` -> `frontend/src/pages/chat/room/ui/ChatGate.tsx`
+- `/chat` -> `frontend/src/pages/chat/room/ui/ChatComposer.tsx`
+- `/chat` -> `frontend/src/pages/chat/room/ui/ChatMessageBubble.tsx`
+- `/chat` -> `frontend/src/pages/chat/room/index.ts`
+- `/photos` -> `frontend/src/pages/photos/gallery/ui/FilmFrame.tsx`
+- `/photos` -> `frontend/src/pages/photos/gallery/ui/PhotoLightbox.tsx`
+- `/photos` -> `frontend/src/pages/photos/gallery/ui/PhotosEmptyState.tsx`
+- `/photos` -> `frontend/src/pages/photos/gallery/ui/PhotoCard.tsx`
+- `/photos` -> `frontend/src/pages/photos/gallery/ui/PhotosGalleryPage.tsx`
+- `/photos` -> `frontend/src/pages/photos/gallery/index.ts`
+- `/projects` -> `frontend/src/pages/projects/catalog/ui/ProjectCard.tsx`
+- `/projects` -> `frontend/src/pages/projects/catalog/ui/ProjectsCatalogPage.tsx`
+- `/projects` -> `frontend/src/pages/projects/catalog/ui/ProjectsEmptyState.tsx`
+- `/projects` -> `frontend/src/pages/projects/catalog/ui/ProjectThumbnail.tsx`
+- `/projects` -> `frontend/src/pages/projects/catalog/index.ts`
+- `/thoughts` -> `frontend/src/pages/thoughts/feed/ui/ThoughtsEmptyState.tsx`
+- `/thoughts` -> `frontend/src/pages/thoughts/feed/ui/ThoughtCard.tsx`
+- `/thoughts` -> `frontend/src/pages/thoughts/feed/ui/ThoughtsFeedPage.tsx`
+- `/thoughts` -> `frontend/src/pages/thoughts/feed/index.ts`
 
 ## Route and Screen Completeness
 - Expected planned routes: `/`, `/thoughts`, `/projects`, `/photos`, `/chat`, `/admin`
-- Missing planned routes/screens: `/thoughts`, `/chat`, `/admin`
+- All planned routes/screens are currently present
 
 ## Layout and Component Structure
-- `frontend/landing/BootLoader.jsx`
-- `frontend/landing/ChannelBug.jsx`
-- `frontend/landing/ChannelChange.jsx`
-- `frontend/landing/Footer.jsx`
-- `frontend/landing/Hero.jsx`
-- `frontend/landing/Nav.jsx`
-- `frontend/landing/StatusStrip.jsx`
-- `frontend/landing/TweaksPanel.jsx`
-- `frontend/photos/ContactFrame.jsx`
-- `frontend/photos/Controls.jsx`
-- `frontend/photos/FilmFrame.jsx`
-- `frontend/photos/Lightbox.jsx`
-- `frontend/photos/PageBanner.jsx`
-- `frontend/photos/PageNav.jsx`
-- `frontend/photos/Tweaks.jsx`
-- `frontend/photos/data.jsx`
-- `frontend/projects/Controls.jsx`
-- `frontend/projects/EmptyState.jsx`
-- `frontend/projects/PageBanner.jsx`
-- `frontend/projects/PageNav.jsx`
+- `frontend/src/app/admin-shell/ui/AdminShell.tsx`
+- `frontend/src/app/public-shell/ui/PublicShell.tsx`
+- `frontend/src/features/filter-photos/ui/PhotosControls.tsx`
+- `frontend/src/features/filter-projects/ui/ProjectsControls.tsx`
+- `frontend/src/features/filter-thoughts/ui/ThoughtsControls.tsx`
+- `frontend/src/pages/admin/dashboard/ui/AdminDashboardPage.tsx`
+- `frontend/src/pages/admin/login/ui/AdminLoginPage.tsx`
+- `frontend/src/pages/chat/room/ui/ChatComposer.tsx`
+- `frontend/src/pages/chat/room/ui/ChatGate.tsx`
+- `frontend/src/pages/chat/room/ui/ChatMessageBubble.tsx`
+- `frontend/src/pages/chat/room/ui/ChatRoomPage.tsx`
+- `frontend/src/pages/home/ui/ChannelBug.tsx`
+- `frontend/src/pages/home/ui/ChannelChangeOverlay.tsx`
+- `frontend/src/pages/home/ui/HomePage.tsx`
+- `frontend/src/pages/photos/gallery/ui/FilmFrame.tsx`
+- `frontend/src/pages/photos/gallery/ui/PhotoCard.tsx`
+- `frontend/src/pages/photos/gallery/ui/PhotoLightbox.tsx`
+- `frontend/src/pages/photos/gallery/ui/PhotosEmptyState.tsx`
+- `frontend/src/pages/photos/gallery/ui/PhotosGalleryPage.tsx`
+- `frontend/src/pages/projects/catalog/ui/ProjectCard.tsx`
 
 ## Design System Observations
-- token or CSS variable signal in `frontend/tokens/safelight.css`
-- token or CSS variable signal in `frontend/tokens/colors_and_type.css`
+- token or CSS variable signal in `frontend/src/app/styles/global.css`
+- token or CSS variable signal in `frontend/src/shared/styles/tokens.css`
+- token or CSS variable signal in `frontend/src/shared/styles/themes.css`
 
 ## API and Contract Assumptions
-- API usage hint in `frontend/projects/data.jsx`
-- API usage hint in `frontend/photos/data.jsx`
+- API usage hint in `frontend/src/shared/api/index.ts`
 
-- auth/session hint in `frontend/landing/StatusStrip.jsx`
-- auth/session hint in `frontend/landing/Nav.jsx`
-- auth/session hint in `frontend/index.html`
-- auth/session hint in `frontend/projects/data.jsx`
+- auth/session hint in `frontend/src/app/styles/global.css`
+- auth/session hint in `frontend/src/app/routes/admin.tsx`
+- auth/session hint in `frontend/src/shared/config/index.ts`
+- auth/session hint in `frontend/src/pages/chat/room/ui/ChatRoomPage.tsx`
+- auth/session hint in `frontend/src/pages/chat/room/ui/ChatGate.tsx`
+- auth/session hint in `frontend/src/pages/admin/dashboard/ui/AdminDashboardPage.tsx`
+- auth/session hint in `frontend/src/pages/admin/login/ui/AdminLoginPage.tsx`
+- auth/session hint in `frontend/src/entities/chat/lib/fixtures.ts`
+- auth/session hint in `frontend/src/entities/project/lib/fixtures.ts`
 
-- No upload/media hints detected
+- upload/media hint in `frontend/src/app/styles/global.css`
+- upload/media hint in `frontend/src/pages/chat/room/ui/ChatRoomPage.tsx`
+- upload/media hint in `frontend/src/pages/chat/room/ui/ChatComposer.tsx`
+- upload/media hint in `frontend/src/entities/chat/lib/fixtures.ts`
 
-- content-domain hint in `frontend/landing/StatusStrip.jsx`
-- content-domain hint in `frontend/landing/Footer.jsx`
-- content-domain hint in `frontend/landing/ChannelChange.jsx`
-- content-domain hint in `frontend/landing/Nav.jsx`
-- content-domain hint in `frontend/projects/Thumbnail.jsx`
-- content-domain hint in `frontend/projects/data.jsx`
-- content-domain hint in `frontend/projects/Controls.jsx`
-- content-domain hint in `frontend/projects/PageBanner.jsx`
-- content-domain hint in `frontend/projects/PageNav.jsx`
-- content-domain hint in `frontend/projects/Tweaks.jsx`
-- content-domain hint in `frontend/projects/ProjectCard.jsx`
-- content-domain hint in `frontend/projects.html`
-- content-domain hint in `frontend/photos.html`
-- content-domain hint in `frontend/photos/data.jsx`
-- content-domain hint in `frontend/photos/Lightbox.jsx`
-- content-domain hint in `frontend/photos/PageBanner.jsx`
-- content-domain hint in `frontend/photos/PageNav.jsx`
-- content-domain hint in `frontend/photos/ContactFrame.jsx`
-- content-domain hint in `frontend/photos/FilmFrame.jsx`
-- content-domain hint in `frontend/photos/Tweaks.jsx`
+- content-domain hint in `frontend/src/app/admin-shell/ui/AdminShell.tsx`
+- content-domain hint in `frontend/src/app/styles/global.css`
+- content-domain hint in `frontend/src/app/routes/public.tsx`
+- content-domain hint in `frontend/src/app/routes/router.tsx`
+- content-domain hint in `frontend/src/app/routes/admin.tsx`
+- content-domain hint in `frontend/src/features/filter-photos/ui/PhotosControls.tsx`
+- content-domain hint in `frontend/src/features/filter-projects/ui/ProjectsControls.tsx`
+- content-domain hint in `frontend/src/features/filter-projects/model/types.ts`
+- content-domain hint in `frontend/src/features/filter-projects/lib/defaults.ts`
+- content-domain hint in `frontend/src/features/filter-thoughts/ui/ThoughtsControls.tsx`
+- content-domain hint in `frontend/src/features/filter-thoughts/model/types.ts`
+- content-domain hint in `frontend/src/shared/config/index.ts`
+- content-domain hint in `frontend/src/pages/home/ui/ChannelChangeOverlay.tsx`
+- content-domain hint in `frontend/src/pages/home/ui/HomePage.tsx`
+- content-domain hint in `frontend/src/pages/chat/room/ui/ChatRoomPage.tsx`
+- content-domain hint in `frontend/src/pages/chat/room/ui/ChatGate.tsx`
+- content-domain hint in `frontend/src/pages/chat/room/ui/ChatComposer.tsx`
+- content-domain hint in `frontend/src/pages/chat/room/ui/ChatMessageBubble.tsx`
+- content-domain hint in `frontend/src/pages/projects/catalog/ui/ProjectCard.tsx`
+- content-domain hint in `frontend/src/pages/projects/catalog/ui/ProjectsCatalogPage.tsx`
 
 ## Findings
 | Area | Class | Notes | Spec Action |
 | --- | --- | --- | --- |
 | Route / | matches-spec | Detected in frontend/index.html. | none |
-| Route /thoughts | blocks-backend | Expected planned screen is not present in current frontend files. | create or migrate the missing screen before backend tasking |
-| Route /projects | matches-spec | Detected in frontend/projects.html. | none |
-| Route /photos | matches-spec | Detected in frontend/photos.html. | none |
-| Route /chat | blocks-backend | Expected planned screen is not present in current frontend files. | create or migrate the missing screen before backend tasking |
-| Route /admin | blocks-backend | Expected planned screen is not present in current frontend files. | create or migrate the missing screen before backend tasking |
+| Route /thoughts | matches-spec | Detected in frontend/src/pages/thoughts/feed/ui/ThoughtsEmptyState.tsx. | none |
+| Route /projects | matches-spec | Detected in frontend/src/pages/projects/catalog/ui/ProjectCard.tsx. | none |
+| Route /photos | matches-spec | Detected in frontend/src/pages/photos/gallery/ui/FilmFrame.tsx. | none |
+| Route /chat | matches-spec | Detected in frontend/src/pages/chat/room/ui/ChatRoomPage.tsx. | none |
+| Route /admin | matches-spec | Detected in frontend/src/pages/admin/dashboard/ui/AdminDashboardPage.tsx. | none |
 | React presence | matches-spec | React usage was detected in the imported frontend. | none |
-| Vite/Bun runtime | blocks-backend | Frontend is not yet aligned to the target Vite + Bun runtime. | scaffold a clean Vite + Bun frontend before backend tasking |
-| TypeScript readiness | blocks-backend | No TypeScript source files detected in the frontend. | migrate frontend source to TypeScript before backend tasking |
-| React architecture correctness | blocks-backend | Frontend uses browser Babel, CDN React, or global `window.*` component exports. | archive legacy frontend and migrate to typed module-based React |
-| Static multi-page entrypoints | blocks-backend | Multiple static HTML entrypoints detected: frontend/index.html, frontend/photos.html, frontend/projects.html. | replace static entrypoints with routed Vite React screens |
-| API assumptions | adapt-spec | Frontend contains API usage in frontend/projects/data.jsx, frontend/photos/data.jsx. | reconcile backend-architecture.md and data-model.md |
+| Vite/Bun runtime | matches-spec | Frontend shows Vite and Bun signals. | none |
+| TypeScript readiness | matches-spec | TypeScript source files detected in frontend/src/app/admin-shell/index.ts, frontend/src/app/admin-shell/ui/AdminShell.tsx, frontend/src/app/entrypoint/main.tsx, frontend/src/app/providers/index.tsx, frontend/src/app/public-shell/index.ts. | none |
+| React architecture correctness | matches-spec | Frontend appears to use module-based React rather than legacy global composition. | none |
+| Static multi-page entrypoints | matches-spec | Single app HTML entrypoint detected: frontend/index.html. | none |
+| API assumptions | adapt-spec | Frontend contains API usage in frontend/src/shared/api/index.ts. | reconcile backend-architecture.md and data-model.md |
+| Upload assumptions | adapt-spec | Upload-related UI hints found in frontend/src/app/styles/global.css, frontend/src/pages/chat/room/ui/ChatRoomPage.tsx, frontend/src/pages/chat/room/ui/ChatComposer.tsx, frontend/src/entities/chat/lib/fixtures.ts. | reconcile media-storage.md, backend-architecture.md, and admin-cms.md |
 
 ## Blocking Items
-- Route /thoughts: Expected planned screen is not present in current frontend files.
-- Route /chat: Expected planned screen is not present in current frontend files.
-- Route /admin: Expected planned screen is not present in current frontend files.
-- Vite/Bun runtime: Frontend is not yet aligned to the target Vite + Bun runtime.
-- TypeScript readiness: No TypeScript source files detected in the frontend.
-- React architecture correctness: Frontend uses browser Babel, CDN React, or global `window.*` component exports.
-- Static multi-page entrypoints: Multiple static HTML entrypoints detected: frontend/index.html, frontend/photos.html, frontend/projects.html.
+- None detected in this pass
 
 ## Migration Recommendation
-- Archive current `frontend/` into a tracked legacy snapshot such as `frontend-legacy/`.
-- Scaffold a clean `Vite + React + TypeScript + Bun` app.
-- Migrate landing, projects, and photos into typed module-based React screens.
-- Implement fully designed Thoughts, Chat Room, and Admin screens.
-- Re-run the analyzer and keep backend tasking blocked until no migration blockers remain.
+- No migration blockers detected. Current frontend is close to target architecture.
 
 ## Recommended Spec Updates
 - Re-run this analyzer after any material frontend change.
