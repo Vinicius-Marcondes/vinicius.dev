@@ -1,23 +1,35 @@
-export const publicNavigation = [
+type NavigationItem = {
+  detail?: string
+  label: string
+  to: string
+}
+
+type SocialItem = {
+  href: string
+  icon: string
+  label: string
+}
+
+export const publicNavigation: readonly NavigationItem[] = [
   { label: 'Photos', to: '/photos' },
   { label: 'Projects', to: '/projects' },
   { label: 'Thoughts', to: '/thoughts' },
-  { label: 'Chat Room', to: '/chat' },
+  { detail: 'auth', label: 'Chat Room', to: '/chat' },
 ] as const
 
-export const footerNavigation = [
+export const footerNavigation: readonly NavigationItem[] = [
   { label: 'Photos', to: '/photos' },
   { label: 'Projects', to: '/projects' },
   { label: 'Thoughts', to: '/thoughts' },
-  { label: 'Chat Room', to: '/chat' },
+  { detail: 'auth', label: 'Chat Room', to: '/chat' },
 ] as const
 
-export const socialNavigation = [
-  { label: 'Instagram', href: 'https://instagram.com' },
-  { label: 'X.com', href: 'https://x.com' },
-  { label: 'GitHub', href: 'https://github.com/Vinicius-Marcondes' },
-  { label: 'LinkedIn', href: 'https://linkedin.com' },
-  { label: 'Reddit', href: 'https://reddit.com' },
+export const socialNavigation: readonly SocialItem[] = [
+  { href: 'https://instagram.com', icon: 'IG', label: 'Instagram' },
+  { href: 'https://x.com', icon: 'X', label: 'X.com' },
+  { href: 'https://github.com/Vinicius-Marcondes', icon: 'GH', label: 'GitHub' },
+  { href: 'https://linkedin.com', icon: 'IN', label: 'LinkedIn' },
+  { href: 'https://reddit.com', icon: 'RD', label: 'Reddit' },
 ] as const
 
 export const adminNavigation = [
