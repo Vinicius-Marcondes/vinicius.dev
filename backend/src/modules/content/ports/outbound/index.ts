@@ -48,6 +48,20 @@ export type ProjectRepositoryRow = Readonly<{
   updatedAt: Date;
 }>;
 
+export type ProjectDetailRepositoryRow = ProjectRepositoryRow &
+  Readonly<{
+    body: string;
+    source: string | null;
+  }>;
+
+export type ProjectListPage = Readonly<{
+  items: readonly ProjectRepositoryRow[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+}>;
+
 export type PhotoRepositoryRow = Readonly<{
   id: string;
   frame: string;
@@ -100,7 +114,8 @@ export type PhotoListQuery = Readonly<{
 export interface ContentRepositoryPort {
   findPublishedThoughts(query: ThoughtListQuery): Promise<ThoughtListPage>;
   findPublishedThoughtBySlug(slug: string): Promise<ThoughtDetailRepositoryRow | null>;
-  findPublishedProjects(query: ProjectListQuery): Promise<readonly ProjectRepositoryRow[]>;
+  findPublishedProjects(query: ProjectListQuery): Promise<ProjectListPage>;
+  findPublishedProjectBySlug(slug: string): Promise<ProjectDetailRepositoryRow | null>;
   findPublishedPhotos(query: PhotoListQuery): Promise<readonly PhotoRepositoryRow[]>;
   listStatusStripEntries(): Promise<readonly StatusStripEntryRepositoryRow[]>;
 }
