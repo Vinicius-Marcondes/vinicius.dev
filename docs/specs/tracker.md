@@ -3,9 +3,9 @@
 ## Gate Checks
 | Gate | Status | Notes |
 | --- | --- | --- |
-| Frontend presence checked | yes | Imported frontend exists under `frontend/` and is legacy React. |
-| Analyzer report current | yes | The analyzer has been refreshed against the imported `frontend/` folder and currently reports migration blockers. |
-| Spec reconciliation complete | no | Frontend reconciliation is incomplete because the imported frontend is legacy React and missing planned screens. |
+| Frontend presence checked | yes | Active frontend now exists under `frontend/` as the Vite React TypeScript Bun app; the imported legacy artifact is preserved under `frontend-legacy/`. |
+| Analyzer report current | yes | FE-010 refreshed the analyzer against the migrated frontend and currently reports no migration blockers. |
+| Spec reconciliation complete | yes | Frontend migration reconciliation is complete; analyzer `adapt-spec` notes for API and upload assumptions remain inputs for backend/media/admin planning. |
 | Frontend structure spec approved | yes | `SPEC-017 Frontend Structure` is approved for frontend-facing specs and tasks. |
 | Project structure spec approved | no | `SPEC-016 Project Structure` is the new hard gate for backend-facing specs and tasks. |
 | CI/CD spec approved | no | `SPEC-018 GitHub Actions CI/CD` is the release-automation and final verification gate. |
@@ -25,29 +25,28 @@
 - `SPEC-016 Project Structure` defines the top-priority structural policy for backend-facing spec and implementation work.
 - The backend target is one application hexagon with module-first core organization and adapters at the technology edge.
 - `SPEC-018 GitHub Actions CI/CD` defines the validation and release-automation policy, with manual VPS development deployment and tag-based production deployment.
-- Backend specs cannot move to `Tasked` until frontend intake rules are satisfied.
-- The imported frontend is currently a legacy React artifact, not a task-ready Vite React TypeScript app.
-- Frontend migration tasks must precede backend, data, and admin task creation.
+- Frontend intake rules are now satisfied for the migrated app: Vite, Bun, TypeScript, module-based React, and all planned top-level screens are present.
+- The imported legacy frontend is preserved under `frontend-legacy/` as migration reference material, not active runtime code.
+- Backend, data, media, admin backend, and deployment task creation may now use the FE-010 analyzer report as frontend input, subject to their own spec approval gates.
 
 ## Cross-Cutting Risks
 - Public photo delivery is intentionally originals-only, which may create performance and bandwidth pressure.
 - Chat room image uploads are allowed for anyone with the room password, which increases moderation and storage risk.
 - CI/CD workflows are not defined yet, so merge validation and release automation are still policy-only at the harness level.
-- The dedicated GitHub Project now exists, but implementation-task creation still waits on spec approval and frontend reconciliation gates.
-- The imported frontend currently depends on browser Babel, CDN React, and global `window.*` component composition.
-- Thoughts, Chat Room, and Admin are missing from the imported frontend and are treated as migration blockers until fully designed screens exist.
+- The FE-010 analyzer reports `adapt-spec` findings for future API and upload assumptions; backend, media-storage, data-model, and admin-cms specs should reconcile those before backend tasking.
+- The frontend migration wave cleared the previous browser Babel, CDN React, global `window.*`, missing TypeScript, and missing screen blockers.
 
 ## Next Spec Queue
-1. Review and approve `frontend-structure.md` as the structural hard gate for frontend-facing work.
-2. Review and approve `frontend-analyzer.md`, `frontend-intake.md`, and `frontend-architecture.md` against `SPEC-017`.
-3. Create frontend migration issues first: archive legacy frontend, scaffold a clean Vite React TypeScript app, establish the FSD/Data Router skeleton, migrate landing/projects/photos, implement Thoughts/Chat/Admin, rerun analyzer.
-4. Review and approve `project-structure.md` as the structural hard gate for backend-facing work.
-5. Review and approve `backend-architecture.md`, `data-model.md`, `media-storage.md`, `admin-cms.md`, and `infra-deployment.md` against `SPEC-016` and the stabilized frontend specs.
-6. Review and approve `git-workflow.md`, `github-project-execution.md`, and `ci-cd.md` together so branch policy, review flow, and release automation stay aligned.
-7. Review and approve `verification.md` against `SPEC-016`, `SPEC-017`, and `SPEC-018`.
+1. Review FE-010 analyzer `adapt-spec` findings and feed them into `backend-architecture.md`, `data-model.md`, `media-storage.md`, and `admin-cms.md`.
+2. Review and approve `project-structure.md` as the structural hard gate for backend-facing work.
+3. Review and approve `backend-architecture.md`, `data-model.md`, `media-storage.md`, `admin-cms.md`, and `infra-deployment.md` against `SPEC-016` and the stabilized frontend.
+4. Review and approve `ci-cd.md` so branch policy, review flow, and release automation stay aligned.
+5. Review and approve `verification.md` against `SPEC-016`, `SPEC-017`, `SPEC-018`, and the FE-010 analyzer report.
+6. Cut the next implementation cluster only from approved backend/data/media/admin/infra specs.
 
 ## Current Executable Cluster
 ### Frontend Migration Wave 1
+- Status: complete after FE-010 analyzer reconciliation.
 - FE-001 `Archive legacy frontend snapshot`
 - FE-002 `Scaffold Vite React TypeScript Bun frontend`
 - FE-003 `Establish FSD route tree public shell and admin shell`
@@ -63,7 +62,7 @@ Cluster rules:
 - FE-001 -> FE-002 -> FE-003 are sequential.
 - FE-004 through FE-009 start only after FE-003.
 - FE-010 starts only after FE-004 through FE-009.
-- Backend, data, storage, admin backend, and deployment tasks remain blocked until FE-010 clears the frontend migration gate.
+- FE-010 cleared the frontend migration gate; backend, data, storage, admin backend, and deployment tasks now depend on their own spec approval gates plus FE-010 `adapt-spec` reconciliation.
 
 ## Spec Table
 | Spec ID | Title | Layer | Status | Owner | Depends on | Blocks | Frontend-reviewed | Git workflow defined | Ready for task split | Notes |
