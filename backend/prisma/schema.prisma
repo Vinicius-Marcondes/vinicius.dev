@@ -1,5 +1,5 @@
 // DATA-001 establishes the Prisma/Postgres baseline.
-// Public content models are added by later persistence tasks.
+// DATA-002 adds public content and status strip models.
 
 generator client {
   provider = "prisma-client"
