@@ -26,6 +26,9 @@ Backend foundation, persistence, public content APIs, media, auth/admin, chat, i
 ### Goal
 Create the minimal backend runtime and architectural skeleton needed before any data, public API, admin, media, chat, infra, or CI hardening work starts.
 
+### Status
+Complete. `BE-001`, `BE-002`, `BE-003`, `BE-004`, and `BE-005` were implemented, reviewed, merged to `develop`, and verified together.
+
 ### Tasks
 | Task ID | Title | Layer | Base Branch | Branch Name | Merge Target | Source Specs | Acceptance Source |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -51,7 +54,7 @@ Create the minimal backend runtime and architectural skeleton needed before any 
 - Production GitHub Actions workflow YAML.
 
 ## Future Clusters
-- Cluster 2 persistence splits by Prisma setup, repository adapter patterns, data model migrations, and seed strategy.
+- Cluster 2 persistence splits by Prisma setup, repository adapter patterns, data model migrations, and seed strategy. This is the next cluster to define.
 - Cluster 3 public content splits by Thoughts, Projects, Photos, Status Strip, RSS, and sitemap.
 - Cluster 4 media splits by public photo delivery, filesystem storage adapter, chat upload validation/storage, and moderation retention.
 - Cluster 5 admin splits by auth/MFA/session, admin dashboard contracts, content CRUD, curation, and status strip editing.
