@@ -46,8 +46,8 @@
 - The frontend migration wave cleared the previous browser Babel, CDN React, global `window.*`, missing TypeScript, and missing screen blockers.
 
 ## Next Task Queue
-1. Cut Wave 2 Cluster 2 persistence tasks from approved data model, backend architecture, project structure, CI/CD, and verification specs.
-2. Implement Prisma/Postgres persistence foundation before public content, media, admin, or chat persistence behavior.
+1. Cut Wave 2 Cluster 3 public content tasks from approved backend architecture, data model, project structure, CI/CD, and verification specs.
+2. Implement public Thoughts, Projects, Photos, Status Strip, RSS, and sitemap APIs before media delivery, admin auth, or chat behavior.
 3. Run frontend analyzer as non-mutating validation for backend-only PRs.
 4. Keep one issue, one Project item, one branch, and one acceptance source per implementation task.
 
@@ -69,12 +69,22 @@
 - Integrated verification: backend typecheck, tests, build, and `bun run verify` passed on `develop`.
 
 ### Wave 2 Cluster 2 Persistence Foundation
-- Status: ready for issue creation and implementation.
+- Status: complete.
 - Primary specs: `SPEC-007`, `SPEC-006`, `SPEC-011`, `SPEC-016`, `SPEC-018`.
 - Scope: Prisma/Postgres setup, migration baseline, repository adapter patterns, schema for approved first-class entities, and seed strategy.
 - Non-scope: public endpoint behavior, media binary storage, admin auth flows, chat room behavior, Docker/Caddy deployment, and production CI workflows.
 - Tasks: `DATA-001`, `DATA-002`, `DATA-003`, `DATA-004`, and `DATA-005`.
 - Required ordering: `DATA-001` first; `DATA-002` after `DATA-001`; `DATA-003` after `DATA-002`; `DATA-004` after `DATA-002`; `DATA-005` after `DATA-002` and `DATA-003`.
+- Merged PRs: `#32`, `#33`, `#34`, `#35`, and `#36`.
+- Integrated verification: Prisma validate/generate, seed, persistence check, backend typecheck, tests, build, and `bun run verify` passed on `develop`.
+
+### Wave 2 Cluster 3 Public Content APIs
+- Status: ready for issue creation and implementation.
+- Primary specs: `SPEC-006`, `SPEC-007`, `SPEC-011`, `SPEC-016`, `SPEC-018`.
+- Scope: shared public content HTTP contracts plus public Thoughts, Projects, Photos, Status Strip, RSS, and sitemap endpoints under `/api`.
+- Non-scope: binary photo delivery, chat uploads/media access, admin auth/session behavior, admin CRUD flows, Docker/Caddy deployment descriptors, and production CI workflows.
+- Tasks: `BE-006`, `BE-007`, `BE-008`, `BE-009`, `BE-010`, and `BE-011`.
+- Required ordering: `BE-006` first; `BE-007`, `BE-008`, `BE-009`, and `BE-010` after `BE-006`; `BE-011` after `BE-007`, `BE-008`, and `BE-009`.
 
 ### Frontend Migration Wave 1
 - Status: complete after FE-010 analyzer reconciliation.
