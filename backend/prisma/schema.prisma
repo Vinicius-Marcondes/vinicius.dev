@@ -1,5 +1,5 @@
 // DATA-001 establishes the Prisma/Postgres baseline.
-// Product models are introduced by later persistence tasks.
+// Public content models are added by later persistence tasks.
 
 generator client {
   provider = "prisma-client"
@@ -8,4 +8,127 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum ThoughtType {
+  essay
+  note
+}
+
+enum ThoughtStatus {
+  draft
+  published
+}
+
+enum ProjectStatus {
+  live
+  archived
+  in_progress @map("in-progress")
+}
+
+enum PhotoStatus {
+  draft
+  published
+}
+
+enum PhotoTone {
+  amber
+  cyan
+  mono
+  sunset
+  violet
+}
+
+enum PhotoOriginalReferencePolicy {
+  backend_media_route
+  filesystem_reference
+}
+
+enum StatusStripAccent {
+  amber
+  cyan
+  pink
+}
+
+model Thought {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  type        ThoughtType
+  status      ThoughtStatus @default(draft)
+  publishedAt DateTime?
+  readingTime Int?
+  tags        String[]      @default([])
+  excerpt     String        @db.Text
+  bodyPreview String        @db.Text
+  body        String        @db.Text
+  source      String?       @db.Text
+  featured    Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status, publishedAt(sort: Desc)])
+  @@index([type, status, publishedAt(sort: Desc)])
+  @@index([featured, publishedAt(sort: Desc)])
+}
+
+model Project {
+  id            String        @id @default(cuid())
+  channel       String
+  title         String
+  slug          String        @unique
+  year          Int
+  status        ProjectStatus @default(in_progress)
+  description   String        @db.Text
+  tags          String[]      @default([])
+  githubUrl     String?
+  siteUrl       String?
+  thumbnailHue  Int
+  thumbnailKind String
+  body          String        @db.Text
+  source        String?       @db.Text
+  featured      Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([status, year(sort: Desc)])
+  @@index([channel, title])
+  @@index([title])
+  @@index([featured, status])
+}
+
+model Photo {
+  id                      String                       @id @default(cuid())
+  frame                   String
+  title                   String
+  date                    DateTime
+  location                String
+  tags                    String[]                     @default([])
+  tone                    PhotoTone
+  caption                 String?                      @db.Text
+  camera                  String?
+  film                    String?
+  originalPath            String
+  originalReferencePolicy PhotoOriginalReferencePolicy @default(backend_media_route)
+  status                  PhotoStatus                  @default(draft)
+  featured                Boolean                      @default(false)
+  createdAt               DateTime                     @default(now())
+  updatedAt               DateTime                     @updatedAt
+
+  @@index([status, date(sort: Desc)])
+  @@index([location, date(sort: Desc)])
+  @@index([frame, date(sort: Desc)])
+  @@index([featured, date(sort: Desc)])
+}
+
+model StatusStripEntry {
+  id           String             @id @default(cuid())
+  label        String
+  value        String
+  accent       StatusStripAccent?
+  displayOrder Int                @unique
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([displayOrder])
 }
