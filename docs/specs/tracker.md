@@ -69,11 +69,12 @@
 - Integrated verification: backend typecheck, tests, build, and `bun run verify` passed on `develop`.
 
 ### Wave 2 Cluster 2 Persistence Foundation
-- Status: next cluster to define.
+- Status: ready for issue creation and implementation.
 - Primary specs: `SPEC-007`, `SPEC-006`, `SPEC-011`, `SPEC-016`, `SPEC-018`.
 - Scope: Prisma/Postgres setup, migration baseline, repository adapter patterns, schema for approved first-class entities, and seed strategy.
 - Non-scope: public endpoint behavior, media binary storage, admin auth flows, chat room behavior, Docker/Caddy deployment, and production CI workflows.
-- Required ordering: task definition must happen before implementation; split one issue, one branch, and one acceptance source per persistence task.
+- Tasks: `DATA-001`, `DATA-002`, `DATA-003`, `DATA-004`, and `DATA-005`.
+- Required ordering: `DATA-001` first; `DATA-002` after `DATA-001`; `DATA-003` after `DATA-002`; `DATA-004` after `DATA-002`; `DATA-005` after `DATA-002` and `DATA-003`.
 
 ### Frontend Migration Wave 1
 - Status: complete after FE-010 analyzer reconciliation.
