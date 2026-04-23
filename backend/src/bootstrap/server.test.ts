@@ -1,10 +1,83 @@
 import { describe, expect, it } from "bun:test";
 
+import type { BootstrapContainer } from "./container";
 import { createServer } from "./server";
+
+const createTestContainer = (): BootstrapContainer => ({
+  config: {
+    auth: {
+      mfaCodeMaxAgeSeconds: 600,
+      roomPasswordSecret: "test-room-secret",
+      sessionCookieName: "vinicius.dev-session",
+      sessionMaxAgeSeconds: 604800,
+      sessionSecret: "test-session-secret",
+    },
+    cors: {
+      allowCredentials: true,
+      allowedOrigins: [],
+    },
+    media: {
+      chatRoot: "/tmp/chat",
+      chatUploadAllowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+      chatUploadMaxBytes: 5 * 1024 * 1024,
+      chatUploadMaxFilesPerMessage: 1,
+      photosRoot: "/tmp/photos",
+      publicUrlBase: "/media",
+    },
+    server: {
+      apiBasePath: "/api",
+      mediaPhotoOriginalPath: "/media/photos/:id/original",
+      nodeEnv: "test",
+      port: 4000,
+    },
+  },
+  content: {
+    getPublishedThoughtBySlug: {
+      execute: async ({ slug }) =>
+        slug === "night-cable-interfaces"
+          ? {
+              body: "A homepage does not need to convert anyone.",
+              bodyPreview: "A homepage does not need to convert anyone.",
+              excerpt: "The best personal websites feel less like products.",
+              id: "thought_1",
+              publishedAt: "2026-03-28",
+              readingTime: "7 min",
+              slug,
+              source: null,
+              status: "published",
+              tags: ["interface", "nostalgia"],
+              title: "Night Cable Interfaces",
+              type: "essay",
+            }
+          : null,
+    },
+    listPublishedThoughts: {
+      execute: async () => ({
+        items: [
+          {
+            bodyPreview: "A homepage does not need to convert anyone.",
+            excerpt: "The best personal websites feel less like products.",
+            id: "thought_1",
+            publishedAt: "2026-03-28",
+            readingTime: "7 min",
+            slug: "night-cable-interfaces",
+            status: "published",
+            tags: ["interface", "nostalgia"],
+            title: "Night Cable Interfaces",
+            type: "essay",
+          },
+        ],
+        pageInfo: {
+          nextCursor: null,
+        },
+      }),
+    },
+  },
+});
 
 describe("backend server scaffold", () => {
   it("responds to the health route", async () => {
-    const app = createServer();
+    const app = createServer(createTestContainer());
     const response = await app.request("/health");
 
     expect(response.status).toBe(200);
@@ -15,7 +88,7 @@ describe("backend server scaffold", () => {
   });
 
   it("mounts the /api shell and placeholder route families", async () => {
-    const app = createServer();
+    const app = createServer(createTestContainer());
 
     const shellResponse = await app.request("/api");
     expect(shellResponse.status).toBe(200);
@@ -26,8 +99,29 @@ describe("backend server scaffold", () => {
       surface: "hono-http-adapter-shell",
     });
 
+    const thoughtsResponse = await app.request("/api/thoughts");
+    expect(thoughtsResponse.status).toBe(200);
+    await expect(thoughtsResponse.json()).resolves.toEqual({
+      items: [
+        {
+          bodyPreview: "A homepage does not need to convert anyone.",
+          excerpt: "The best personal websites feel less like products.",
+          id: "thought_1",
+          publishedAt: "2026-03-28",
+          readingTime: "7 min",
+          slug: "night-cable-interfaces",
+          status: "published",
+          tags: ["interface", "nostalgia"],
+          title: "Night Cable Interfaces",
+          type: "essay",
+        },
+      ],
+      pageInfo: {
+        nextCursor: null,
+      },
+    });
+
     const placeholderRoutes = [
-      ["/api/thoughts", "public content"],
       ["/api/projects", "public content"],
       ["/api/photos", "public content"],
       ["/api/status-strip", "status strip"],

@@ -1,5 +1,8 @@
 import { Hono } from "hono";
 
+import { InvalidThoughtCursorError } from "@/modules/content/application";
+import type { BootstrapContainer } from "@/bootstrap/container";
+
 const serviceName = "vinicius.dev-backend";
 
 type NotImplementedResponse = {
@@ -33,7 +36,124 @@ const mountPlaceholderFamily = (app: Hono, path: string, family: string) => {
   app.route(path, createNotImplementedFamily(family));
 };
 
-export const createHonoHttpAdapter = () => {
+const parsePositiveInteger = (value: string | undefined): number | undefined => {
+  if (typeof value === "undefined") {
+    return undefined;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return undefined;
+  }
+
+  return parsed;
+};
+
+const parseThoughtQuery = (query: Record<string, string | undefined>) => {
+  const type = query.type;
+
+  if (type && type !== "essay" && type !== "note") {
+    return {
+      error: {
+        error: "invalid_query",
+        field: "type",
+      },
+    } as const;
+  }
+
+  const limit = parsePositiveInteger(query.limit);
+
+  if (typeof query.limit !== "undefined" && typeof limit === "undefined") {
+    return {
+      error: {
+        error: "invalid_query",
+        field: "limit",
+      },
+    } as const;
+  }
+
+  const tags = [query.tag, query.tags]
+    .filter((value): value is string => typeof value === "string")
+    .flatMap((value) => value.split(","))
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  const normalizedType: "essay" | "note" | undefined =
+    type === "essay" || type === "note" ? type : undefined;
+
+  return {
+    value: {
+      cursor: query.cursor,
+      limit,
+      search: query.search,
+      tags,
+      type: normalizedType,
+    },
+  } as const;
+};
+
+const createThoughtsFamily = (container: BootstrapContainer) => {
+  const thoughtsApp = new Hono();
+
+  thoughtsApp.get("/", async (c) => {
+    const parsed = parseThoughtQuery(c.req.query());
+
+    if ("error" in parsed) {
+      return c.json(parsed.error, 400);
+    }
+
+    try {
+      const response = await container.content.listPublishedThoughts.execute(parsed.value);
+
+      return c.json(response);
+    } catch (error) {
+      if (error instanceof InvalidThoughtCursorError) {
+        return c.json(
+          {
+            error: "invalid_query",
+            field: "cursor",
+          },
+          400,
+        );
+      }
+
+      throw error;
+    }
+  });
+
+  thoughtsApp.get("/:slug", async (c) => {
+    const slug = c.req.param("slug")?.trim();
+
+    if (!slug) {
+      return c.json(
+        {
+          error: "invalid_path",
+          field: "slug",
+        },
+        400,
+      );
+    }
+
+    const thought = await container.content.getPublishedThoughtBySlug.execute({ slug });
+
+    if (!thought) {
+      return c.json(
+        {
+          error: "not_found",
+          resource: "thought",
+        },
+        404,
+      );
+    }
+
+    return c.json({ item: thought });
+  });
+
+  return thoughtsApp;
+};
+
+export const createHonoHttpAdapter = (container: BootstrapContainer) => {
   const app = new Hono();
 
   app.get("/api", (c) =>
@@ -45,7 +165,7 @@ export const createHonoHttpAdapter = () => {
     }),
   );
 
-  mountPlaceholderFamily(app, "/api/thoughts", "public content");
+  app.route("/api/thoughts", createThoughtsFamily(container));
   mountPlaceholderFamily(app, "/api/projects", "public content");
   mountPlaceholderFamily(app, "/api/photos", "public content");
   mountPlaceholderFamily(app, "/api/status-strip", "status strip");
