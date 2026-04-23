@@ -40,7 +40,10 @@ export type ChatUploadRepositoryRow = Readonly<{
   byteSize: number;
   kind: "image";
   storageKey: string;
-  relatedMessageId: string | null;
+  storagePath: string;
+  uploaderHandleId: string;
+  uploaderSessionId: string | null;
+  messageId: string | null;
   moderationState: "visible" | "hidden" | "deleted";
   hiddenAt: Date | null;
   deletedAt: Date | null;

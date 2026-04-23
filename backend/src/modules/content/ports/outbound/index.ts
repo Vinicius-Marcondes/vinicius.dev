@@ -5,10 +5,10 @@ export type ThoughtRepositoryRow = Readonly<{
   type: "essay" | "note";
   status: "draft" | "published";
   publishedAt: Date | null;
-  readingTime: number;
+  readingTime: number | null;
   tags: readonly string[];
-  excerpt: string | null;
-  bodyPreview: string | null;
+  excerpt: string;
+  bodyPreview: string;
   featured: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -21,12 +21,12 @@ export type ProjectRepositoryRow = Readonly<{
   slug: string;
   year: number;
   status: "live" | "archived" | "in-progress";
-  description: string | null;
+  description: string;
   tags: readonly string[];
   githubUrl: string | null;
   siteUrl: string | null;
-  thumbnailHue: number | null;
-  thumbnailKind: string | null;
+  thumbnailHue: number;
+  thumbnailKind: string;
   featured: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -37,7 +37,7 @@ export type PhotoRepositoryRow = Readonly<{
   frame: string;
   title: string;
   date: Date;
-  location: string | null;
+  location: string;
   tags: readonly string[];
   tone: "amber" | "cyan" | "mono" | "sunset" | "violet";
   caption: string | null;

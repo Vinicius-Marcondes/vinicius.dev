@@ -1,7 +1,6 @@
 export type PhotoMediaRepositoryRow = Readonly<{
   id: string;
   title: string;
-  slug: string;
   originalReferencePolicy: "backend_media_route" | "filesystem_reference";
   originalReference: string;
   createdAt: Date;
