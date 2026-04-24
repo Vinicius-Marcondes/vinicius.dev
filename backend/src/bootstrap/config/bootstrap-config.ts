@@ -1,3 +1,6 @@
+import { realpathSync } from "node:fs";
+import { basename, dirname, isAbsolute, relative, resolve, sep } from "node:path";
+
 export const API_BASE_PATH = "/api" as const;
 export const MEDIA_PHOTO_ORIGINAL_PATH = "/media/photos/:id/original" as const;
 
@@ -121,35 +124,55 @@ const parseList = (value: string | undefined, fallback: string[]) => {
 const parseString = (value: string | undefined, fallback: string) =>
   value === undefined || value === "" ? fallback : value;
 
+const normalizeRootPath = (value: string) => {
+  let resolvedPath = resolve(value);
+  const missingSegments: string[] = [];
+
+  while (true) {
+    try {
+      const canonicalBase = realpathSync.native(resolvedPath);
+
+      return missingSegments.reduceRight(
+        (currentPath, segment) => resolve(currentPath, segment),
+        canonicalBase,
+      );
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+        throw error;
+      }
+
+      const parentPath = dirname(resolvedPath);
+
+      if (parentPath === resolvedPath) {
+        return missingSegments.reduceRight(
+          (currentPath, segment) => resolve(currentPath, segment),
+          resolvedPath,
+        );
+      }
+
+      missingSegments.push(basename(resolvedPath));
+      resolvedPath = parentPath;
+    }
+  }
+};
+
+const pathsOverlap = (left: string, right: string) => {
+  const normalizedLeft = normalizeRootPath(left);
+  const normalizedRight = normalizeRootPath(right);
+  const leftToRight = relative(normalizedLeft, normalizedRight);
+  const rightToLeft = relative(normalizedRight, normalizedLeft);
+
+  const isContained = (candidate: string) =>
+    candidate.length === 0 ||
+    (!isAbsolute(candidate) && candidate !== ".." && !candidate.startsWith(`..${sep}`));
+
+  return isContained(leftToRight) || isContained(rightToLeft);
+};
+
 export const loadBootstrapConfig = (
   env: BootstrapEnv = Bun.env,
-): BootstrapConfig => ({
-  auth: {
-    mfaCodeMaxAgeSeconds: parseInteger(
-      env.AUTH_MFA_CODE_MAX_AGE_SECONDS,
-      DEFAULT_MFA_CODE_MAX_AGE_SECONDS,
-      "AUTH_MFA_CODE_MAX_AGE_SECONDS",
-    ),
-    roomPasswordSecret: parseString(
-      env.AUTH_ROOM_PASSWORD_SECRET,
-      DEFAULT_ROOM_PASSWORD_SECRET,
-    ),
-    sessionCookieName: parseString(
-      env.AUTH_SESSION_COOKIE_NAME,
-      DEFAULT_SESSION_COOKIE_NAME,
-    ),
-    sessionMaxAgeSeconds: parseInteger(
-      env.AUTH_SESSION_MAX_AGE_SECONDS,
-      DEFAULT_SESSION_MAX_AGE_SECONDS,
-      "AUTH_SESSION_MAX_AGE_SECONDS",
-    ),
-    sessionSecret: parseString(env.AUTH_SESSION_SECRET, DEFAULT_SESSION_SECRET),
-  },
-  cors: {
-    allowCredentials: parseBoolean(env.CORS_ALLOW_CREDENTIALS, true),
-    allowedOrigins: parseList(env.CORS_ALLOWED_ORIGINS, []),
-  },
-  media: {
+): BootstrapConfig => {
+  const media = {
     chatRoot: parseString(env.MEDIA_CHAT_ROOT, DEFAULT_MEDIA_CHAT_ROOT),
     chatUploadAllowedMimeTypes: parseList(
       env.CHAT_UPLOAD_ALLOWED_MIME_TYPES,
@@ -170,11 +193,44 @@ export const loadBootstrapConfig = (
       env.MEDIA_PUBLIC_URL_BASE,
       DEFAULT_MEDIA_PUBLIC_URL_BASE,
     ),
-  },
-  server: {
-    apiBasePath: API_BASE_PATH,
-    mediaPhotoOriginalPath: MEDIA_PHOTO_ORIGINAL_PATH,
-    nodeEnv: parseNodeEnv(env.NODE_ENV),
-    port: parsePort(env.PORT),
-  },
-});
+  };
+
+  if (pathsOverlap(media.photosRoot, media.chatRoot)) {
+    throw new Error("MEDIA_PHOTOS_ROOT and MEDIA_CHAT_ROOT must be different");
+  }
+
+  return {
+    auth: {
+      mfaCodeMaxAgeSeconds: parseInteger(
+        env.AUTH_MFA_CODE_MAX_AGE_SECONDS,
+        DEFAULT_MFA_CODE_MAX_AGE_SECONDS,
+        "AUTH_MFA_CODE_MAX_AGE_SECONDS",
+      ),
+      roomPasswordSecret: parseString(
+        env.AUTH_ROOM_PASSWORD_SECRET,
+        DEFAULT_ROOM_PASSWORD_SECRET,
+      ),
+      sessionCookieName: parseString(
+        env.AUTH_SESSION_COOKIE_NAME,
+        DEFAULT_SESSION_COOKIE_NAME,
+      ),
+      sessionMaxAgeSeconds: parseInteger(
+        env.AUTH_SESSION_MAX_AGE_SECONDS,
+        DEFAULT_SESSION_MAX_AGE_SECONDS,
+        "AUTH_SESSION_MAX_AGE_SECONDS",
+      ),
+      sessionSecret: parseString(env.AUTH_SESSION_SECRET, DEFAULT_SESSION_SECRET),
+    },
+    cors: {
+      allowCredentials: parseBoolean(env.CORS_ALLOW_CREDENTIALS, true),
+      allowedOrigins: parseList(env.CORS_ALLOWED_ORIGINS, []),
+    },
+    media,
+    server: {
+      apiBasePath: API_BASE_PATH,
+      mediaPhotoOriginalPath: MEDIA_PHOTO_ORIGINAL_PATH,
+      nodeEnv: parseNodeEnv(env.NODE_ENV),
+      port: parsePort(env.PORT),
+    },
+  };
+};
