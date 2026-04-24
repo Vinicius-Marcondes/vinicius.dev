@@ -1,3 +1,5 @@
+import { extname } from "node:path";
+
 import { Hono } from "hono";
 
 import { InvalidChatUploadActorError } from "@/modules/chat/application";
@@ -9,6 +11,17 @@ import { presentThoughtsRssFeed } from "./rss-presenter";
 import { presentSitemapXml } from "./sitemap-presenter";
 
 const serviceName = "vinicius.dev-backend";
+const defaultMediaContentType = "application/octet-stream";
+const mediaContentTypeByExtension: Record<string, string> = {
+  ".avif": "image/avif",
+  ".gif": "image/gif",
+  ".jpeg": "image/jpeg",
+  ".jpg": "image/jpeg",
+  ".png": "image/png",
+  ".tif": "image/tiff",
+  ".tiff": "image/tiff",
+  ".webp": "image/webp",
+};
 
 type NotImplementedResponse = {
   family: string;
@@ -54,6 +67,9 @@ const parsePositiveInteger = (value: string | undefined): number | undefined => 
 
   return parsed;
 };
+
+const inferMediaContentType = (absolutePath: string): string =>
+  mediaContentTypeByExtension[extname(absolutePath).toLowerCase()] ?? defaultMediaContentType;
 
 const parseThoughtQuery = (query: Record<string, string | undefined>) => {
   const type = query.type;
@@ -670,18 +686,62 @@ export const createHonoHttpAdapter = (container: BootstrapContainer) => {
   mountPlaceholderFamily(app, "/api/admin", "admin");
   mountPlaceholderFamily(app, "/api/auth", "auth");
 
-  app.get("/media/photos/:id/original", (c) =>
-    c.json<NotImplementedResponse>(
-      {
-        family: "photo media",
-        method: c.req.method,
-        route: c.req.path,
-        service: serviceName,
-        status: "not_implemented",
-      },
-      501,
-    ),
-  );
+  app.get(container.config.server.mediaPhotoOriginalPath, async (c) => {
+    const id = c.req.param("id")?.trim();
+
+    if (!id) {
+      return c.json(
+        {
+          error: "invalid_path",
+          field: "id",
+        },
+        400,
+      );
+    }
+
+    const photoMedia = await container.media.repository.findPhotoMediaById(id);
+
+    if (!photoMedia) {
+      return c.json(
+        {
+          error: "not_found",
+          resource: "photo",
+        },
+        404,
+      );
+    }
+
+    const publishedPhoto = await container.content.getPublishedPhotoById.execute({ id });
+
+    if (!publishedPhoto) {
+      return c.json(
+        {
+          error: "denied",
+          resource: "photo",
+        },
+        403,
+      );
+    }
+
+    const originalMedia = await container.media.storage.photos.openOriginal(
+      photoMedia.originalReference,
+    );
+
+    if (!originalMedia) {
+      return c.json(
+        {
+          error: "not_found",
+          resource: "photo",
+        },
+        404,
+      );
+    }
+
+    return c.body(originalMedia.stream, 200, {
+      "Content-Length": String(originalMedia.byteSize),
+      "Content-Type": inferMediaContentType(originalMedia.absolutePath),
+    });
+  });
 
   return app;
 };
