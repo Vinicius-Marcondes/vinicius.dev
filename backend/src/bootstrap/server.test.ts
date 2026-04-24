@@ -354,7 +354,6 @@ describe("backend server scaffold", () => {
       ["/api/chat", "chat"],
       ["/api/admin", "admin"],
       ["/api/auth", "auth"],
-      ["/media/photos/123/original", "photo media"],
     ] as const;
 
     for (const [path, family] of placeholderRoutes) {
