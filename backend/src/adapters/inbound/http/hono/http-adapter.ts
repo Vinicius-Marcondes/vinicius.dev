@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 
+import { InvalidChatUploadActorError } from "@/modules/chat/application";
 import { InvalidThoughtCursorError } from "@/modules/content/application";
+import type { ChatUploadMimeType } from "@/modules/chat/ports/inbound";
 import type { BootstrapContainer } from "@/bootstrap/container";
 
 import { presentThoughtsRssFeed } from "./rss-presenter";
@@ -395,6 +397,240 @@ const createStatusStripFamily = (container: BootstrapContainer) => {
   return statusStripApp;
 };
 
+const supportedChatUploadMimeTypes: readonly ChatUploadMimeType[] = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+];
+
+const isSupportedChatUploadMimeType = (value: string): value is ChatUploadMimeType => {
+  return supportedChatUploadMimeTypes.includes(value as ChatUploadMimeType);
+};
+
+const getRequiredFormText = (
+  formData: FormData,
+  field: string,
+): { error: { error: "invalid_request"; field: string } } | { value: string } => {
+  const value = formData.get(field);
+
+  if (typeof value !== "string") {
+    return {
+      error: {
+        error: "invalid_request",
+        field,
+      },
+    };
+  }
+
+  const trimmed = value.trim();
+
+  if (trimmed.length === 0) {
+    return {
+      error: {
+        error: "invalid_request",
+        field,
+      },
+    };
+  }
+
+  return {
+    value: trimmed,
+  };
+};
+
+const getOptionalFormText = (formData: FormData, field: string): string | undefined => {
+  const value = formData.get(field);
+
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  return value;
+};
+
+const collectUploadFiles = (formData: FormData): File[] => {
+  const files: File[] = [];
+
+  for (const value of formData.values()) {
+    if (typeof value !== "string") {
+      files.push(value);
+    }
+  }
+
+  return files;
+};
+
+const createChatFamily = (container: BootstrapContainer) => {
+  const chatApp = new Hono();
+
+  chatApp.post("/messages/upload", async (c) => {
+    let formData: FormData;
+
+    try {
+      formData = await c.req.formData();
+    } catch (_error) {
+      return c.json(
+        {
+          error: "invalid_request",
+          field: "formData",
+        },
+        400,
+      );
+    }
+
+    const roomId = getRequiredFormText(formData, "roomId");
+
+    if ("error" in roomId) {
+      return c.json(roomId.error, 400);
+    }
+
+    const roomSessionId = getRequiredFormText(formData, "roomSessionId");
+
+    if ("error" in roomSessionId) {
+      return c.json(roomSessionId.error, 400);
+    }
+
+    const authorHandleId = getRequiredFormText(formData, "authorHandleId");
+
+    if ("error" in authorHandleId) {
+      return c.json(authorHandleId.error, 400);
+    }
+
+    const toneInput = getOptionalFormText(formData, "tone")?.trim();
+
+    if (
+      toneInput &&
+      toneInput !== "cyan" &&
+      toneInput !== "pink" &&
+      toneInput !== "system"
+    ) {
+      return c.json(
+        {
+          error: "invalid_request",
+          field: "tone",
+        },
+        400,
+      );
+    }
+
+    const tone: "cyan" | "pink" | "system" | null =
+      toneInput === "cyan" || toneInput === "pink" || toneInput === "system"
+        ? toneInput
+        : null;
+
+    const files = collectUploadFiles(formData);
+
+    if (files.length === 0) {
+      return c.json(
+        {
+          error: "invalid_upload",
+          field: "file",
+          reason: "missing_file",
+        },
+        400,
+      );
+    }
+
+    if (files.length > container.config.media.chatUploadMaxFilesPerMessage) {
+      return c.json(
+        {
+          error: "invalid_upload",
+          field: "file",
+          reason: "too_many_files",
+        },
+        400,
+      );
+    }
+
+    const uploadFile = files[0];
+    const mimeType = uploadFile.type.trim().toLowerCase();
+
+    if (!isSupportedChatUploadMimeType(mimeType)) {
+      return c.json(
+        {
+          error: "invalid_upload",
+          field: "file",
+          reason: "unsupported_mime_type",
+        },
+        400,
+      );
+    }
+
+    if (!container.config.media.chatUploadAllowedMimeTypes.includes(mimeType)) {
+      return c.json(
+        {
+          error: "invalid_upload",
+          field: "file",
+          reason: "unsupported_mime_type",
+        },
+        400,
+      );
+    }
+
+    if (uploadFile.size > container.config.media.chatUploadMaxBytes) {
+      return c.json(
+        {
+          error: "invalid_upload",
+          field: "file",
+          reason: "file_too_large",
+        },
+        413,
+      );
+    }
+
+    let result;
+
+    try {
+      result = await container.chat.uploadMessageWithImage.execute({
+        authorHandleId: authorHandleId.value,
+        body: getOptionalFormText(formData, "body"),
+        image: {
+          body: new Uint8Array(await uploadFile.arrayBuffer()),
+          displayFilename: uploadFile.name.trim() || "upload",
+          mimeType,
+        },
+        roomId: roomId.value,
+        roomSessionId: roomSessionId.value,
+        tone,
+      });
+    } catch (error) {
+      if (error instanceof InvalidChatUploadActorError) {
+        return c.json(
+          {
+            error: "denied",
+            resource: "chat",
+          },
+          403,
+        );
+      }
+
+      throw error;
+    }
+
+    return c.json(
+      {
+        item: result,
+      },
+      201,
+    );
+  });
+
+  chatApp.all("*", (c) =>
+    c.json<NotImplementedResponse>(
+      {
+        family: "chat",
+        method: c.req.method,
+        route: c.req.path,
+        service: serviceName,
+        status: "not_implemented",
+      },
+      501,
+    ),
+  );
+
+  return chatApp;
+};
+
 const createSitemapFamily = () => {
   const sitemapApp = new Hono();
 
@@ -430,7 +666,7 @@ export const createHonoHttpAdapter = (container: BootstrapContainer) => {
   app.route("/api/rss", createRssFamily(container));
   app.route("/api/sitemap", createSitemapFamily());
   app.route("/api/status-strip", createStatusStripFamily(container));
-  mountPlaceholderFamily(app, "/api/chat", "chat");
+  app.route("/api/chat", createChatFamily(container));
   mountPlaceholderFamily(app, "/api/admin", "admin");
   mountPlaceholderFamily(app, "/api/auth", "auth");
 

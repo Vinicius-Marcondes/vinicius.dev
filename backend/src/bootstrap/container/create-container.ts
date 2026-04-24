@@ -1,5 +1,7 @@
 import { createPrismaPersistenceAdapter } from "@/adapters/outbound/persistence";
 import { createFilesystemMediaStorageAdapter } from "@/adapters/outbound/storage/filesystem";
+import { createUploadChatMessageWithImageUseCase } from "@/modules/chat/application";
+import type { UploadChatMessageWithImagePort } from "@/modules/chat/ports/inbound";
 import {
   createGetPublishedProjectBySlugUseCase,
   createGetPublishedPhotoByIdUseCase,
@@ -22,6 +24,9 @@ import type {
 import { loadBootstrapConfig, type BootstrapConfig } from "../config";
 
 export type BootstrapContainer = Readonly<{
+  chat: Readonly<{
+    uploadMessageWithImage: UploadChatMessageWithImagePort;
+  }>;
   config: BootstrapConfig;
   content: Readonly<{
     getPublishedProjectBySlug: GetPublishedProjectBySlugPort;
@@ -49,6 +54,12 @@ export const createContainer = (env: BootstrapEnv = Bun.env): BootstrapContainer
   });
 
   return {
+    chat: {
+      uploadMessageWithImage: createUploadChatMessageWithImageUseCase({
+        repository: persistence.chat,
+        storage: storage.chatUploads,
+      }),
+    },
     config,
     content: {
       getPublishedProjectBySlug: createGetPublishedProjectBySlugUseCase({

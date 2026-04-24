@@ -15,5 +15,6 @@ describe("bootstrap container", () => {
     expect(typeof container.media.storage.photos.openOriginal).toBe("function");
     expect(typeof container.media.storage.chatUploads.openUpload).toBe("function");
     expect(typeof container.media.storage.chatUploads.writeUpload).toBe("function");
+    expect(typeof container.chat.uploadMessageWithImage.execute).toBe("function");
   });
 });

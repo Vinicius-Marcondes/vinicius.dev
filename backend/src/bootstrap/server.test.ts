@@ -4,6 +4,24 @@ import type { BootstrapContainer } from "./container";
 import { createServer } from "./server";
 
 const createTestContainer = (): BootstrapContainer => ({
+  chat: {
+    uploadMessageWithImage: {
+      execute: async () => ({
+        attachment: {
+          byteSize: 0,
+          fileName: "upload.webp",
+          id: "upload_1",
+          kind: "image",
+          mimeType: "image/webp",
+        },
+        authorHandleId: "handle_1",
+        body: "uploaded an image without a caption",
+        id: "message_1",
+        sentAt: "2026-04-24T00:00:00.000Z",
+        tone: null,
+      }),
+    },
+  },
   config: {
     auth: {
       mfaCodeMaxAgeSeconds: 600,
