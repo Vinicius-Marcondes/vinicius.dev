@@ -15,6 +15,9 @@ const createTestContainer = (
   ) => UploadChatMessageWithImageOutput | Promise<UploadChatMessageWithImageOutput>,
 ): BootstrapContainer => ({
   chat: {
+    moderateUploadRetention: {
+      execute: async () => null,
+    },
     openUploadMedia: {
       execute: async () => null,
     },

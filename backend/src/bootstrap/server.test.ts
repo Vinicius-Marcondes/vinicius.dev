@@ -5,6 +5,9 @@ import { createServer } from "./server";
 
 const createTestContainer = (): BootstrapContainer => ({
   chat: {
+    moderateUploadRetention: {
+      execute: async () => null,
+    },
     openUploadMedia: {
       execute: async () => null,
     },
