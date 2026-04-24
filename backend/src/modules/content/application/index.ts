@@ -13,6 +13,7 @@ import type {
   GetPublishedProjectBySlugPort,
   GetPublishedPhotoByIdPort,
   GetPublishedThoughtBySlugPort,
+  ListStatusStripEntriesPort,
   ListPublishedPhotosInput,
   ListPublishedPhotosOutput,
   ListPublishedPhotosPort,
@@ -26,6 +27,7 @@ import type {
   PublishedProjectSummary,
   PublishedPhotoDetail,
   PublishedPhotoSummary,
+  StatusStripEntry,
   PublishedThoughtDetail,
   PublishedThoughtSummary,
 } from "../ports/inbound";
@@ -144,6 +146,16 @@ const mapPhotoDetail = (row: PhotoDetailRepositoryRow): PublishedPhotoDetail => 
   camera: row.camera,
   caption: row.caption,
   film: row.film,
+});
+
+const mapStatusStripEntry = (row: {
+  accent: "amber" | "cyan" | "pink" | null;
+  label: string;
+  value: string;
+}): StatusStripEntry => ({
+  ...(row.accent ? { accent: row.accent } : {}),
+  label: row.label,
+  value: row.value,
 });
 
 const normalizeLimit = (value?: number): number => {
@@ -324,5 +336,17 @@ export const createGetPublishedPhotoByIdUseCase = ({
     const photo = await repository.findPublishedPhotoById(id);
 
     return photo ? mapPhotoDetail(photo) : null;
+  },
+});
+
+export const createListStatusStripEntriesUseCase = ({
+  repository,
+}: ContentApplicationDependencies): ListStatusStripEntriesPort => ({
+  execute: async () => {
+    const entries = await repository.listStatusStripEntries();
+
+    return {
+      items: entries.map(mapStatusStripEntry),
+    };
   },
 });

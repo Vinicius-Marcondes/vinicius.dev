@@ -512,6 +512,28 @@ export const createPrismaContentRepository = (client: PrismaDatabaseClient): Con
 
     return row ? mapPhotoDetailRow(row) : null;
   },
-  listStatusStripEntries: (): Promise<readonly StatusStripEntryRepositoryRow[]> =>
-    notImplemented("listStatusStripEntries"),
+  listStatusStripEntries: async (): Promise<readonly StatusStripEntryRepositoryRow[]> => {
+    const rows = await client.statusStripEntry.findMany({
+      orderBy: [{ displayOrder: "asc" }],
+      select: {
+        accent: true,
+        createdAt: true,
+        displayOrder: true,
+        id: true,
+        label: true,
+        updatedAt: true,
+        value: true,
+      },
+    });
+
+    return rows.map((row) => ({
+      accent: row.accent,
+      createdAt: row.createdAt,
+      displayOrder: row.displayOrder,
+      id: row.id,
+      label: row.label,
+      updatedAt: row.updatedAt,
+      value: row.value,
+    }));
+  },
 });

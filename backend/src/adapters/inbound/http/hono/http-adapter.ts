@@ -382,6 +382,18 @@ const createRssFamily = (container: BootstrapContainer) => {
   return rssApp;
 };
 
+const createStatusStripFamily = (container: BootstrapContainer) => {
+  const statusStripApp = new Hono();
+
+  statusStripApp.get("/", async (c) => {
+    const response = await container.content.listStatusStripEntries.execute();
+
+    return c.json(response);
+  });
+
+  return statusStripApp;
+};
+
 export const createHonoHttpAdapter = (container: BootstrapContainer) => {
   const app = new Hono();
 
@@ -398,7 +410,7 @@ export const createHonoHttpAdapter = (container: BootstrapContainer) => {
   app.route("/api/projects", createProjectsFamily(container));
   app.route("/api/photos", createPhotosFamily(container));
   app.route("/api/rss", createRssFamily(container));
-  mountPlaceholderFamily(app, "/api/status-strip", "status strip");
+  app.route("/api/status-strip", createStatusStripFamily(container));
   mountPlaceholderFamily(app, "/api/chat", "chat");
   mountPlaceholderFamily(app, "/api/admin", "admin");
   mountPlaceholderFamily(app, "/api/auth", "auth");

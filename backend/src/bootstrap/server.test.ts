@@ -167,6 +167,21 @@ const createTestContainer = (): BootstrapContainer => ({
         },
       }),
     },
+    listStatusStripEntries: {
+      execute: async () => ({
+        items: [
+          {
+            accent: "cyan",
+            label: "now building",
+            value: "vinicius.dev backend",
+          },
+          {
+            label: "location",
+            value: "Sao Paulo",
+          },
+        ],
+      }),
+    },
   },
 });
 
@@ -270,8 +285,23 @@ describe("backend server scaffold", () => {
       },
     });
 
+    const statusStripResponse = await app.request("/api/status-strip");
+    expect(statusStripResponse.status).toBe(200);
+    await expect(statusStripResponse.json()).resolves.toEqual({
+      items: [
+        {
+          accent: "cyan",
+          label: "now building",
+          value: "vinicius.dev backend",
+        },
+        {
+          label: "location",
+          value: "Sao Paulo",
+        },
+      ],
+    });
+
     const placeholderRoutes = [
-      ["/api/status-strip", "status strip"],
       ["/api/chat", "chat"],
       ["/api/admin", "admin"],
       ["/api/auth", "auth"],

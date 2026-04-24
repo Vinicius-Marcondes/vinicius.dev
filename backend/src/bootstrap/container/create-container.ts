@@ -6,6 +6,7 @@ import {
   createListPublishedPhotosUseCase,
   createListPublishedProjectsUseCase,
   createListPublishedThoughtsUseCase,
+  createListStatusStripEntriesUseCase,
 } from "@/modules/content/application";
 import type {
   GetPublishedProjectBySlugPort,
@@ -14,6 +15,7 @@ import type {
   ListPublishedPhotosPort,
   ListPublishedProjectsPort,
   ListPublishedThoughtsPort,
+  ListStatusStripEntriesPort,
 } from "@/modules/content/ports/inbound";
 
 import { loadBootstrapConfig, type BootstrapConfig } from "../config";
@@ -27,6 +29,7 @@ export type BootstrapContainer = Readonly<{
     listPublishedPhotos: ListPublishedPhotosPort;
     listPublishedProjects: ListPublishedProjectsPort;
     listPublishedThoughts: ListPublishedThoughtsPort;
+    listStatusStripEntries: ListStatusStripEntriesPort;
   }>;
 }>;
 
@@ -54,6 +57,9 @@ export const createContainer = (env: BootstrapEnv = Bun.env): BootstrapContainer
         repository: persistence.content,
       }),
       listPublishedThoughts: createListPublishedThoughtsUseCase({
+        repository: persistence.content,
+      }),
+      listStatusStripEntries: createListStatusStripEntriesUseCase({
         repository: persistence.content,
       }),
     },
