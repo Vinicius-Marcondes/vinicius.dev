@@ -1,5 +1,5 @@
 import { realpathSync } from "node:fs";
-import { isAbsolute, relative, resolve, sep } from "node:path";
+import { basename, dirname, isAbsolute, relative, resolve, sep } from "node:path";
 
 export const API_BASE_PATH = "/api" as const;
 export const MEDIA_PHOTO_ORIGINAL_PATH = "/media/photos/:id/original" as const;
@@ -125,16 +125,34 @@ const parseString = (value: string | undefined, fallback: string) =>
   value === undefined || value === "" ? fallback : value;
 
 const normalizeRootPath = (value: string) => {
-  const resolvedPath = resolve(value);
+  let resolvedPath = resolve(value);
+  const missingSegments: string[] = [];
 
-  try {
-    return realpathSync.native(resolvedPath);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return resolvedPath;
+  while (true) {
+    try {
+      const canonicalBase = realpathSync.native(resolvedPath);
+
+      return missingSegments.reduceRight(
+        (currentPath, segment) => resolve(currentPath, segment),
+        canonicalBase,
+      );
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+        throw error;
+      }
+
+      const parentPath = dirname(resolvedPath);
+
+      if (parentPath === resolvedPath) {
+        return missingSegments.reduceRight(
+          (currentPath, segment) => resolve(currentPath, segment),
+          resolvedPath,
+        );
+      }
+
+      missingSegments.push(basename(resolvedPath));
+      resolvedPath = parentPath;
     }
-
-    throw error;
   }
 };
 

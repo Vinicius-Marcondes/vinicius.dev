@@ -132,4 +132,19 @@ describe("bootstrap config", () => {
       }),
     ).toThrow("MEDIA_PHOTOS_ROOT and MEDIA_CHAT_ROOT must be different");
   });
+
+  it("rejects roots under a symlinked parent even when the leaf path does not exist yet", async () => {
+    const sharedRoot = await createTempRoot("shared-media");
+    const aliasParent = await createTempRoot("shared-alias");
+    const aliasPath = join(aliasParent, "alias");
+
+    await symlink(sharedRoot, aliasPath);
+
+    expect(() =>
+      loadBootstrapConfig({
+        MEDIA_CHAT_ROOT: join(aliasPath, "chat"),
+        MEDIA_PHOTOS_ROOT: sharedRoot,
+      }),
+    ).toThrow("MEDIA_PHOTOS_ROOT and MEDIA_CHAT_ROOT must be different");
+  });
 });
