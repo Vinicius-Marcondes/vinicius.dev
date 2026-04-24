@@ -3,6 +3,8 @@ import { Hono } from "hono";
 import { InvalidThoughtCursorError } from "@/modules/content/application";
 import type { BootstrapContainer } from "@/bootstrap/container";
 
+import { presentThoughtsRssFeed } from "./rss-presenter";
+
 const serviceName = "vinicius.dev-backend";
 
 type NotImplementedResponse = {
@@ -360,6 +362,26 @@ const createPhotosFamily = (container: BootstrapContainer) => {
   return photosApp;
 };
 
+const createRssFamily = (container: BootstrapContainer) => {
+  const rssApp = new Hono();
+
+  rssApp.get("/", async (c) => {
+    const response = await container.content.listPublishedThoughts.execute({
+      limit: 24,
+    });
+    const feed = presentThoughtsRssFeed({
+      baseUrl: new URL(c.req.url).origin,
+      thoughts: response.items,
+    });
+
+    return c.body(feed, 200, {
+      "Content-Type": "application/rss+xml; charset=utf-8",
+    });
+  });
+
+  return rssApp;
+};
+
 export const createHonoHttpAdapter = (container: BootstrapContainer) => {
   const app = new Hono();
 
@@ -375,11 +397,11 @@ export const createHonoHttpAdapter = (container: BootstrapContainer) => {
   app.route("/api/thoughts", createThoughtsFamily(container));
   app.route("/api/projects", createProjectsFamily(container));
   app.route("/api/photos", createPhotosFamily(container));
+  app.route("/api/rss", createRssFamily(container));
   mountPlaceholderFamily(app, "/api/status-strip", "status strip");
   mountPlaceholderFamily(app, "/api/chat", "chat");
   mountPlaceholderFamily(app, "/api/admin", "admin");
   mountPlaceholderFamily(app, "/api/auth", "auth");
-  mountPlaceholderFamily(app, "/api/rss", "rss");
   mountPlaceholderFamily(app, "/api/sitemap", "sitemap");
 
   app.get("/media/photos/:id/original", (c) =>
