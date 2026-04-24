@@ -143,3 +143,16 @@ export interface ListPublishedPhotosPort
 
 export interface GetPublishedPhotoByIdPort
   extends UseCase<GetPublishedPhotoByIdInput, PublishedPhotoDetail | null> {}
+
+export type StatusStripEntry = Readonly<{
+  accent?: "amber" | "cyan" | "pink";
+  label: string;
+  value: string;
+}>;
+
+export type ListStatusStripEntriesOutput = Readonly<{
+  items: readonly StatusStripEntry[];
+}>;
+
+export interface ListStatusStripEntriesPort
+  extends UseCase<void, ListStatusStripEntriesOutput> {}

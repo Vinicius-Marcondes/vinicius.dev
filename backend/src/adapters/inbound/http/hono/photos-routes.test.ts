@@ -98,6 +98,11 @@ const createTestContainer = (): BootstrapContainer => ({
         },
       }),
     },
+    listStatusStripEntries: {
+      execute: async () => ({
+        items: [],
+      }),
+    },
   },
 });
 
