@@ -32,6 +32,9 @@ const mapChatUploadMediaRow = (row: {
   displayFilename: string;
   id: string;
   mimeType: ChatUploadMimeType;
+  moderationState: "visible" | "hidden" | "deleted";
+  roomId: string;
+  storagePath: string;
   storageKey: string;
   updatedAt: Date;
 }): ChatUploadMediaRepositoryRow => ({
@@ -45,6 +48,9 @@ const mapChatUploadMediaRow = (row: {
       : row.mimeType === ChatUploadMimeType.image_png
         ? "image/png"
         : "image/webp",
+  moderationState: row.moderationState,
+  roomId: row.roomId,
+  storagePath: row.storagePath,
   storageKey: row.storageKey,
   updatedAt: row.updatedAt,
 });
@@ -77,6 +83,9 @@ export const createPrismaMediaRepository = (client: PrismaDatabaseClient): Media
         displayFilename: true,
         id: true,
         mimeType: true,
+        moderationState: true,
+        roomId: true,
+        storagePath: true,
         storageKey: true,
         updatedAt: true,
       },

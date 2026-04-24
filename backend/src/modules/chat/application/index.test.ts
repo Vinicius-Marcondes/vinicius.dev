@@ -1,6 +1,10 @@
 import { describe, expect, it } from "bun:test";
 
-import { createUploadChatMessageWithImageUseCase } from "./index";
+import {
+  createOpenChatUploadMediaUseCase,
+  createUploadChatMessageWithImageUseCase,
+  InvalidChatUploadAccessError,
+} from "./index";
 
 describe("chat upload message with image use case", () => {
   it("writes the upload and persists message/upload metadata", async () => {
@@ -205,5 +209,126 @@ describe("chat upload message with image use case", () => {
         roomSessionId: "session_1",
       }),
     ).rejects.toThrow("chat upload actor/session does not match the requested room");
+  });
+});
+
+describe("chat upload media access use case", () => {
+  it("opens visible upload media for an active room session", async () => {
+    const useCase = createOpenChatUploadMediaUseCase({
+      mediaRepository: {
+        findChatUploadMediaById: async () => ({
+          byteSize: 42,
+          createdAt: new Date("2026-04-24T00:00:00.000Z"),
+          displayFilename: "scan.webp",
+          id: "upload_1",
+          mimeType: "image/webp",
+          moderationState: "visible",
+          roomId: "room_1",
+          storageKey: "room_1/upload_1.webp",
+          storagePath: "room_1/upload_1.webp",
+          updatedAt: new Date("2026-04-24T00:00:00.000Z"),
+        }),
+      },
+      repository: {
+        findSessionById: async () => ({
+          createdAt: new Date("2026-04-24T00:00:00.000Z"),
+          expiresAt: null,
+          handleId: "handle_1",
+          id: "session_1",
+          joinedAt: new Date("2026-04-24T00:00:00.000Z"),
+          lastSeenAt: null,
+          leftAt: null,
+          roomId: "room_1",
+          status: "active",
+          updatedAt: new Date("2026-04-24T00:00:00.000Z"),
+        }),
+      },
+      storage: {
+        openUpload: async () => ({
+          absolutePath: "/tmp/chat/room_1/upload_1.webp",
+          byteSize: 42,
+          stream: new ReadableStream<Uint8Array>(),
+        }),
+      },
+    });
+
+    const result = await useCase.execute({
+      roomSessionId: "session_1",
+      uploadId: "upload_1",
+    });
+
+    expect(result).not.toBeNull();
+    expect(result).toMatchObject({
+      byteSize: 42,
+      mimeType: "image/webp",
+    });
+  });
+
+  it("rejects access when the room session is missing or inactive", async () => {
+    const useCase = createOpenChatUploadMediaUseCase({
+      mediaRepository: {
+        findChatUploadMediaById: async () => {
+          throw new Error("should not read upload metadata");
+        },
+      },
+      repository: {
+        findSessionById: async () => null,
+      },
+      storage: {
+        openUpload: async () => null,
+      },
+    });
+
+    await expect(
+      useCase.execute({
+        roomSessionId: "session_1",
+        uploadId: "upload_1",
+      }),
+    ).rejects.toBeInstanceOf(InvalidChatUploadAccessError);
+  });
+
+  it("returns null when upload metadata is hidden or outside the session room", async () => {
+    const useCase = createOpenChatUploadMediaUseCase({
+      mediaRepository: {
+        findChatUploadMediaById: async () => ({
+          byteSize: 42,
+          createdAt: new Date("2026-04-24T00:00:00.000Z"),
+          displayFilename: "scan.webp",
+          id: "upload_1",
+          mimeType: "image/webp",
+          moderationState: "hidden",
+          roomId: "room_2",
+          storageKey: "room_2/upload_1.webp",
+          storagePath: "room_2/upload_1.webp",
+          updatedAt: new Date("2026-04-24T00:00:00.000Z"),
+        }),
+      },
+      repository: {
+        findSessionById: async () => ({
+          createdAt: new Date("2026-04-24T00:00:00.000Z"),
+          expiresAt: null,
+          handleId: "handle_1",
+          id: "session_1",
+          joinedAt: new Date("2026-04-24T00:00:00.000Z"),
+          lastSeenAt: null,
+          leftAt: null,
+          roomId: "room_1",
+          status: "active",
+          updatedAt: new Date("2026-04-24T00:00:00.000Z"),
+        }),
+      },
+      storage: {
+        openUpload: async () => {
+          throw new Error("should not open hidden or foreign-room upload");
+        },
+      },
+    });
+
+    await expect(
+      useCase.execute({
+        roomSessionId: "session_1",
+        uploadId: "upload_1",
+      }),
+    ).resolves.toBeNull();
   });
 });

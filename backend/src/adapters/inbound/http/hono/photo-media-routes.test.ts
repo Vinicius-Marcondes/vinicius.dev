@@ -58,6 +58,9 @@ const createTestContainer = (options: TestContainerOptions = {}): BootstrapConta
 
   return {
     chat: {
+      openUploadMedia: {
+        execute: async () => null,
+      },
       uploadMessageWithImage: {
         execute: async () => ({
           attachment: {

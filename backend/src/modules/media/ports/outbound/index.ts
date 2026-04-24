@@ -11,6 +11,9 @@ export type ChatUploadMediaRepositoryRow = Readonly<{
   id: string;
   displayFilename: string;
   mimeType: "image/jpeg" | "image/png" | "image/webp";
+  moderationState: "visible" | "hidden" | "deleted";
+  roomId: string;
+  storagePath: string;
   storageKey: string;
   byteSize: number;
   createdAt: Date;
