@@ -50,3 +50,22 @@ export type OpenChatUploadMediaOutput = Readonly<{
 
 export interface OpenChatUploadMediaPort
   extends UseCase<OpenChatUploadMediaInput, OpenChatUploadMediaOutput | null> {}
+
+export type ModerateChatUploadRetentionInput = Readonly<{
+  action: "hide_media_metadata" | "delete_message";
+  actorAdminUserId: string;
+  reason?: string;
+  uploadId: string;
+}>;
+
+export type ModerateChatUploadRetentionOutput = Readonly<{
+  action: "hide_media_metadata" | "delete_message";
+  auditId: string;
+  messageId: string | null;
+  messageModerationState: "visible" | "hidden" | "deleted" | null;
+  uploadId: string;
+  uploadModerationState: "visible" | "hidden" | "deleted";
+}>;
+
+export interface ModerateChatUploadRetentionPort
+  extends UseCase<ModerateChatUploadRetentionInput, ModerateChatUploadRetentionOutput | null> {}

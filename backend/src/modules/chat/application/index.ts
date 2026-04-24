@@ -5,6 +5,9 @@ import type {
 import type { ChatRepositoryPort } from "@/modules/chat/ports/outbound";
 import type {
   ChatUploadMimeType,
+  ModerateChatUploadRetentionInput,
+  ModerateChatUploadRetentionOutput,
+  ModerateChatUploadRetentionPort,
   OpenChatUploadMediaInput,
   OpenChatUploadMediaOutput,
   OpenChatUploadMediaPort,
@@ -12,6 +15,7 @@ import type {
   UploadChatMessageWithImageOutput,
   UploadChatMessageWithImagePort,
 } from "@/modules/chat/ports/inbound";
+import type { ModerateChatUploadRetentionAction } from "@/modules/chat/ports/outbound";
 
 const IMAGE_ONLY_FALLBACK_BODY = "uploaded an image without a caption";
 
@@ -65,6 +69,11 @@ export type ChatUploadMediaAccessDependencies = Readonly<{
   repository: Pick<ChatRepositoryPort, "findSessionById">;
   mediaRepository: Pick<MediaRepositoryPort, "findChatUploadMediaById">;
   storage: Pick<ChatUploadStoragePort, "openUpload">;
+}>;
+
+export type ChatUploadRetentionDependencies = Readonly<{
+  clock?: () => Date;
+  repository: Pick<ChatRepositoryPort, "moderateUploadRetention">;
 }>;
 
 export const createUploadChatMessageWithImageUseCase = ({
@@ -170,6 +179,40 @@ export const createOpenChatUploadMediaUseCase = ({
       byteSize: storedObject.byteSize,
       mimeType: upload.mimeType,
       stream: storedObject.stream,
+    };
+  },
+});
+
+const normalizeRetentionAction = (
+  value: ModerateChatUploadRetentionInput["action"],
+): ModerateChatUploadRetentionAction => value;
+
+export const createModerateChatUploadRetentionUseCase = ({
+  clock = () => new Date(),
+  repository,
+}: ChatUploadRetentionDependencies): ModerateChatUploadRetentionPort => ({
+  execute: async (
+    input: ModerateChatUploadRetentionInput,
+  ): Promise<ModerateChatUploadRetentionOutput | null> => {
+    const result = await repository.moderateUploadRetention({
+      action: normalizeRetentionAction(input.action),
+      actorAdminUserId: input.actorAdminUserId.trim(),
+      occurredAt: clock(),
+      reason: input.reason?.trim() || undefined,
+      uploadId: input.uploadId,
+    });
+
+    if (!result) {
+      return null;
+    }
+
+    return {
+      action: input.action,
+      auditId: result.auditId,
+      messageId: result.message?.id ?? null,
+      messageModerationState: result.message?.moderationState ?? null,
+      uploadId: result.upload.id,
+      uploadModerationState: result.upload.moderationState,
     };
   },
 });

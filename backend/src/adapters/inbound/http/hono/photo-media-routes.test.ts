@@ -58,6 +58,9 @@ const createTestContainer = (options: TestContainerOptions = {}): BootstrapConta
 
   return {
     chat: {
+      moderateUploadRetention: {
+        execute: async () => null,
+      },
       openUploadMedia: {
         execute: async () => null,
       },

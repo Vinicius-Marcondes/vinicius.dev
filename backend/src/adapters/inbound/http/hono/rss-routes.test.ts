@@ -7,6 +7,9 @@ import { presentThoughtsRssFeed } from "./rss-presenter";
 
 const createTestContainer = (): BootstrapContainer => ({
   chat: {
+    moderateUploadRetention: {
+      execute: async () => null,
+    },
     openUploadMedia: {
       execute: async () => null,
     },

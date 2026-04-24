@@ -495,13 +495,13 @@ const createChatFamily = (container: BootstrapContainer) => {
       );
     }
 
-    const roomSessionId = c.req.query("roomSessionId")?.trim();
+    const roomSessionId = c.req.header("x-chat-room-session-id")?.trim();
 
     if (!roomSessionId) {
       return c.json(
         {
-          error: "invalid_query",
-          field: "roomSessionId",
+          error: "invalid_request",
+          field: "x-chat-room-session-id",
         },
         400,
       );
@@ -539,8 +539,10 @@ const createChatFamily = (container: BootstrapContainer) => {
     }
 
     return c.body(upload.stream, 200, {
+      "Cache-Control": "private, no-store",
       "Content-Length": String(upload.byteSize),
       "Content-Type": upload.mimeType,
+      Vary: "x-chat-room-session-id",
     });
   });
 

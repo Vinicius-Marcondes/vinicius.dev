@@ -7,6 +7,9 @@ import { presentSitemapXml } from "./sitemap-presenter";
 
 const createTestContainer = (): BootstrapContainer => ({
   chat: {
+    moderateUploadRetention: {
+      execute: async () => null,
+    },
     openUploadMedia: {
       execute: async () => null,
     },

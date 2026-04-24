@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 
 import {
+  createModerateChatUploadRetentionUseCase,
   createOpenChatUploadMediaUseCase,
   createUploadChatMessageWithImageUseCase,
   InvalidChatUploadAccessError,
@@ -328,6 +329,98 @@ describe("chat upload media access use case", () => {
       useCase.execute({
         roomSessionId: "session_1",
         uploadId: "upload_1",
+      }),
+    ).resolves.toBeNull();
+  });
+});
+
+describe("chat upload retention moderation use case", () => {
+  it("records a hide-media moderation action", async () => {
+    const occurredAt = new Date("2026-04-24T12:34:56.000Z");
+    const capturedCalls: Array<Record<string, unknown>> = [];
+    const useCase = createModerateChatUploadRetentionUseCase({
+      clock: () => occurredAt,
+      repository: {
+        moderateUploadRetention: async (input) => {
+          capturedCalls.push(input as unknown as Record<string, unknown>);
+
+          return {
+            auditId: "audit_1",
+            message: {
+              authorHandleId: "handle_1",
+              body: "night drop",
+              createdAt: occurredAt,
+              deletedAt: null,
+              hiddenAt: occurredAt,
+              id: "message_1",
+              moderationState: "hidden",
+              roomId: "room_1",
+              roomSessionId: "session_1",
+              sentAt: occurredAt,
+              tone: null,
+              updatedAt: occurredAt,
+            },
+            upload: {
+              byteSize: 42,
+              createdAt: occurredAt,
+              deletedAt: null,
+              displayFilename: "scan.webp",
+              hiddenAt: occurredAt,
+              id: "upload_1",
+              kind: "image",
+              messageId: "message_1",
+              mimeType: "image/webp",
+              moderationState: "hidden",
+              roomId: "room_1",
+              storageKey: "room_1/upload_1.webp",
+              storagePath: "room_1/upload_1.webp",
+              updatedAt: occurredAt,
+              uploaderHandleId: "handle_1",
+              uploaderSessionId: "session_1",
+            },
+          };
+        },
+      },
+    });
+
+    const output = await useCase.execute({
+      action: "hide_media_metadata",
+      actorAdminUserId: " admin_1 ",
+      reason: "  remove image from public room view  ",
+      uploadId: "upload_1",
+    });
+
+    expect(capturedCalls).toEqual([
+      {
+        action: "hide_media_metadata",
+        actorAdminUserId: "admin_1",
+        occurredAt,
+        reason: "remove image from public room view",
+        uploadId: "upload_1",
+      },
+    ]);
+    expect(output).toEqual({
+      action: "hide_media_metadata",
+      auditId: "audit_1",
+      messageId: "message_1",
+      messageModerationState: "hidden",
+      uploadId: "upload_1",
+      uploadModerationState: "hidden",
+    });
+  });
+
+  it("returns null when the upload does not exist", async () => {
+    const useCase = createModerateChatUploadRetentionUseCase({
+      repository: {
+        moderateUploadRetention: async () => null,
+      },
+    });
+
+    await expect(
+      useCase.execute({
+        action: "delete_message",
+        actorAdminUserId: "admin_1",
+        uploadId: "upload_404",
       }),
     ).resolves.toBeNull();
   });

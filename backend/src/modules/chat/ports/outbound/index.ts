@@ -85,6 +85,22 @@ export type CreateChatMessageWithUploadResult = Readonly<{
   upload: ChatUploadRepositoryRow;
 }>;
 
+export type ModerateChatUploadRetentionAction = "hide_media_metadata" | "delete_message";
+
+export type ModerateChatUploadRetentionCommand = Readonly<{
+  action: ModerateChatUploadRetentionAction;
+  actorAdminUserId: string;
+  occurredAt: Date;
+  reason?: string;
+  uploadId: string;
+}>;
+
+export type ModerateChatUploadRetentionResult = Readonly<{
+  auditId: string;
+  message: ChatMessageRepositoryRow | null;
+  upload: ChatUploadRepositoryRow;
+}>;
+
 export type ChatRoomQuery = Readonly<{
   slug: string;
 }>;
@@ -100,6 +116,9 @@ export interface ChatRepositoryPort {
   createMessageWithUpload(
     input: CreateChatMessageWithUploadCommand,
   ): Promise<CreateChatMessageWithUploadResult>;
+  moderateUploadRetention(
+    input: ModerateChatUploadRetentionCommand,
+  ): Promise<ModerateChatUploadRetentionResult | null>;
   findSessionById(sessionId: string): Promise<ChatRoomSessionRepositoryRow | null>;
   findRoomBySlug(query: ChatRoomQuery): Promise<ChatRoomRepositoryRow | null>;
   findHandleByRoomIdAndNormalizedHandle(roomId: string, normalizedHandle: string): Promise<ChatHandleRepositoryRow | null>;

@@ -38,6 +38,9 @@ const createTestContainer = ({
   ) => UploadChatMessageWithImageOutput | Promise<UploadChatMessageWithImageOutput>;
 } = {}): BootstrapContainer => ({
   chat: {
+    moderateUploadRetention: {
+      execute: async () => null,
+    },
     openUploadMedia: {
       execute: executeOpenUploadMedia,
     },
@@ -163,15 +166,21 @@ describe("chat media routes", () => {
       }),
     );
 
-    const response = await app.request("/api/chat/uploads/upload_1/media?roomSessionId=session_1");
+    const response = await app.request("/api/chat/uploads/upload_1/media", {
+      headers: {
+        "x-chat-room-session-id": "session_1",
+      },
+    });
 
     expect(captured).toEqual({
       roomSessionId: "session_1",
       uploadId: "upload_1",
     });
     expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(response.headers.get("content-type")).toBe("image/webp");
     expect(response.headers.get("content-length")).toBe(String(bytes.byteLength));
+    expect(response.headers.get("vary")).toBe("x-chat-room-session-id");
     await expect(response.text()).resolves.toBe("upload-bytes");
   });
 
@@ -184,7 +193,11 @@ describe("chat media routes", () => {
       }),
     );
 
-    const response = await app.request("/api/chat/uploads/upload_1/media?roomSessionId=session_1");
+    const response = await app.request("/api/chat/uploads/upload_1/media", {
+      headers: {
+        "x-chat-room-session-id": "session_1",
+      },
+    });
 
     expect(response.status).toBe(403);
     await expect(response.json()).resolves.toEqual({
@@ -195,7 +208,11 @@ describe("chat media routes", () => {
 
   it("returns not found when the upload is missing or hidden", async () => {
     const app = createHonoHttpAdapter(createTestContainer());
-    const response = await app.request("/api/chat/uploads/upload_1/media?roomSessionId=session_1");
+    const response = await app.request("/api/chat/uploads/upload_1/media", {
+      headers: {
+        "x-chat-room-session-id": "session_1",
+      },
+    });
 
     expect(response.status).toBe(404);
     await expect(response.json()).resolves.toEqual({
@@ -215,14 +232,14 @@ describe("chat media routes", () => {
     });
   });
 
-  it("rejects missing roomSessionId query values", async () => {
+  it("rejects missing room session header values", async () => {
     const app = createHonoHttpAdapter(createTestContainer());
     const response = await app.request("/api/chat/uploads/upload_1/media");
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({
-      error: "invalid_query",
-      field: "roomSessionId",
+      error: "invalid_request",
+      field: "x-chat-room-session-id",
     });
   });
 });
