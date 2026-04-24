@@ -4,6 +4,7 @@ import { InvalidThoughtCursorError } from "@/modules/content/application";
 import type { BootstrapContainer } from "@/bootstrap/container";
 
 import { presentThoughtsRssFeed } from "./rss-presenter";
+import { presentSitemapXml } from "./sitemap-presenter";
 
 const serviceName = "vinicius.dev-backend";
 
@@ -394,6 +395,23 @@ const createStatusStripFamily = (container: BootstrapContainer) => {
   return statusStripApp;
 };
 
+const createSitemapFamily = () => {
+  const sitemapApp = new Hono();
+
+  sitemapApp.get("/", (c) => {
+    const sitemap = presentSitemapXml({
+      baseUrl: new URL(c.req.url).origin,
+      paths: ["/", "/thoughts", "/projects", "/photos", "/chat"],
+    });
+
+    return c.body(sitemap, 200, {
+      "Content-Type": "application/xml; charset=utf-8",
+    });
+  });
+
+  return sitemapApp;
+};
+
 export const createHonoHttpAdapter = (container: BootstrapContainer) => {
   const app = new Hono();
 
@@ -410,11 +428,11 @@ export const createHonoHttpAdapter = (container: BootstrapContainer) => {
   app.route("/api/projects", createProjectsFamily(container));
   app.route("/api/photos", createPhotosFamily(container));
   app.route("/api/rss", createRssFamily(container));
+  app.route("/api/sitemap", createSitemapFamily());
   app.route("/api/status-strip", createStatusStripFamily(container));
   mountPlaceholderFamily(app, "/api/chat", "chat");
   mountPlaceholderFamily(app, "/api/admin", "admin");
   mountPlaceholderFamily(app, "/api/auth", "auth");
-  mountPlaceholderFamily(app, "/api/sitemap", "sitemap");
 
   app.get("/media/photos/:id/original", (c) =>
     c.json<NotImplementedResponse>(
