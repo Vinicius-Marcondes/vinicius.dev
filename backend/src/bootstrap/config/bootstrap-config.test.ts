@@ -79,4 +79,13 @@ describe("bootstrap config", () => {
     ]);
     expect(config.media.publicUrlBase).toBe("https://media.example.com");
   });
+
+  it("rejects overlapping media roots", () => {
+    expect(() =>
+      loadBootstrapConfig({
+        MEDIA_CHAT_ROOT: "/tmp/media",
+        MEDIA_PHOTOS_ROOT: "/tmp/media",
+      }),
+    ).toThrow("MEDIA_PHOTOS_ROOT and MEDIA_CHAT_ROOT must be different");
+  });
 });

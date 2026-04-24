@@ -123,8 +123,36 @@ const parseString = (value: string | undefined, fallback: string) =>
 
 export const loadBootstrapConfig = (
   env: BootstrapEnv = Bun.env,
-): BootstrapConfig => ({
-  auth: {
+): BootstrapConfig => {
+  const media = {
+    chatRoot: parseString(env.MEDIA_CHAT_ROOT, DEFAULT_MEDIA_CHAT_ROOT),
+    chatUploadAllowedMimeTypes: parseList(
+      env.CHAT_UPLOAD_ALLOWED_MIME_TYPES,
+      DEFAULT_CHAT_UPLOAD_ALLOWED_MIME_TYPES,
+    ),
+    chatUploadMaxBytes: parseInteger(
+      env.CHAT_UPLOAD_MAX_BYTES,
+      DEFAULT_CHAT_UPLOAD_MAX_BYTES,
+      "CHAT_UPLOAD_MAX_BYTES",
+    ),
+    chatUploadMaxFilesPerMessage: parseInteger(
+      env.CHAT_UPLOAD_MAX_FILES_PER_MESSAGE,
+      DEFAULT_CHAT_UPLOAD_MAX_FILES_PER_MESSAGE,
+      "CHAT_UPLOAD_MAX_FILES_PER_MESSAGE",
+    ),
+    photosRoot: parseString(env.MEDIA_PHOTOS_ROOT, DEFAULT_MEDIA_PHOTOS_ROOT),
+    publicUrlBase: parseString(
+      env.MEDIA_PUBLIC_URL_BASE,
+      DEFAULT_MEDIA_PUBLIC_URL_BASE,
+    ),
+  };
+
+  if (media.photosRoot === media.chatRoot) {
+    throw new Error("MEDIA_PHOTOS_ROOT and MEDIA_CHAT_ROOT must be different");
+  }
+
+  return {
+    auth: {
     mfaCodeMaxAgeSeconds: parseInteger(
       env.AUTH_MFA_CODE_MAX_AGE_SECONDS,
       DEFAULT_MFA_CODE_MAX_AGE_SECONDS,
@@ -149,32 +177,12 @@ export const loadBootstrapConfig = (
     allowCredentials: parseBoolean(env.CORS_ALLOW_CREDENTIALS, true),
     allowedOrigins: parseList(env.CORS_ALLOWED_ORIGINS, []),
   },
-  media: {
-    chatRoot: parseString(env.MEDIA_CHAT_ROOT, DEFAULT_MEDIA_CHAT_ROOT),
-    chatUploadAllowedMimeTypes: parseList(
-      env.CHAT_UPLOAD_ALLOWED_MIME_TYPES,
-      DEFAULT_CHAT_UPLOAD_ALLOWED_MIME_TYPES,
-    ),
-    chatUploadMaxBytes: parseInteger(
-      env.CHAT_UPLOAD_MAX_BYTES,
-      DEFAULT_CHAT_UPLOAD_MAX_BYTES,
-      "CHAT_UPLOAD_MAX_BYTES",
-    ),
-    chatUploadMaxFilesPerMessage: parseInteger(
-      env.CHAT_UPLOAD_MAX_FILES_PER_MESSAGE,
-      DEFAULT_CHAT_UPLOAD_MAX_FILES_PER_MESSAGE,
-      "CHAT_UPLOAD_MAX_FILES_PER_MESSAGE",
-    ),
-    photosRoot: parseString(env.MEDIA_PHOTOS_ROOT, DEFAULT_MEDIA_PHOTOS_ROOT),
-    publicUrlBase: parseString(
-      env.MEDIA_PUBLIC_URL_BASE,
-      DEFAULT_MEDIA_PUBLIC_URL_BASE,
-    ),
-  },
+  media,
   server: {
     apiBasePath: API_BASE_PATH,
     mediaPhotoOriginalPath: MEDIA_PHOTO_ORIGINAL_PATH,
     nodeEnv: parseNodeEnv(env.NODE_ENV),
     port: parsePort(env.PORT),
   },
-});
+  };
+};

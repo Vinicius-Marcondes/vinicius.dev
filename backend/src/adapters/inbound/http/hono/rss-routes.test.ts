@@ -92,6 +92,26 @@ const createTestContainer = (): BootstrapContainer => ({
       }),
     },
   },
+  media: {
+    repository: {
+      findChatUploadMediaById: async () => null,
+      findPhotoMediaById: async () => null,
+    },
+    storage: {
+      chatUploads: {
+        deleteUpload: async () => {},
+        openUpload: async () => null,
+        writeUpload: async () => ({
+          byteSize: 0,
+          storageKey: "test-upload",
+          storagePath: "test-upload",
+        }),
+      },
+      photos: {
+        openOriginal: async () => null,
+      },
+    },
+  },
 });
 
 describe("rss routes", () => {
