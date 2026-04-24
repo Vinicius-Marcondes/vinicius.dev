@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, rm, symlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "bun:test";
@@ -82,5 +82,26 @@ describe("filesystem media storage adapter", () => {
         storageKey: "../outside.webp",
       }),
     ).rejects.toThrow("Storage path escapes configured root");
+  });
+
+  it("rejects symlink-backed paths inside the configured root", async () => {
+    const photosRoot = await createTempRoot("photos");
+    const chatRoot = await createTempRoot("chat");
+    const outsideRoot = await createTempRoot("outside");
+    const adapter = createFilesystemMediaStorageAdapter({
+      chatRoot,
+      photosRoot,
+    });
+
+    await writeFile(join(outsideRoot, "secret.txt"), "not-photo-bytes");
+    await symlink(join(outsideRoot, "secret.txt"), join(photosRoot, "linked-photo.jpg"));
+    await symlink(join(outsideRoot, "secret.txt"), join(chatRoot, "linked-upload.webp"));
+
+    await expect(adapter.photos.openOriginal("linked-photo.jpg")).rejects.toThrow(
+      "Storage path references a symbolic link",
+    );
+    await expect(adapter.chatUploads.openUpload("linked-upload.webp")).rejects.toThrow(
+      "Storage path references a symbolic link",
+    );
   });
 });

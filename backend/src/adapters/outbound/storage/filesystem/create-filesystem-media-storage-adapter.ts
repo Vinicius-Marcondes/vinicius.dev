@@ -1,4 +1,4 @@
-import { mkdir, stat, unlink, writeFile } from "node:fs/promises";
+import { lstat, mkdir, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 
 import type {
@@ -24,7 +24,30 @@ const normalizeStoragePath = (value: string) => value.replaceAll("\\", "/");
 const createSafeStoragePathResolver = (root: string) => {
   const resolvedRoot = resolve(root);
 
-  return (storagePath: string) => {
+  const assertNoSymlinkSegments = async (normalizedStoragePath: string) => {
+    const segments = normalizedStoragePath.split("/").filter(Boolean);
+    let currentPath = resolvedRoot;
+
+    for (const segment of segments) {
+      currentPath = resolve(currentPath, segment);
+
+      try {
+        const entryStats = await lstat(currentPath);
+
+        if (entryStats.isSymbolicLink()) {
+          throw new Error(`Storage path references a symbolic link: ${normalizedStoragePath}`);
+        }
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+          break;
+        }
+
+        throw error;
+      }
+    }
+  };
+
+  return async (storagePath: string) => {
     const normalizedStoragePath = normalizeStoragePath(storagePath).trim();
 
     if (normalizedStoragePath.length === 0) {
@@ -46,6 +69,8 @@ const createSafeStoragePathResolver = (root: string) => {
     ) {
       throw new Error(`Storage path escapes configured root: ${storagePath}`);
     }
+
+    await assertNoSymlinkSegments(normalizedStoragePath);
 
     return {
       absolutePath: resolvedPath,
@@ -81,7 +106,7 @@ const createPhotoMediaStorage = (photosRoot: string): PhotoMediaStoragePort => {
 
   return {
     openOriginal: async (reference) => {
-      const { absolutePath } = resolvePhotoPath(reference);
+      const { absolutePath } = await resolvePhotoPath(reference);
 
       return openStorageObject(absolutePath);
     },
@@ -93,7 +118,7 @@ const createChatUploadStorage = (chatRoot: string): ChatUploadStoragePort => {
 
   return {
     deleteUpload: async (storagePath) => {
-      const { absolutePath } = resolveChatPath(storagePath);
+      const { absolutePath } = await resolveChatPath(storagePath);
 
       try {
         await unlink(absolutePath);
@@ -104,14 +129,14 @@ const createChatUploadStorage = (chatRoot: string): ChatUploadStoragePort => {
       }
     },
     openUpload: async (storagePath) => {
-      const { absolutePath } = resolveChatPath(storagePath);
+      const { absolutePath } = await resolveChatPath(storagePath);
 
       return openStorageObject(absolutePath);
     },
     writeUpload: async (
       input: ChatUploadStorageWriteRequest,
     ): Promise<ChatUploadStorageWriteResult> => {
-      const { absolutePath, storagePath } = resolveChatPath(input.storageKey);
+      const { absolutePath, storagePath } = await resolveChatPath(input.storageKey);
 
       await mkdir(dirname(absolutePath), { recursive: true });
       await writeFile(absolutePath, input.body);

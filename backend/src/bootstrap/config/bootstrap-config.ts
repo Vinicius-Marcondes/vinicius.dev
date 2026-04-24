@@ -1,3 +1,5 @@
+import { resolve } from "node:path";
+
 export const API_BASE_PATH = "/api" as const;
 export const MEDIA_PHOTO_ORIGINAL_PATH = "/media/photos/:id/original" as const;
 
@@ -121,6 +123,8 @@ const parseList = (value: string | undefined, fallback: string[]) => {
 const parseString = (value: string | undefined, fallback: string) =>
   value === undefined || value === "" ? fallback : value;
 
+const normalizeRootPath = (value: string) => resolve(value);
+
 export const loadBootstrapConfig = (
   env: BootstrapEnv = Bun.env,
 ): BootstrapConfig => {
@@ -147,42 +151,42 @@ export const loadBootstrapConfig = (
     ),
   };
 
-  if (media.photosRoot === media.chatRoot) {
+  if (normalizeRootPath(media.photosRoot) === normalizeRootPath(media.chatRoot)) {
     throw new Error("MEDIA_PHOTOS_ROOT and MEDIA_CHAT_ROOT must be different");
   }
 
   return {
     auth: {
-    mfaCodeMaxAgeSeconds: parseInteger(
-      env.AUTH_MFA_CODE_MAX_AGE_SECONDS,
-      DEFAULT_MFA_CODE_MAX_AGE_SECONDS,
-      "AUTH_MFA_CODE_MAX_AGE_SECONDS",
-    ),
-    roomPasswordSecret: parseString(
-      env.AUTH_ROOM_PASSWORD_SECRET,
-      DEFAULT_ROOM_PASSWORD_SECRET,
-    ),
-    sessionCookieName: parseString(
-      env.AUTH_SESSION_COOKIE_NAME,
-      DEFAULT_SESSION_COOKIE_NAME,
-    ),
-    sessionMaxAgeSeconds: parseInteger(
-      env.AUTH_SESSION_MAX_AGE_SECONDS,
-      DEFAULT_SESSION_MAX_AGE_SECONDS,
-      "AUTH_SESSION_MAX_AGE_SECONDS",
-    ),
-    sessionSecret: parseString(env.AUTH_SESSION_SECRET, DEFAULT_SESSION_SECRET),
-  },
-  cors: {
-    allowCredentials: parseBoolean(env.CORS_ALLOW_CREDENTIALS, true),
-    allowedOrigins: parseList(env.CORS_ALLOWED_ORIGINS, []),
-  },
-  media,
-  server: {
-    apiBasePath: API_BASE_PATH,
-    mediaPhotoOriginalPath: MEDIA_PHOTO_ORIGINAL_PATH,
-    nodeEnv: parseNodeEnv(env.NODE_ENV),
-    port: parsePort(env.PORT),
-  },
+      mfaCodeMaxAgeSeconds: parseInteger(
+        env.AUTH_MFA_CODE_MAX_AGE_SECONDS,
+        DEFAULT_MFA_CODE_MAX_AGE_SECONDS,
+        "AUTH_MFA_CODE_MAX_AGE_SECONDS",
+      ),
+      roomPasswordSecret: parseString(
+        env.AUTH_ROOM_PASSWORD_SECRET,
+        DEFAULT_ROOM_PASSWORD_SECRET,
+      ),
+      sessionCookieName: parseString(
+        env.AUTH_SESSION_COOKIE_NAME,
+        DEFAULT_SESSION_COOKIE_NAME,
+      ),
+      sessionMaxAgeSeconds: parseInteger(
+        env.AUTH_SESSION_MAX_AGE_SECONDS,
+        DEFAULT_SESSION_MAX_AGE_SECONDS,
+        "AUTH_SESSION_MAX_AGE_SECONDS",
+      ),
+      sessionSecret: parseString(env.AUTH_SESSION_SECRET, DEFAULT_SESSION_SECRET),
+    },
+    cors: {
+      allowCredentials: parseBoolean(env.CORS_ALLOW_CREDENTIALS, true),
+      allowedOrigins: parseList(env.CORS_ALLOWED_ORIGINS, []),
+    },
+    media,
+    server: {
+      apiBasePath: API_BASE_PATH,
+      mediaPhotoOriginalPath: MEDIA_PHOTO_ORIGINAL_PATH,
+      nodeEnv: parseNodeEnv(env.NODE_ENV),
+      port: parsePort(env.PORT),
+    },
   };
 };
