@@ -1,4 +1,5 @@
-import { resolve } from "node:path";
+import { realpathSync } from "node:fs";
+import { isAbsolute, relative, resolve, sep } from "node:path";
 
 export const API_BASE_PATH = "/api" as const;
 export const MEDIA_PHOTO_ORIGINAL_PATH = "/media/photos/:id/original" as const;
@@ -123,7 +124,32 @@ const parseList = (value: string | undefined, fallback: string[]) => {
 const parseString = (value: string | undefined, fallback: string) =>
   value === undefined || value === "" ? fallback : value;
 
-const normalizeRootPath = (value: string) => resolve(value);
+const normalizeRootPath = (value: string) => {
+  const resolvedPath = resolve(value);
+
+  try {
+    return realpathSync.native(resolvedPath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return resolvedPath;
+    }
+
+    throw error;
+  }
+};
+
+const pathsOverlap = (left: string, right: string) => {
+  const normalizedLeft = normalizeRootPath(left);
+  const normalizedRight = normalizeRootPath(right);
+  const leftToRight = relative(normalizedLeft, normalizedRight);
+  const rightToLeft = relative(normalizedRight, normalizedLeft);
+
+  const isContained = (candidate: string) =>
+    candidate.length === 0 ||
+    (!isAbsolute(candidate) && candidate !== ".." && !candidate.startsWith(`..${sep}`));
+
+  return isContained(leftToRight) || isContained(rightToLeft);
+};
 
 export const loadBootstrapConfig = (
   env: BootstrapEnv = Bun.env,
@@ -151,7 +177,7 @@ export const loadBootstrapConfig = (
     ),
   };
 
-  if (normalizeRootPath(media.photosRoot) === normalizeRootPath(media.chatRoot)) {
+  if (pathsOverlap(media.photosRoot, media.chatRoot)) {
     throw new Error("MEDIA_PHOTOS_ROOT and MEDIA_CHAT_ROOT must be different");
   }
 
