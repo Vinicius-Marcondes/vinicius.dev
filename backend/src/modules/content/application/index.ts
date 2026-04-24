@@ -1,5 +1,7 @@
 import type {
   ContentRepositoryPort,
+  PhotoDetailRepositoryRow,
+  PhotoRepositoryRow,
   ThoughtCursor,
   ThoughtDetailRepositoryRow,
   ThoughtRepositoryRow,
@@ -9,7 +11,11 @@ import type {
 
 import type {
   GetPublishedProjectBySlugPort,
+  GetPublishedPhotoByIdPort,
   GetPublishedThoughtBySlugPort,
+  ListPublishedPhotosInput,
+  ListPublishedPhotosOutput,
+  ListPublishedPhotosPort,
   ListPublishedProjectsInput,
   ListPublishedProjectsOutput,
   ListPublishedProjectsPort,
@@ -18,6 +24,8 @@ import type {
   ListPublishedThoughtsPort,
   PublishedProjectDetail,
   PublishedProjectSummary,
+  PublishedPhotoDetail,
+  PublishedPhotoSummary,
   PublishedThoughtDetail,
   PublishedThoughtSummary,
 } from "../ports/inbound";
@@ -27,6 +35,9 @@ const MAX_THOUGHTS_PAGE_SIZE = 24;
 const DEFAULT_PROJECTS_PAGE = 1;
 const DEFAULT_PROJECTS_PAGE_SIZE = 12;
 const MAX_PROJECTS_PAGE_SIZE = 48;
+const DEFAULT_PHOTOS_PAGE = 1;
+const DEFAULT_PHOTOS_PAGE_SIZE = 24;
+const MAX_PHOTOS_PAGE_SIZE = 96;
 
 export class InvalidThoughtCursorError extends Error {
   constructor() {
@@ -115,6 +126,26 @@ const mapProjectDetail = (row: ProjectDetailRepositoryRow): PublishedProjectDeta
   source: row.source,
 });
 
+const buildPhotoOriginalUrl = (id: string): string => `/media/photos/${id}/original`;
+
+const mapPhotoSummary = (row: PhotoRepositoryRow): PublishedPhotoSummary => ({
+  date: row.date.toISOString().slice(0, 10),
+  frame: row.frame,
+  id: row.id,
+  location: row.location,
+  originalUrl: buildPhotoOriginalUrl(row.id),
+  tags: [...row.tags],
+  title: row.title,
+  tone: row.tone,
+});
+
+const mapPhotoDetail = (row: PhotoDetailRepositoryRow): PublishedPhotoDetail => ({
+  ...mapPhotoSummary(row),
+  camera: row.camera,
+  caption: row.caption,
+  film: row.film,
+});
+
 const normalizeLimit = (value?: number): number => {
   if (typeof value !== "number" || Number.isNaN(value)) {
     return DEFAULT_THOUGHTS_PAGE_SIZE;
@@ -137,6 +168,22 @@ const normalizeProjectPageSize = (value?: number): number => {
   }
 
   return Math.min(Math.max(Math.trunc(value), 1), MAX_PROJECTS_PAGE_SIZE);
+};
+
+const normalizePhotoPage = (value?: number): number => {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return DEFAULT_PHOTOS_PAGE;
+  }
+
+  return Math.max(Math.trunc(value), 1);
+};
+
+const normalizePhotoPageSize = (value?: number): number => {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return DEFAULT_PHOTOS_PAGE_SIZE;
+  }
+
+  return Math.min(Math.max(Math.trunc(value), 1), MAX_PHOTOS_PAGE_SIZE);
 };
 
 const encodeThoughtCursor = (cursor: ThoughtCursor): string => {
@@ -243,5 +290,39 @@ export const createGetPublishedProjectBySlugUseCase = ({
     const project = await repository.findPublishedProjectBySlug(slug);
 
     return project ? mapProjectDetail(project) : null;
+  },
+});
+
+export const createListPublishedPhotosUseCase = ({
+  repository,
+}: ContentApplicationDependencies): ListPublishedPhotosPort => ({
+  execute: async (input: ListPublishedPhotosInput): Promise<ListPublishedPhotosOutput> => {
+    const result = await repository.findPublishedPhotos({
+      location: input.location?.trim() || undefined,
+      page: normalizePhotoPage(input.page),
+      pageSize: normalizePhotoPageSize(input.pageSize),
+      search: input.search?.trim() || undefined,
+      year: input.year,
+    });
+
+    return {
+      items: result.items.map(mapPhotoSummary),
+      pageInfo: {
+        page: result.page,
+        pageSize: result.pageSize,
+        totalItems: result.totalItems,
+        totalPages: result.totalPages,
+      },
+    };
+  },
+});
+
+export const createGetPublishedPhotoByIdUseCase = ({
+  repository,
+}: ContentApplicationDependencies): GetPublishedPhotoByIdPort => ({
+  execute: async ({ id }) => {
+    const photo = await repository.findPublishedPhotoById(id);
+
+    return photo ? mapPhotoDetail(photo) : null;
   },
 });
