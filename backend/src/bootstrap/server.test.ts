@@ -301,11 +301,21 @@ describe("backend server scaffold", () => {
       ],
     });
 
+    const sitemapResponse = await app.request("https://vinicius.dev/api/sitemap");
+    const sitemapBody = await sitemapResponse.text();
+    expect(sitemapResponse.status).toBe(200);
+    expect(sitemapResponse.headers.get("content-type")).toContain("application/xml");
+    expect(sitemapBody).toContain('<?xml version="1.0" encoding="UTF-8"?>');
+    expect(sitemapBody).toContain("<loc>https://vinicius.dev/</loc>");
+    expect(sitemapBody).toContain("<loc>https://vinicius.dev/thoughts</loc>");
+    expect(sitemapBody).toContain("<loc>https://vinicius.dev/projects</loc>");
+    expect(sitemapBody).toContain("<loc>https://vinicius.dev/photos</loc>");
+    expect(sitemapBody).toContain("<loc>https://vinicius.dev/chat</loc>");
+
     const placeholderRoutes = [
       ["/api/chat", "chat"],
       ["/api/admin", "admin"],
       ["/api/auth", "auth"],
-      ["/api/sitemap", "sitemap"],
       ["/media/photos/123/original", "photo media"],
     ] as const;
 
