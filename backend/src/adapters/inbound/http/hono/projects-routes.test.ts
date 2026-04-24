@@ -58,6 +58,9 @@ const createTestContainer = (): BootstrapContainer => ({
             }
           : null,
     },
+    getPublishedPhotoById: {
+      execute: async () => null,
+    },
     getPublishedThoughtBySlug: {
       execute: async () => null,
     },
@@ -87,6 +90,17 @@ const createTestContainer = (): BootstrapContainer => ({
           page: page ?? 1,
           pageSize: pageSize ?? 12,
           totalItems: 1,
+          totalPages: 1,
+        },
+      }),
+    },
+    listPublishedPhotos: {
+      execute: async () => ({
+        items: [],
+        pageInfo: {
+          page: 1,
+          pageSize: 24,
+          totalItems: 0,
           totalPages: 1,
         },
       }),

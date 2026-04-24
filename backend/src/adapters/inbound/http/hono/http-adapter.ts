@@ -269,6 +269,97 @@ const createProjectsFamily = (container: BootstrapContainer) => {
   return projectsApp;
 };
 
+const parsePhotosQuery = (query: Record<string, string | undefined>) => {
+  const page = parsePositiveInteger(query.page);
+
+  if (typeof query.page !== "undefined" && typeof page === "undefined") {
+    return {
+      error: {
+        error: "invalid_query",
+        field: "page",
+      },
+    } as const;
+  }
+
+  const pageSize = parsePositiveInteger(query.pageSize);
+
+  if (typeof query.pageSize !== "undefined" && typeof pageSize === "undefined") {
+    return {
+      error: {
+        error: "invalid_query",
+        field: "pageSize",
+      },
+    } as const;
+  }
+
+  const year = parsePositiveInteger(query.year);
+
+  if (typeof query.year !== "undefined" && typeof year === "undefined") {
+    return {
+      error: {
+        error: "invalid_query",
+        field: "year",
+      },
+    } as const;
+  }
+
+  return {
+    value: {
+      location: query.location,
+      page,
+      pageSize,
+      search: query.search,
+      year,
+    },
+  } as const;
+};
+
+const createPhotosFamily = (container: BootstrapContainer) => {
+  const photosApp = new Hono();
+
+  photosApp.get("/", async (c) => {
+    const parsed = parsePhotosQuery(c.req.query());
+
+    if ("error" in parsed) {
+      return c.json(parsed.error, 400);
+    }
+
+    const response = await container.content.listPublishedPhotos.execute(parsed.value);
+
+    return c.json(response);
+  });
+
+  photosApp.get("/:id", async (c) => {
+    const id = c.req.param("id")?.trim();
+
+    if (!id) {
+      return c.json(
+        {
+          error: "invalid_path",
+          field: "id",
+        },
+        400,
+      );
+    }
+
+    const photo = await container.content.getPublishedPhotoById.execute({ id });
+
+    if (!photo) {
+      return c.json(
+        {
+          error: "not_found",
+          resource: "photo",
+        },
+        404,
+      );
+    }
+
+    return c.json({ item: photo });
+  });
+
+  return photosApp;
+};
+
 export const createHonoHttpAdapter = (container: BootstrapContainer) => {
   const app = new Hono();
 
@@ -283,7 +374,7 @@ export const createHonoHttpAdapter = (container: BootstrapContainer) => {
 
   app.route("/api/thoughts", createThoughtsFamily(container));
   app.route("/api/projects", createProjectsFamily(container));
-  mountPlaceholderFamily(app, "/api/photos", "public content");
+  app.route("/api/photos", createPhotosFamily(container));
   mountPlaceholderFamily(app, "/api/status-strip", "status strip");
   mountPlaceholderFamily(app, "/api/chat", "chat");
   mountPlaceholderFamily(app, "/api/admin", "admin");

@@ -1,6 +1,8 @@
 import type {
   ContentRepositoryPort,
+  PhotoDetailRepositoryRow,
   PhotoListQuery,
+  PhotoListPage,
   PhotoRepositoryRow,
   ProjectDetailRepositoryRow,
   ProjectListQuery,
@@ -12,7 +14,12 @@ import type {
   ThoughtListPage,
   ThoughtRepositoryRow,
 } from "@/modules/content/ports/outbound";
-import { Prisma, ProjectStatus, ThoughtStatus } from "../../../../../generated/prisma/client";
+import {
+  PhotoStatus,
+  Prisma,
+  ProjectStatus,
+  ThoughtStatus,
+} from "../../../../../generated/prisma/client";
 
 import type { PrismaDatabaseClient } from "./prisma-client";
 
@@ -128,6 +135,54 @@ const mapProjectDetailRow = (row: {
   ...mapProjectRow(row),
   body: row.body,
   source: row.source,
+});
+
+const mapPhotoRow = (row: {
+  caption: string | null;
+  createdAt: Date;
+  date: Date;
+  featured: boolean;
+  frame: string;
+  id: string;
+  location: string;
+  tags: string[];
+  title: string;
+  tone: "amber" | "cyan" | "mono" | "sunset" | "violet";
+  updatedAt: Date;
+}): PhotoRepositoryRow => ({
+  caption: row.caption,
+  createdAt: row.createdAt,
+  date: row.date,
+  featured: row.featured,
+  frame: row.frame,
+  id: row.id,
+  location: row.location,
+  tags: [...row.tags],
+  title: row.title,
+  tone: row.tone,
+  updatedAt: row.updatedAt,
+});
+
+const mapPhotoDetailRow = (row: {
+  camera: string | null;
+  caption: string | null;
+  createdAt: Date;
+  date: Date;
+  featured: boolean;
+  film: string | null;
+  frame: string;
+  id: string;
+  location: string;
+  originalPath: string;
+  tags: string[];
+  title: string;
+  tone: "amber" | "cyan" | "mono" | "sunset" | "violet";
+  updatedAt: Date;
+}): PhotoDetailRepositoryRow => ({
+  ...mapPhotoRow(row),
+  camera: row.camera,
+  film: row.film,
+  originalPath: row.originalPath,
 });
 
 const applyThoughtSearch = <
@@ -372,8 +427,91 @@ export const createPrismaContentRepository = (client: PrismaDatabaseClient): Con
 
     return row ? mapProjectDetailRow(row) : null;
   },
-  findPublishedPhotos: (_query: PhotoListQuery): Promise<readonly PhotoRepositoryRow[]> =>
-    notImplemented("findPublishedPhotos"),
+  findPublishedPhotos: async (query: PhotoListQuery): Promise<PhotoListPage> => {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 24;
+    const rows = await client.photo.findMany({
+      orderBy: [{ date: "desc" }, { id: "desc" }],
+      select: {
+        caption: true,
+        createdAt: true,
+        date: true,
+        featured: true,
+        frame: true,
+        id: true,
+        location: true,
+        tags: true,
+        title: true,
+        tone: true,
+        updatedAt: true,
+      },
+      where: {
+        ...(query.location
+          ? {
+              location: query.location,
+            }
+          : {}),
+        ...(query.year
+          ? {
+              date: {
+                gte: new Date(Date.UTC(query.year, 0, 1)),
+                lt: new Date(Date.UTC(query.year + 1, 0, 1)),
+              },
+            }
+          : {}),
+        status: PhotoStatus.published,
+      },
+    });
+
+    const normalizedSearch = query.search?.trim().toLowerCase();
+    const filteredRows = normalizedSearch
+      ? rows.filter((row) => {
+          return (
+            row.title.toLowerCase().includes(normalizedSearch) ||
+            row.location.toLowerCase().includes(normalizedSearch) ||
+            row.frame.toLowerCase().includes(normalizedSearch) ||
+            row.tags.some((tag) => tag.toLowerCase().includes(normalizedSearch))
+          );
+        })
+      : rows;
+    const totalItems = filteredRows.length;
+    const totalPages = Math.max(Math.ceil(totalItems / pageSize), 1);
+    const startIndex = (page - 1) * pageSize;
+
+    return {
+      items: filteredRows.slice(startIndex, startIndex + pageSize).map(mapPhotoRow),
+      page,
+      pageSize,
+      totalItems,
+      totalPages,
+    };
+  },
+  findPublishedPhotoById: async (id: string): Promise<PhotoDetailRepositoryRow | null> => {
+    const row = await client.photo.findFirst({
+      select: {
+        camera: true,
+        caption: true,
+        createdAt: true,
+        date: true,
+        featured: true,
+        film: true,
+        frame: true,
+        id: true,
+        location: true,
+        originalPath: true,
+        tags: true,
+        title: true,
+        tone: true,
+        updatedAt: true,
+      },
+      where: {
+        id,
+        status: PhotoStatus.published,
+      },
+    });
+
+    return row ? mapPhotoDetailRow(row) : null;
+  },
   listStatusStripEntries: (): Promise<readonly StatusStripEntryRepositoryRow[]> =>
     notImplemented("listStatusStripEntries"),
 });

@@ -36,6 +36,9 @@ const createTestContainer = (): BootstrapContainer => ({
     getPublishedProjectBySlug: {
       execute: async () => null,
     },
+    getPublishedPhotoById: {
+      execute: async () => null,
+    },
     getPublishedThoughtBySlug: {
       execute: async ({ slug }) =>
         slug === "night-cable-interfaces"
@@ -82,6 +85,17 @@ const createTestContainer = (): BootstrapContainer => ({
         pageInfo: {
           page: 1,
           pageSize: 12,
+          totalItems: 0,
+          totalPages: 1,
+        },
+      }),
+    },
+    listPublishedPhotos: {
+      execute: async () => ({
+        items: [],
+        pageInfo: {
+          page: 1,
+          pageSize: 24,
           totalItems: 0,
           totalPages: 1,
         },

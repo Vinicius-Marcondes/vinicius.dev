@@ -127,6 +127,46 @@ const createTestContainer = (): BootstrapContainer => ({
         },
       }),
     },
+    getPublishedPhotoById: {
+      execute: async ({ id }) =>
+        id === "p-2026-014"
+          ? {
+              camera: "Canon T7+",
+              caption: "Night street frame.",
+              date: "2026-03-22",
+              film: "digital",
+              frame: "014",
+              id,
+              location: "Sao Paulo",
+              originalUrl: "/media/photos/p-2026-014/original",
+              tags: ["night", "street"],
+              title: "paulista at 02:14",
+              tone: "sunset",
+            }
+          : null,
+    },
+    listPublishedPhotos: {
+      execute: async () => ({
+        items: [
+          {
+            date: "2026-03-22",
+            frame: "014",
+            id: "p-2026-014",
+            location: "Sao Paulo",
+            originalUrl: "/media/photos/p-2026-014/original",
+            tags: ["night", "street"],
+            title: "paulista at 02:14",
+            tone: "sunset",
+          },
+        ],
+        pageInfo: {
+          page: 1,
+          pageSize: 24,
+          totalItems: 1,
+          totalPages: 1,
+        },
+      }),
+    },
   },
 });
 
@@ -207,13 +247,34 @@ describe("backend server scaffold", () => {
       },
     });
 
+    const photosResponse = await app.request("/api/photos");
+    expect(photosResponse.status).toBe(200);
+    await expect(photosResponse.json()).resolves.toEqual({
+      items: [
+        {
+          date: "2026-03-22",
+          frame: "014",
+          id: "p-2026-014",
+          location: "Sao Paulo",
+          originalUrl: "/media/photos/p-2026-014/original",
+          tags: ["night", "street"],
+          title: "paulista at 02:14",
+          tone: "sunset",
+        },
+      ],
+      pageInfo: {
+        page: 1,
+        pageSize: 24,
+        totalItems: 1,
+        totalPages: 1,
+      },
+    });
+
     const placeholderRoutes = [
-      ["/api/photos", "public content"],
       ["/api/status-strip", "status strip"],
       ["/api/chat", "chat"],
       ["/api/admin", "admin"],
       ["/api/auth", "auth"],
-      ["/api/rss", "rss"],
       ["/api/sitemap", "sitemap"],
       ["/media/photos/123/original", "photo media"],
     ] as const;

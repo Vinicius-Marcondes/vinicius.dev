@@ -97,3 +97,49 @@ export interface ListPublishedProjectsPort
 
 export interface GetPublishedProjectBySlugPort
   extends UseCase<GetPublishedProjectBySlugInput, PublishedProjectDetail | null> {}
+
+export type PublishedPhotoSummary = Readonly<{
+  id: string;
+  frame: string;
+  title: string;
+  date: string;
+  location: string;
+  tags: readonly string[];
+  tone: "amber" | "cyan" | "mono" | "sunset" | "violet";
+  originalUrl: string;
+}>;
+
+export type PublishedPhotoDetail = PublishedPhotoSummary &
+  Readonly<{
+    camera: string | null;
+    caption: string | null;
+    film: string | null;
+  }>;
+
+export type ListPublishedPhotosInput = Readonly<{
+  page?: number;
+  pageSize?: number;
+  year?: number;
+  location?: string;
+  search?: string;
+}>;
+
+export type ListPublishedPhotosOutput = Readonly<{
+  items: readonly PublishedPhotoSummary[];
+  pageInfo: Readonly<{
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+  }>;
+}>;
+
+export type GetPublishedPhotoByIdInput = Readonly<{
+  id: string;
+}>;
+
+export interface ListPublishedPhotosPort
+  extends UseCase<ListPublishedPhotosInput, ListPublishedPhotosOutput> {}
+
+export interface GetPublishedPhotoByIdPort
+  extends UseCase<GetPublishedPhotoByIdInput, PublishedPhotoDetail | null> {}
