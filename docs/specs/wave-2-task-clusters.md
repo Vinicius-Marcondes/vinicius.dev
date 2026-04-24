@@ -54,10 +54,8 @@ Complete. `BE-001`, `BE-002`, `BE-003`, `BE-004`, and `BE-005` were implemented,
 - Production GitHub Actions workflow YAML.
 
 ## Future Clusters
-- Cluster 3 public content splits by Thoughts, Projects, Photos, Status Strip, RSS, and sitemap.
-- Cluster 4 media splits by public photo delivery, filesystem storage adapter, chat upload validation/storage, and moderation retention.
-- Cluster 5 admin splits by auth/MFA/session, admin dashboard contracts, content CRUD, curation, and status strip editing.
-- Cluster 6 chat splits by room gate, handle/session state, message archive, participant state, image attachment flow, moderation commands, and audit records.
+- Cluster 5 admin/auth splits by login, MFA, session lifecycle, dashboard contracts, content curation, and status strip editing.
+- Cluster 6 chat splits by room gate, handle/session state, message archive, participant state, non-media message flow, moderation commands, and audit records.
 - Cluster 7 infra/CI/verification splits by Docker service layout, Caddy routing, env/volume policy, GitHub Actions validation, deploy workflow, and cross-layer tests.
 
 ## Cluster 2: Persistence Foundation
@@ -98,7 +96,7 @@ Complete. `DATA-001`, `DATA-002`, `DATA-003`, `DATA-004`, and `DATA-005` were im
 Implement the public read APIs and metadata endpoints that feed the migrated frontend, using the persistence foundation from Cluster 2 and the DTO/filter/pagination contracts from the approved specs.
 
 ### Status
-Ready for issue creation and implementation.
+Complete. `BE-006`, `BE-007`, `BE-008`, `BE-009`, `BE-010`, and `BE-011` were implemented, reviewed, merged to `develop`, and verified together.
 
 ### Tasks
 | Task ID | Title | Layer | Base Branch | Branch Name | Merge Target | Source Specs | Acceptance Source |
@@ -123,6 +121,46 @@ Ready for issue creation and implementation.
 - Docker/Caddy deployment descriptors.
 - Production GitHub Actions workflow YAML.
 
+### Merged PRs
+- `BE-006`: `#45`
+- `BE-007`: `#46`
+- `BE-008`: `#47`
+- `BE-009`: `#49`
+- `BE-010`: `#48`
+- `BE-011`: `#50`
+
+## Cluster 4: Media Storage And Delivery
+### Goal
+Implement the shared media foundation and delivery behavior needed for filesystem-backed photo and chat media, while keeping storage behind outbound adapters and preserving the approved public and room-gated access contracts.
+
+### Status
+Ready for issue creation and implementation.
+
+### Tasks
+| Task ID | Title | Layer | Base Branch | Branch Name | Merge Target | Source Specs | Acceptance Source |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| BE-012 | Implement media repository and filesystem storage foundation | backend | develop | backend/BE-012-media-storage-foundation | develop | SPEC-006, SPEC-008, SPEC-010, SPEC-016 | media-storage.md, project-structure.md, infra-deployment.md |
+| BE-013 | Implement public photo original media delivery | backend | develop | backend/BE-013-photo-original-media-delivery | develop | SPEC-006, SPEC-008, SPEC-010, SPEC-011, SPEC-016 | media-storage.md, backend-architecture.md, verification.md |
+| BE-014 | Implement chat upload validation and storage flow | backend | develop | backend/BE-014-chat-upload-validation-storage | develop | SPEC-006, SPEC-008, SPEC-011, SPEC-016 | media-storage.md, backend-architecture.md, verification.md |
+| BE-015 | Implement room-gated chat media access | backend | develop | backend/BE-015-room-gated-chat-media-access | develop | SPEC-006, SPEC-008, SPEC-010, SPEC-011, SPEC-016 | media-storage.md, infra-deployment.md, verification.md |
+| BE-016 | Implement chat media hide-delete retention behavior | backend | develop | backend/BE-016-chat-media-retention-moderation | develop | SPEC-008, SPEC-009, SPEC-011, SPEC-016 | media-storage.md, admin-cms.md, data-model.md, verification.md |
+| BE-017 | Add media delivery and upload verification hardening | backend | develop | backend/BE-017-media-verification-hardening | develop | SPEC-008, SPEC-011, SPEC-018 | verification.md, ci-cd.md |
+
+### Dependency Rules
+- `BE-012` runs first because Cluster 4 depends on shared media repository reads, storage ports, filesystem adapter behavior, and bootstrap wiring.
+- `BE-013` and `BE-014` start only after `BE-012` lands on `develop`; they may run in parallel because one owns public photo delivery and the other owns chat upload write flow.
+- `BE-015` starts only after `BE-014` lands on `develop` because room-gated media access depends on persisted upload metadata and room/session-aware media lookups.
+- `BE-016` starts only after `BE-014` lands on `develop` because hide/delete retention behavior depends on the chat upload/media persistence flow.
+- `BE-017` starts only after `BE-013`, `BE-014`, `BE-015`, and `BE-016` land on `develop`.
+- Cluster 5 admin/auth and Cluster 6 non-media chat behavior remain blocked until Cluster 4 is merged and validated.
+
+### Non-Scope
+- Admin login, MFA, and session lifecycle.
+- Admin dashboard CRUD and curation flows.
+- Non-media chat message archive, participant presence, and moderation commands outside media hide/delete behavior.
+- Docker/Caddy implementation files.
+- Production GitHub Actions workflow YAML.
+
 ## Acceptance Checklist
 - [ ] Cluster order follows the approved Wave 2 dependency sequence.
 - [ ] Cluster 1 tasks each have one task ID, branch, issue, Project item, and acceptance source.
@@ -133,6 +171,11 @@ Ready for issue creation and implementation.
 - [ ] Cluster 3 tasks each have one task ID, branch, issue, Project item, and acceptance source.
 - [ ] Cluster 3 keeps the Thoughts API ahead of the other public content endpoints.
 - [ ] RSS remains coupled to Thoughts and sitemap remains coupled to the finalized public content contracts.
+- [ ] Cluster 4 tasks each have one task ID, branch, issue, Project item, and acceptance source.
+- [ ] Cluster 4 starts with shared media storage foundation before photo or chat media behavior.
+- [ ] Cluster 4 allows photo delivery and chat upload implementation to run in parallel only after the shared storage foundation lands.
+- [ ] Cluster 4 keeps room-gated chat media access and retention behavior behind upload/storage readiness.
+- [ ] Cluster 4 moderation-aligned media retention work cites the admin moderation spec directly.
 - [ ] Future clusters remain blocked until their dependencies land.
 
 ## Git Branch Implications
@@ -140,4 +183,5 @@ Ready for issue creation and implementation.
 - Cluster 1 implementation uses `backend/` branches.
 - Cluster 2 implementation uses `data/` branches.
 - Cluster 3 implementation uses `backend/` branches.
+- Cluster 4 implementation uses `backend/` branches.
 - Future infra-only work uses `infra/` branches and future verification-only work may use `qa/` branches if the harness adopts that prefix; until then, use the closest approved prefix from `git-workflow.md`.

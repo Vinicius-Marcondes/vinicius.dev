@@ -6,15 +6,16 @@ This playbook explains how to turn the spec harness into real work, in the corre
 ## Summary
 Use this sequence every time:
 1. confirm gates in [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md)
-2. approve the blocking specs for the next phase
-3. turn approved specs into task clusters
-4. split clusters into GitHub Issues
-5. run one agent per task branch
-6. monitor status in GitHub Project `vinicius.dev`
-7. merge reviewed work into `develop`
-8. promote milestones from `develop` to `main`
+2. confirm the current executable cluster in the harness, not from memory
+3. approve the blocking specs for the next phase
+4. turn approved specs into task clusters
+5. split clusters into GitHub Issues
+6. run one agent per task branch
+7. monitor status in GitHub Project `vinicius.dev`
+8. merge reviewed work into `develop`
+9. promote milestones from `develop` to `main`
 
-This repo does not start from backend work. The current first implementation phase is frontend migration, because the imported `frontend/` is still a legacy React artifact and blocks backend tasking.
+The harness, GitHub Project, and `develop` must stay aligned. If implementation lands ahead of the harness, close out the completed cluster in docs before starting the next one.
 
 ## Phase Order
 ### Phase 0: Repo and workflow bootstrap
@@ -29,10 +30,10 @@ This repo does not start from backend work. The current first implementation pha
 - Approve the specs that block the next layer of work.
 
 Current required approvals before real task cutting:
-- [frontend-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-structure.md)
-- [frontend-intake.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-intake.md)
-- [frontend-analyzer.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer.md)
-- [frontend-architecture.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-architecture.md)
+- the current executable cluster in [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md)
+- the owning source specs named by that cluster in [wave-2-task-clusters.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/wave-2-task-clusters.md)
+- [project-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/project-structure.md) for backend-facing work
+- [ci-cd.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/ci-cd.md) for validation and release-readiness tasks
 
 Do not cut backend tasks while the analyzer still reports:
 - legacy React architecture
@@ -48,14 +49,14 @@ Each cluster should:
 - have a clear dependency boundary
 - contain tasks that can be parallelized without overlapping write scope
 
-Current cluster order:
-1. `Frontend migration`
-2. `Frontend validation and reconciliation`
-3. `Backend foundation`
-4. `Data and storage`
-5. `Admin backend and UI integration`
-6. `Infra and CI/CD`
-7. `Verification and release readiness`
+Current Wave 2 cluster order:
+1. `Backend foundation`
+2. `Persistence foundation`
+3. `Public content APIs`
+4. `Media storage and delivery`
+5. `Admin/auth backend`
+6. `Chat backend and moderation`
+7. `Infra, CI/CD, and verification hardening`
 
 ### Phase 3: Issue creation
 For each executable task:
@@ -88,33 +89,32 @@ Use:
 - Promote from `develop` to `main`.
 - Production releases come from tagged commits on `main`.
 
-## Current First Development Cluster
-The first real cluster is `Frontend migration`.
+## Current Executable Cluster
+The current executable cluster is `Wave 2 Cluster 4: Media storage and delivery`.
 
 Create these tasks in this order:
-1. Archive current `frontend/` into tracked `frontend-legacy/`
-2. Scaffold clean `Vite + React + TypeScript + Bun` app
-3. Establish route skeleton and app shells for `/`, `/thoughts`, `/projects`, `/photos`, `/chat`, `/admin`
-4. Migrate landing screen
-5. Migrate projects screen
-6. Migrate photos screen
-7. Implement fully designed Thoughts screen
-8. Implement fully designed Chat Room screen
-9. Implement fully designed Admin screen
-10. Re-run frontend analyzer and clear migration blockers
+1. Implement shared media repository reads, storage ports, filesystem adapter behavior, and bootstrap wiring.
+2. Implement public photo original delivery on `/media/photos/:id/original`.
+3. Implement chat upload validation and storage flow.
+4. Implement room-gated chat media access.
+5. Implement chat media hide/delete retention behavior.
+6. Add media delivery and upload verification coverage.
 
-Only after that should backend clusters be created.
+Parallelization rule for the current cluster:
+- after the shared media foundation lands, public photo delivery and chat upload/storage may run in parallel
+- room-gated chat media access and media retention follow the chat upload/storage task
+- verification hardening runs last across the merged cluster state
 
 ## Cluster-to-Task Rules
 ### Good task split
-- one route or screen migration per task
+- one storage or delivery concern per task
 - one infrastructure concern per task
 - one data or API concern per task
 - one verification concern per task
 
 ### Bad task split
-- one task touching both frontend migration and backend API design
-- one task spanning multiple independent screens
+- one task touching both public photo delivery and chat upload behavior
+- one task spanning multiple independent media concerns with different dependencies
 - one task that changes structure, data contracts, and deployment at once
 - one task with unclear acceptance source
 
@@ -124,12 +124,10 @@ Parallelize only when:
 - dependencies are already satisfied
 - one task does not need the result of another task immediately
 
-For example, after the new frontend shell exists:
-- landing migration
-- projects migration
-- photos migration
-- Thoughts implementation
-can run in parallel if they do not all edit the same structural files.
+For example, after the shared media foundation exists:
+- public photo delivery
+- chat upload/storage
+can run in parallel if they do not overlap on the same adapter or route files.
 
 ## GitHub Project Usage
 Read the Project as the execution board.
@@ -157,8 +155,8 @@ Use these views in GitHub Project:
 - Board grouped by `Status`
 - Table sorted by `Layer`, then `Task ID`
 - Filtered view for `Blocked Reason is not empty`
-- Filtered view for `Layer = frontend`
 - Filtered view for `Layer = backend`
+- Filtered view for `Status = Spec-ready`
 
 ## Agent Types
 ### 1. Frontend validator agent
@@ -258,6 +256,7 @@ Responsibilities:
 - check acceptance against the source spec
 - check task scope and regressions
 - check issue/PR linkage and branch policy
+- confirm the tracker and cluster docs still describe the active phase correctly when the task closes a cluster
 - move or confirm `In Review`/`Done` states
 
 ## Commands and Helpers
@@ -309,8 +308,7 @@ Before merging:
 
 ## Current Recommendation
 Start with:
-1. create `develop` from `main`
-2. create the frontend migration cluster as GitHub Issues
-3. assign agents one issue each starting with the new frontend shell and legacy snapshot work
-4. do not create backend implementation issues until the analyzer no longer reports migration blockers
-
+1. sync the harness to the latest merged cluster state
+2. create the current executable cluster as GitHub Issues from `wave-2-task-clusters.md`
+3. assign one agent to the shared foundation task first
+4. parallelize only the tasks explicitly marked parallel-safe by the active cluster definition

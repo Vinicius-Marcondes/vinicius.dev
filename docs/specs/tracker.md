@@ -46,8 +46,8 @@
 - The frontend migration wave cleared the previous browser Babel, CDN React, global `window.*`, missing TypeScript, and missing screen blockers.
 
 ## Next Task Queue
-1. Cut Wave 2 Cluster 3 public content tasks from approved backend architecture, data model, project structure, CI/CD, and verification specs.
-2. Implement public Thoughts, Projects, Photos, Status Strip, RSS, and sitemap APIs before media delivery, admin auth, or chat behavior.
+1. Cut Wave 2 Cluster 4 media/storage tasks from approved media, backend, infra, project structure, and verification specs.
+2. Implement shared media foundation first, then public photo delivery and chat-media behavior, then media verification hardening.
 3. Run frontend analyzer as non-mutating validation for backend-only PRs.
 4. Keep one issue, one Project item, one branch, and one acceptance source per implementation task.
 
@@ -79,12 +79,22 @@
 - Integrated verification: Prisma validate/generate, seed, persistence check, backend typecheck, tests, build, and `bun run verify` passed on `develop`.
 
 ### Wave 2 Cluster 3 Public Content APIs
-- Status: ready for issue creation and implementation.
+- Status: complete.
 - Primary specs: `SPEC-006`, `SPEC-007`, `SPEC-011`, `SPEC-016`, `SPEC-018`.
 - Scope: shared public content HTTP contracts plus public Thoughts, Projects, Photos, Status Strip, RSS, and sitemap endpoints under `/api`.
 - Non-scope: binary photo delivery, chat uploads/media access, admin auth/session behavior, admin CRUD flows, Docker/Caddy deployment descriptors, and production CI workflows.
 - Tasks: `BE-006`, `BE-007`, `BE-008`, `BE-009`, `BE-010`, and `BE-011`.
 - Required ordering: `BE-006` first; `BE-007`, `BE-008`, `BE-009`, and `BE-010` after `BE-006`; `BE-011` after `BE-007`, `BE-008`, and `BE-009`.
+- Merged PRs: `#45`, `#46`, `#47`, `#49`, `#48`, and `#50`.
+- Integrated verification: backend typecheck, tests, build, and `bun run verify` passed on `develop`.
+
+### Wave 2 Cluster 4 Media Storage And Delivery
+- Status: ready for issue creation and implementation.
+- Primary specs: `SPEC-006`, `SPEC-008`, `SPEC-010`, `SPEC-011`, `SPEC-016`, `SPEC-018`.
+- Scope: filesystem-backed media foundation, public photo original delivery, chat upload validation/storage, room-gated chat media access, moderation-aligned retention behavior, and media-specific verification.
+- Non-scope: admin auth/session behavior, admin dashboard CRUD flows, non-media chat room lifecycle behavior, Docker/Caddy implementation files, and production CI workflow YAML.
+- Tasks: `BE-012`, `BE-013`, `BE-014`, `BE-015`, `BE-016`, and `BE-017`.
+- Required ordering: `BE-012` first; `BE-013` and `BE-014` after `BE-012`; `BE-015` and `BE-016` after `BE-014`; `BE-017` after `BE-013`, `BE-014`, `BE-015`, and `BE-016`.
 
 ### Frontend Migration Wave 1
 - Status: complete after FE-010 analyzer reconciliation.
