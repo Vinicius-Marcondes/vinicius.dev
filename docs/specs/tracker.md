@@ -93,8 +93,8 @@
 - Primary specs: `SPEC-006`, `SPEC-008`, `SPEC-010`, `SPEC-011`, `SPEC-016`, `SPEC-018`.
 - Scope: filesystem-backed media foundation, public photo original delivery, chat upload validation/storage, room-gated chat media access, moderation-aligned retention behavior, and media-specific verification.
 - Non-scope: admin auth/session behavior, admin dashboard CRUD flows, non-media chat room lifecycle behavior, Docker/Caddy implementation files, and production CI workflow YAML.
-- Tasks: `BE-012`, `BE-013`, `BE-014`, `BE-015`, `BE-016`, and `QA-001`.
-- Required ordering: `BE-012` first; `BE-013` and `BE-014` after `BE-012`; `BE-015` and `BE-016` after `BE-014`; `QA-001` after `BE-013`, `BE-014`, `BE-015`, and `BE-016`.
+- Tasks: `BE-012`, `BE-013`, `BE-014`, `BE-015`, `BE-016`, and `BE-017`.
+- Required ordering: `BE-012` first; `BE-013` and `BE-014` after `BE-012`; `BE-015` and `BE-016` after `BE-014`; `BE-017` after `BE-013`, `BE-014`, `BE-015`, and `BE-016`.
 
 ### Frontend Migration Wave 1
 - Status: complete after FE-010 analyzer reconciliation.

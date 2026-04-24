@@ -143,15 +143,15 @@ Ready for issue creation and implementation.
 | BE-013 | Implement public photo original media delivery | backend | develop | backend/BE-013-photo-original-media-delivery | develop | SPEC-006, SPEC-008, SPEC-010, SPEC-011, SPEC-016 | media-storage.md, backend-architecture.md, verification.md |
 | BE-014 | Implement chat upload validation and storage flow | backend | develop | backend/BE-014-chat-upload-validation-storage | develop | SPEC-006, SPEC-008, SPEC-011, SPEC-016 | media-storage.md, backend-architecture.md, verification.md |
 | BE-015 | Implement room-gated chat media access | backend | develop | backend/BE-015-room-gated-chat-media-access | develop | SPEC-006, SPEC-008, SPEC-010, SPEC-011, SPEC-016 | media-storage.md, infra-deployment.md, verification.md |
-| BE-016 | Implement chat media hide-delete retention behavior | backend | develop | backend/BE-016-chat-media-retention-moderation | develop | SPEC-008, SPEC-011, SPEC-016 | media-storage.md, data-model.md, verification.md |
-| QA-001 | Add media delivery and upload verification coverage | qa | develop | qa/QA-001-media-storage-delivery-verification | develop | SPEC-008, SPEC-011, SPEC-018 | verification.md, ci-cd.md |
+| BE-016 | Implement chat media hide-delete retention behavior | backend | develop | backend/BE-016-chat-media-retention-moderation | develop | SPEC-008, SPEC-009, SPEC-011, SPEC-016 | media-storage.md, admin-cms.md, data-model.md, verification.md |
+| BE-017 | Add media delivery and upload verification hardening | backend | develop | backend/BE-017-media-verification-hardening | develop | SPEC-008, SPEC-011, SPEC-018 | verification.md, ci-cd.md |
 
 ### Dependency Rules
 - `BE-012` runs first because Cluster 4 depends on shared media repository reads, storage ports, filesystem adapter behavior, and bootstrap wiring.
 - `BE-013` and `BE-014` start only after `BE-012` lands on `develop`; they may run in parallel because one owns public photo delivery and the other owns chat upload write flow.
 - `BE-015` starts only after `BE-014` lands on `develop` because room-gated media access depends on persisted upload metadata and room/session-aware media lookups.
 - `BE-016` starts only after `BE-014` lands on `develop` because hide/delete retention behavior depends on the chat upload/media persistence flow.
-- `QA-001` starts only after `BE-013`, `BE-014`, `BE-015`, and `BE-016` land on `develop`.
+- `BE-017` starts only after `BE-013`, `BE-014`, `BE-015`, and `BE-016` land on `develop`.
 - Cluster 5 admin/auth and Cluster 6 non-media chat behavior remain blocked until Cluster 4 is merged and validated.
 
 ### Non-Scope
@@ -175,6 +175,7 @@ Ready for issue creation and implementation.
 - [ ] Cluster 4 starts with shared media storage foundation before photo or chat media behavior.
 - [ ] Cluster 4 allows photo delivery and chat upload implementation to run in parallel only after the shared storage foundation lands.
 - [ ] Cluster 4 keeps room-gated chat media access and retention behavior behind upload/storage readiness.
+- [ ] Cluster 4 moderation-aligned media retention work cites the admin moderation spec directly.
 - [ ] Future clusters remain blocked until their dependencies land.
 
 ## Git Branch Implications
@@ -182,5 +183,5 @@ Ready for issue creation and implementation.
 - Cluster 1 implementation uses `backend/` branches.
 - Cluster 2 implementation uses `data/` branches.
 - Cluster 3 implementation uses `backend/` branches.
-- Cluster 4 implementation uses `backend/` branches, with verification hardening allowed on `qa/` branches.
+- Cluster 4 implementation uses `backend/` branches.
 - Future infra-only work uses `infra/` branches and future verification-only work may use `qa/` branches if the harness adopts that prefix; until then, use the closest approved prefix from `git-workflow.md`.

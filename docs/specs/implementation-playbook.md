@@ -30,10 +30,10 @@ The harness, GitHub Project, and `develop` must stay aligned. If implementation 
 - Approve the specs that block the next layer of work.
 
 Current required approvals before real task cutting:
-- [frontend-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-structure.md)
-- [frontend-intake.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-intake.md)
-- [frontend-analyzer.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer.md)
-- [frontend-architecture.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-architecture.md)
+- the current executable cluster in [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md)
+- the owning source specs named by that cluster in [wave-2-task-clusters.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/wave-2-task-clusters.md)
+- [project-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/project-structure.md) for backend-facing work
+- [ci-cd.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/ci-cd.md) for validation and release-readiness tasks
 
 Do not cut backend tasks while the analyzer still reports:
 - legacy React architecture
@@ -107,14 +107,14 @@ Parallelization rule for the current cluster:
 
 ## Cluster-to-Task Rules
 ### Good task split
-- one route or screen migration per task
+- one storage or delivery concern per task
 - one infrastructure concern per task
 - one data or API concern per task
 - one verification concern per task
 
 ### Bad task split
-- one task touching both frontend migration and backend API design
-- one task spanning multiple independent screens
+- one task touching both public photo delivery and chat upload behavior
+- one task spanning multiple independent media concerns with different dependencies
 - one task that changes structure, data contracts, and deployment at once
 - one task with unclear acceptance source
 
@@ -124,12 +124,10 @@ Parallelize only when:
 - dependencies are already satisfied
 - one task does not need the result of another task immediately
 
-For example, after the new frontend shell exists:
-- landing migration
-- projects migration
-- photos migration
-- Thoughts implementation
-can run in parallel if they do not all edit the same structural files.
+For example, after the shared media foundation exists:
+- public photo delivery
+- chat upload/storage
+can run in parallel if they do not overlap on the same adapter or route files.
 
 ## GitHub Project Usage
 Read the Project as the execution board.
@@ -158,7 +156,7 @@ Use these views in GitHub Project:
 - Table sorted by `Layer`, then `Task ID`
 - Filtered view for `Blocked Reason is not empty`
 - Filtered view for `Layer = backend`
-- Filtered view for `Layer = qa`
+- Filtered view for `Status = Spec-ready`
 
 ## Agent Types
 ### 1. Frontend validator agent
