@@ -36,3 +36,17 @@ export type UploadChatMessageWithImageOutput = Readonly<{
 
 export interface UploadChatMessageWithImagePort
   extends UseCase<UploadChatMessageWithImageInput, UploadChatMessageWithImageOutput> {}
+
+export type OpenChatUploadMediaInput = Readonly<{
+  roomSessionId: string;
+  uploadId: string;
+}>;
+
+export type OpenChatUploadMediaOutput = Readonly<{
+  byteSize: number;
+  mimeType: ChatUploadMimeType;
+  stream: ReadableStream<Uint8Array>;
+}>;
+
+export interface OpenChatUploadMediaPort
+  extends UseCase<OpenChatUploadMediaInput, OpenChatUploadMediaOutput | null> {}

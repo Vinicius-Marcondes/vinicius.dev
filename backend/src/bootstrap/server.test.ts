@@ -5,6 +5,9 @@ import { createServer } from "./server";
 
 const createTestContainer = (): BootstrapContainer => ({
   chat: {
+    openUploadMedia: {
+      execute: async () => null,
+    },
     uploadMessageWithImage: {
       execute: async () => ({
         attachment: {

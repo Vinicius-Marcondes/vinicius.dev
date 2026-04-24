@@ -15,6 +15,9 @@ const createTestContainer = (
   ) => UploadChatMessageWithImageOutput | Promise<UploadChatMessageWithImageOutput>,
 ): BootstrapContainer => ({
   chat: {
+    openUploadMedia: {
+      execute: async () => null,
+    },
     uploadMessageWithImage: {
       execute: executeUpload,
     },

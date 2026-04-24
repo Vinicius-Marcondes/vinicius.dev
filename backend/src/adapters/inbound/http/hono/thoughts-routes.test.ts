@@ -6,6 +6,9 @@ import { createHonoHttpAdapter } from "./http-adapter";
 
 const createTestContainer = (): BootstrapContainer => ({
   chat: {
+    openUploadMedia: {
+      execute: async () => null,
+    },
     uploadMessageWithImage: {
       execute: async () => ({
         attachment: {

@@ -10,6 +10,7 @@ describe("bootstrap container", () => {
       NODE_ENV: "test",
     });
 
+    expect(typeof container.chat.openUploadMedia.execute).toBe("function");
     expect(typeof container.media.repository.findPhotoMediaById).toBe("function");
     expect(typeof container.media.repository.findChatUploadMediaById).toBe("function");
     expect(typeof container.media.storage.photos.openOriginal).toBe("function");

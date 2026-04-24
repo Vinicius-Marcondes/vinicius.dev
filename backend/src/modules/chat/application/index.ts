@@ -1,7 +1,13 @@
-import type { ChatUploadStoragePort } from "@/modules/media/ports/outbound";
+import type {
+  ChatUploadStoragePort,
+  MediaRepositoryPort,
+} from "@/modules/media/ports/outbound";
 import type { ChatRepositoryPort } from "@/modules/chat/ports/outbound";
 import type {
   ChatUploadMimeType,
+  OpenChatUploadMediaInput,
+  OpenChatUploadMediaOutput,
+  OpenChatUploadMediaPort,
   UploadChatMessageWithImageInput,
   UploadChatMessageWithImageOutput,
   UploadChatMessageWithImagePort,
@@ -13,6 +19,13 @@ export class InvalidChatUploadActorError extends Error {
   constructor() {
     super("chat upload actor/session does not match the requested room");
     this.name = "InvalidChatUploadActorError";
+  }
+}
+
+export class InvalidChatUploadAccessError extends Error {
+  constructor() {
+    super("chat upload access requires an active room session");
+    this.name = "InvalidChatUploadAccessError";
   }
 }
 
@@ -46,6 +59,12 @@ export type ChatApplicationDependencies = Readonly<{
   createId?: () => string;
   repository: Pick<ChatRepositoryPort, "createMessageWithUpload" | "findSessionById">;
   storage: ChatUploadStoragePort;
+}>;
+
+export type ChatUploadMediaAccessDependencies = Readonly<{
+  repository: Pick<ChatRepositoryPort, "findSessionById">;
+  mediaRepository: Pick<MediaRepositoryPort, "findChatUploadMediaById">;
+  storage: Pick<ChatUploadStoragePort, "openUpload">;
 }>;
 
 export const createUploadChatMessageWithImageUseCase = ({
@@ -114,5 +133,43 @@ export const createUploadChatMessageWithImageUseCase = ({
       await storage.deleteUpload(writtenUpload.storagePath).catch(() => undefined);
       throw error;
     }
+  },
+});
+
+export const createOpenChatUploadMediaUseCase = ({
+  mediaRepository,
+  repository,
+  storage,
+}: ChatUploadMediaAccessDependencies): OpenChatUploadMediaPort => ({
+  execute: async (
+    input: OpenChatUploadMediaInput,
+  ): Promise<OpenChatUploadMediaOutput | null> => {
+    const session = await repository.findSessionById(input.roomSessionId);
+
+    if (!session || session.status !== "active") {
+      throw new InvalidChatUploadAccessError();
+    }
+
+    const upload = await mediaRepository.findChatUploadMediaById(input.uploadId);
+
+    if (
+      !upload ||
+      upload.roomId !== session.roomId ||
+      upload.moderationState !== "visible"
+    ) {
+      return null;
+    }
+
+    const storedObject = await storage.openUpload(upload.storagePath);
+
+    if (!storedObject) {
+      return null;
+    }
+
+    return {
+      byteSize: storedObject.byteSize,
+      mimeType: upload.mimeType,
+      stream: storedObject.stream,
+    };
   },
 });

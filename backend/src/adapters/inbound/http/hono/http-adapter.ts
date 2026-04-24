@@ -2,7 +2,10 @@ import { extname } from "node:path";
 
 import { Hono } from "hono";
 
-import { InvalidChatUploadActorError } from "@/modules/chat/application";
+import {
+  InvalidChatUploadAccessError,
+  InvalidChatUploadActorError,
+} from "@/modules/chat/application";
 import { InvalidThoughtCursorError } from "@/modules/content/application";
 import type { ChatUploadMimeType } from "@/modules/chat/ports/inbound";
 import type { BootstrapContainer } from "@/bootstrap/container";
@@ -478,6 +481,68 @@ const collectUploadFiles = (formData: FormData): File[] => {
 
 const createChatFamily = (container: BootstrapContainer) => {
   const chatApp = new Hono();
+
+  chatApp.get("/uploads/:id/media", async (c) => {
+    const id = c.req.param("id")?.trim();
+
+    if (!id) {
+      return c.json(
+        {
+          error: "invalid_path",
+          field: "id",
+        },
+        400,
+      );
+    }
+
+    const roomSessionId = c.req.query("roomSessionId")?.trim();
+
+    if (!roomSessionId) {
+      return c.json(
+        {
+          error: "invalid_query",
+          field: "roomSessionId",
+        },
+        400,
+      );
+    }
+
+    let upload;
+
+    try {
+      upload = await container.chat.openUploadMedia.execute({
+        roomSessionId,
+        uploadId: id,
+      });
+    } catch (error) {
+      if (error instanceof InvalidChatUploadAccessError) {
+        return c.json(
+          {
+            error: "denied",
+            resource: "chat",
+          },
+          403,
+        );
+      }
+
+      throw error;
+    }
+
+    if (!upload) {
+      return c.json(
+        {
+          error: "not_found",
+          resource: "chat_upload",
+        },
+        404,
+      );
+    }
+
+    return c.body(upload.stream, 200, {
+      "Content-Length": String(upload.byteSize),
+      "Content-Type": upload.mimeType,
+    });
+  });
 
   chatApp.post("/messages/upload", async (c) => {
     let formData: FormData;
