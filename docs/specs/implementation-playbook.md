@@ -90,17 +90,17 @@ Use:
 - Production releases come from tagged commits on `main`.
 
 ## Current Executable Cluster
-Wave 2 Clusters 1-4 are complete in the harness. There is no new executable cluster to cut from this playbook until the next planning/status update is approved.
+The current executable cluster is `Wave 2 Cluster 4: Media storage and delivery`.
 
 Current follow-up actions:
-1. Commit and merge `BE-017` to `develop`.
-2. Run the cluster-level backend verification pass on `develop` after merge.
-3. Cut the Cluster 4 closeout/spec sync task once merge verification is complete.
+1. Run the cluster-level backend verification pass on `develop` for the merged Cluster 4 task set.
+2. Confirm the Wave 2 Cluster 4 execution artifacts stay synced across specs, issues, PRs, and the GitHub Project.
+3. Cut the next planning/status update before defining any new executable cluster.
 
 Parallelization rule for the current state:
 - do not cut a new cluster from this playbook until the harness is explicitly advanced
 - backend-only PRs still run the frontend analyzer as a non-mutating validation check
-- verification hardening remains the last task within Cluster 4 until `BE-017` is merged
+- Cluster 4 is complete; the next action is harness/planning advancement rather than another Cluster 4 implementation task
 
 ## Cluster-to-Task Rules
 ### Good task split
