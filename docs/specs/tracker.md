@@ -46,10 +46,11 @@
 - The frontend migration wave cleared the previous browser Babel, CDN React, global `window.*`, missing TypeScript, and missing screen blockers.
 
 ## Next Task Queue
-1. Cut Wave 2 Cluster 4 media/storage tasks from approved media, backend, infra, project structure, and verification specs.
-2. Implement shared media foundation first, then public photo delivery and chat-media behavior, then media verification hardening.
-3. Run frontend analyzer as non-mutating validation for backend-only PRs.
-4. Keep one issue, one Project item, one branch, and one acceptance source per implementation task.
+1. Commit and open the `BE-017` media verification hardening PR.
+2. Merge `BE-017` to `develop` and run the cluster-level backend verification pass there.
+3. Cut the Cluster 4 closeout/spec sync task after merge verification is complete.
+4. Run frontend analyzer as non-mutating validation for backend-only PRs.
+5. Keep one issue, one Project item, one branch, and one acceptance source per implementation task.
 
 ## Current Executable Cluster
 ### SPEC-019 Backend Spec Reconciliation
@@ -89,12 +90,20 @@
 - Integrated verification: backend typecheck, tests, build, and `bun run verify` passed on `develop`.
 
 ### Wave 2 Cluster 4 Media Storage And Delivery
-- Status: ready for issue creation and implementation.
+- Status: complete on branch; merge to `develop` pending `BE-017` PR.
 - Primary specs: `SPEC-006`, `SPEC-008`, `SPEC-010`, `SPEC-011`, `SPEC-016`, `SPEC-018`.
 - Scope: filesystem-backed media foundation, public photo original delivery, chat upload validation/storage, room-gated chat media access, moderation-aligned retention behavior, and media-specific verification.
 - Non-scope: admin auth/session behavior, admin dashboard CRUD flows, non-media chat room lifecycle behavior, Docker/Caddy implementation files, and production CI workflow YAML.
 - Tasks: `BE-012`, `BE-013`, `BE-014`, `BE-015`, `BE-016`, and `BE-017`.
 - Required ordering: `BE-012` first; `BE-013` and `BE-014` after `BE-012`; `BE-015` and `BE-016` after `BE-014`; `BE-017` after `BE-013`, `BE-014`, `BE-015`, and `BE-016`.
+- Execution checkpoint:
+- `BE-012` complete and merged via PR `#59`.
+- `BE-013` complete and merged via PR `#61`.
+- `BE-014` complete and merged via PR `#60`.
+- `BE-015` complete and merged via PR `#62`.
+- `BE-016` complete and merged via PR `#63`.
+- `BE-017` implementation and verification are complete on `backend/BE-017-media-verification-hardening`.
+- Integrated verification: `bun run verify:media`, `bun run verify`, `bun test`, `bun run typecheck`, and `bun run build` passed on `backend/BE-017-media-verification-hardening`.
 
 ### Frontend Migration Wave 1
 - Status: complete after FE-010 analyzer reconciliation.

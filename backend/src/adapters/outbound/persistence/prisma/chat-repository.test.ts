@@ -348,4 +348,115 @@ describe("prisma chat repository", () => {
       },
     });
   });
+
+  it("preserves deleted moderation state when hide_media_metadata is re-applied", async () => {
+    const repository = createPrismaChatRepository({
+      $transaction: async <T>(
+        runInTransaction: (tx: {
+          chatMessage: {
+            findUnique: (args: { where: { id: string } }) => Promise<Record<string, unknown> | null>;
+            update: (args: {
+              data: Record<string, unknown>;
+              where: { id: string };
+            }) => Promise<Record<string, unknown>>;
+          };
+          chatModerationAuditRecord: {
+            create: (args: { data: Record<string, unknown> }) => Promise<Record<string, unknown>>;
+          };
+          chatUpload: {
+            findUnique: (args: { where: { id: string } }) => Promise<Record<string, unknown> | null>;
+            update: (args: {
+              data: Record<string, unknown>;
+              where: { id: string };
+            }) => Promise<Record<string, unknown>>;
+          };
+        }) => Promise<T>,
+      ) =>
+        runInTransaction({
+          chatMessage: {
+            findUnique: async () => ({
+              authorHandleId: "handle_1",
+              body: "night drop",
+              createdAt: new Date("2026-04-24T10:00:00.000Z"),
+              deletedAt: new Date("2026-04-24T11:00:00.000Z"),
+              hiddenAt: new Date("2026-04-24T11:00:00.000Z"),
+              id: "message_1",
+              moderationState: "deleted" as const,
+              roomId: "room_1",
+              roomSessionId: "session_1",
+              sentAt: new Date("2026-04-24T10:00:00.000Z"),
+              tone: "pink" as const,
+              updatedAt: new Date("2026-04-24T11:00:00.000Z"),
+            }),
+            update: async ({ data }) => ({
+              authorHandleId: "handle_1",
+              body: "night drop",
+              createdAt: new Date("2026-04-24T10:00:00.000Z"),
+              deletedAt: data.deletedAt as Date,
+              hiddenAt: data.hiddenAt as Date,
+              id: "message_1",
+              moderationState: data.moderationState as "deleted",
+              roomId: "room_1",
+              roomSessionId: "session_1",
+              sentAt: new Date("2026-04-24T10:00:00.000Z"),
+              tone: "pink" as const,
+              updatedAt: new Date("2026-04-24T12:34:56.000Z"),
+            }),
+          },
+          chatModerationAuditRecord: {
+            create: async () => ({
+              id: "audit_2",
+            }),
+          },
+          chatUpload: {
+            findUnique: async () => ({
+              byteSize: 1234,
+              createdAt: new Date("2026-04-24T10:00:00.000Z"),
+              deletedAt: new Date("2026-04-24T11:00:00.000Z"),
+              displayFilename: "drop.png",
+              hiddenAt: new Date("2026-04-24T11:00:00.000Z"),
+              id: "upload_1",
+              kind: "image" as const,
+              messageId: "message_1",
+              mimeType: "image_png" as const,
+              moderationState: "deleted" as const,
+              roomId: "room_1",
+              storageKey: "room_1/upload_1.png",
+              storagePath: "room_1/upload_1.png",
+              updatedAt: new Date("2026-04-24T11:00:00.000Z"),
+              uploaderHandleId: "handle_1",
+              uploaderSessionId: "session_1",
+            }),
+            update: async ({ data }) => ({
+              byteSize: 1234,
+              createdAt: new Date("2026-04-24T10:00:00.000Z"),
+              deletedAt: data.deletedAt as Date,
+              displayFilename: "drop.png",
+              hiddenAt: data.hiddenAt as Date,
+              id: "upload_1",
+              kind: "image" as const,
+              messageId: "message_1",
+              mimeType: "image_png" as const,
+              moderationState: data.moderationState as "deleted",
+              roomId: "room_1",
+              storageKey: "room_1/upload_1.png",
+              storagePath: "room_1/upload_1.png",
+              updatedAt: new Date("2026-04-24T12:34:56.000Z"),
+              uploaderHandleId: "handle_1",
+              uploaderSessionId: "session_1",
+            }),
+          },
+        }),
+    } as unknown as PrismaDatabaseClient);
+
+    const result = await repository.moderateUploadRetention({
+      action: "hide_media_metadata",
+      actorAdminUserId: "admin_1",
+      occurredAt: new Date("2026-04-24T12:34:56.000Z"),
+      uploadId: "upload_1",
+    });
+
+    expect(result?.message?.moderationState).toBe("deleted");
+    expect(result?.upload.moderationState).toBe("deleted");
+  });
 });

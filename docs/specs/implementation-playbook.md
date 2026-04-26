@@ -90,20 +90,17 @@ Use:
 - Production releases come from tagged commits on `main`.
 
 ## Current Executable Cluster
-The current executable cluster is `Wave 2 Cluster 4: Media storage and delivery`.
+Wave 2 Clusters 1-4 are complete in the harness. There is no new executable cluster to cut from this playbook until the next planning/status update is approved.
 
-Create these tasks in this order:
-1. Implement shared media repository reads, storage ports, filesystem adapter behavior, and bootstrap wiring.
-2. Implement public photo original delivery on `/media/photos/:id/original`.
-3. Implement chat upload validation and storage flow.
-4. Implement room-gated chat media access.
-5. Implement chat media hide/delete retention behavior.
-6. Add media delivery and upload verification coverage.
+Current follow-up actions:
+1. Commit and merge `BE-017` to `develop`.
+2. Run the cluster-level backend verification pass on `develop` after merge.
+3. Cut the Cluster 4 closeout/spec sync task once merge verification is complete.
 
-Parallelization rule for the current cluster:
-- after the shared media foundation lands, public photo delivery and chat upload/storage may run in parallel
-- room-gated chat media access and media retention follow the chat upload/storage task
-- verification hardening runs last across the merged cluster state
+Parallelization rule for the current state:
+- do not cut a new cluster from this playbook until the harness is explicitly advanced
+- backend-only PRs still run the frontend analyzer as a non-mutating validation check
+- verification hardening remains the last task within Cluster 4 until `BE-017` is merged
 
 ## Cluster-to-Task Rules
 ### Good task split
