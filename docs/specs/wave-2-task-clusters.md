@@ -134,7 +134,7 @@ Complete. `BE-006`, `BE-007`, `BE-008`, `BE-009`, `BE-010`, and `BE-011` were im
 Implement the shared media foundation and delivery behavior needed for filesystem-backed photo and chat media, while keeping storage behind outbound adapters and preserving the approved public and room-gated access contracts.
 
 ### Status
-Complete on branch. `BE-012`, `BE-013`, `BE-014`, `BE-015`, `BE-016`, and `BE-017` are implemented and verified, with `BE-017` awaiting PR merge to `develop`.
+Complete. `BE-012`, `BE-013`, `BE-014`, `BE-015`, `BE-016`, and `BE-017` are implemented, merged to `develop`, and tracked as done.
 
 ### Tasks
 | Task ID | Title | Layer | Base Branch | Branch Name | Merge Target | Source Specs | Acceptance Source |
@@ -160,8 +160,8 @@ Complete on branch. `BE-012`, `BE-013`, `BE-014`, `BE-015`, `BE-016`, and `BE-01
 - `BE-014` complete and merged via PR `#60`.
 - `BE-015` complete and merged via PR `#62`.
 - `BE-016` complete and merged via PR `#63`.
-- `BE-017` implementation and verification are complete on `backend/BE-017-media-verification-hardening`.
-- Cluster 4 verification passed via `bun run verify:media`, `bun run verify`, `bun test`, `bun run typecheck`, and `bun run build` on the `BE-017` branch.
+- `BE-017` complete and merged via PR `#64`.
+- Cluster 4 verification passed via `bun run verify:media`, `bun run verify`, `bun test`, `bun run typecheck`, and `bun run build` for the merged Cluster 4 task set.
 
 ### Non-Scope
 - Admin login, MFA, and session lifecycle.
