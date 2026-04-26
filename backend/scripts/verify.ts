@@ -32,6 +32,14 @@ async function runFrontendAnalyzer(): Promise<number> {
   );
 }
 
+async function runMediaVerification(): Promise<number> {
+  return runCommand(
+    ["bun", "run", "verify:media"],
+    BACKEND_ROOT,
+    "Running media verification",
+  );
+}
+
 export async function main(): Promise<number> {
   const violations = await checkBoundaryViolations();
   if (violations.length > 0) {
@@ -49,6 +57,9 @@ export async function main(): Promise<number> {
     "Running persistence verification",
   );
   if (persistenceExitCode !== 0) return persistenceExitCode;
+
+  const mediaVerificationExitCode = await runMediaVerification();
+  if (mediaVerificationExitCode !== 0) return mediaVerificationExitCode;
 
   const analyzerExitCode = await runFrontendAnalyzer();
   if (analyzerExitCode !== 0) return analyzerExitCode;

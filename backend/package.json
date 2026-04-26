@@ -16,6 +16,7 @@
     "prisma:migrate:status": "prisma migrate status",
     "prisma:check": "bun scripts/persistence-check.ts",
     "verify:boundary": "bun scripts/boundary-check.ts",
+    "verify:media": "bun test src/modules/chat/application/index.test.ts src/adapters/inbound/http/hono/chat-routes.test.ts src/adapters/inbound/http/hono/chat-media-routes.test.ts src/adapters/inbound/http/hono/photo-media-routes.test.ts src/adapters/outbound/persistence/prisma/chat-repository.test.ts src/adapters/outbound/persistence/prisma/media-repository.test.ts src/adapters/outbound/storage/filesystem/create-filesystem-media-storage-adapter.test.ts",
     "verify": "bun scripts/verify.ts"
   },
   "dependencies": {

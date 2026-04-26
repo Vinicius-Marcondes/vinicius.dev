@@ -483,6 +483,9 @@ const createChatFamily = (container: BootstrapContainer) => {
   const chatApp = new Hono();
 
   chatApp.get("/uploads/:id/media", async (c) => {
+    c.header("Cache-Control", "private, no-store");
+    c.header("Vary", "x-chat-room-session-id");
+
     const id = c.req.param("id")?.trim();
 
     if (!id) {
@@ -539,10 +542,8 @@ const createChatFamily = (container: BootstrapContainer) => {
     }
 
     return c.body(upload.stream, 200, {
-      "Cache-Control": "private, no-store",
       "Content-Length": String(upload.byteSize),
       "Content-Type": upload.mimeType,
-      Vary: "x-chat-room-session-id",
     });
   });
 

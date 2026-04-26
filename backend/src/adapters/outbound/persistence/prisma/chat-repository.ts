@@ -263,7 +263,10 @@ const moderateUploadRetention = async (
 
     const nextUploadHiddenAt = upload.hiddenAt ?? input.occurredAt;
     const nextUploadDeletedAt = upload.deletedAt;
-    const nextUploadModerationState = "hidden";
+    const nextUploadModerationState =
+      upload.moderationState === "deleted" || upload.deletedAt
+        ? "deleted"
+        : "hidden";
     const nextMessageHiddenAt =
       message ? (message.hiddenAt ?? input.occurredAt) : null;
     const nextMessageDeletedAt =
@@ -271,7 +274,11 @@ const moderateUploadRetention = async (
         ? message.deletedAt ?? input.occurredAt
         : message?.deletedAt ?? null;
     const nextMessageModerationState =
-      input.action === "delete_message" ? "deleted" : "hidden";
+      input.action === "delete_message" ||
+      message?.moderationState === "deleted" ||
+      !!message?.deletedAt
+        ? "deleted"
+        : "hidden";
 
     const updatedUpload = await tx.chatUpload.update({
       data: {

@@ -134,7 +134,7 @@ Complete. `BE-006`, `BE-007`, `BE-008`, `BE-009`, `BE-010`, and `BE-011` were im
 Implement the shared media foundation and delivery behavior needed for filesystem-backed photo and chat media, while keeping storage behind outbound adapters and preserving the approved public and room-gated access contracts.
 
 ### Status
-Ready for issue creation and implementation.
+Complete on branch. `BE-012`, `BE-013`, `BE-014`, `BE-015`, `BE-016`, and `BE-017` are implemented and verified, with `BE-017` awaiting PR merge to `develop`.
 
 ### Tasks
 | Task ID | Title | Layer | Base Branch | Branch Name | Merge Target | Source Specs | Acceptance Source |
@@ -153,6 +153,15 @@ Ready for issue creation and implementation.
 - `BE-016` starts only after `BE-014` lands on `develop` because hide/delete retention behavior depends on the chat upload/media persistence flow.
 - `BE-017` starts only after `BE-013`, `BE-014`, `BE-015`, and `BE-016` land on `develop`.
 - Cluster 5 admin/auth and Cluster 6 non-media chat behavior remain blocked until Cluster 4 is merged and validated.
+
+### Execution Checkpoint
+- `BE-012` complete and merged via PR `#59`.
+- `BE-013` complete and merged via PR `#61`.
+- `BE-014` complete and merged via PR `#60`.
+- `BE-015` complete and merged via PR `#62`.
+- `BE-016` complete and merged via PR `#63`.
+- `BE-017` implementation and verification are complete on `backend/BE-017-media-verification-hardening`.
+- Cluster 4 verification passed via `bun run verify:media`, `bun run verify`, `bun test`, `bun run typecheck`, and `bun run build` on the `BE-017` branch.
 
 ### Non-Scope
 - Admin login, MFA, and session lifecycle.
