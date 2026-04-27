@@ -46,13 +46,44 @@
 - The frontend migration wave cleared the previous browser Babel, CDN React, global `window.*`, missing TypeScript, and missing screen blockers.
 
 ## Next Task Queue
-1. Run the cluster-level backend verification pass on `develop` after the `BE-017` merge.
-2. Confirm the Wave 2 Cluster 4 execution artifacts stay synced across specs, issues, PRs, and the GitHub Project.
-3. Cut the next planning/status update before defining any new executable cluster.
+1. Create the dedicated Wave 3 planning issue and Project item for this harness advancement task.
+2. Split Wave 3 Cluster 5 into one issue per task using `wave-2-task-clusters.md` definitions.
+3. Keep Wave 3 Cluster 6 and Cluster 7 in `Spec-ready` planning state until Cluster 5 and Cluster 6 dependency checkpoints are complete.
 4. Run frontend analyzer as non-mutating validation for backend-only PRs.
 5. Keep one issue, one Project item, one branch, and one acceptance source per implementation task.
 
 ## Current Executable Cluster
+### SPEC-025 Wave 3 Cluster Planning
+- Status: approved for Wave 3 tasking.
+- Scope: define execution-ready Wave 3 clusters 5, 6, and 7 and keep harness artifacts aligned with GitHub execution state.
+- Branch: `spec/SPEC-025-wave-3-cluster-planning`.
+- GitHub issue: `#67`.
+- Wave 3 Cluster 5 issue creation is unblocked after this harness update merges.
+
+### Wave 3 Cluster 5 Admin/Auth Backend
+- Status: planned as next executable implementation cluster.
+- Primary specs: `SPEC-006`, `SPEC-007`, `SPEC-008`, `SPEC-009`, `SPEC-011`, `SPEC-016`, `SPEC-018`.
+- Scope: admin login/MFA, admin session lifecycle, dashboard summary contracts, content curation APIs, status strip management, and admin verification hardening.
+- Non-scope: non-media chat lifecycle and moderation behavior, Docker/Caddy runtime implementation, and production deploy workflow execution.
+- Tasks: `ADMIN-001`, `ADMIN-002`, `ADMIN-003`, `ADMIN-004`, `ADMIN-005`, `ADMIN-006`, and `ADMIN-007`.
+- Required ordering: `ADMIN-001` first; `ADMIN-002` after `ADMIN-001`; `ADMIN-003` after `ADMIN-002`; `ADMIN-004`, `ADMIN-005`, and `ADMIN-006` after `ADMIN-003`; `ADMIN-007` after `ADMIN-004`, `ADMIN-005`, and `ADMIN-006`.
+
+### Wave 3 Cluster 6 Chat Backend And Moderation
+- Status: planned; blocked on Wave 3 Cluster 5 completion.
+- Primary specs: `SPEC-006`, `SPEC-007`, `SPEC-009`, `SPEC-011`, `SPEC-016`, `SPEC-018`.
+- Scope: room password gate, room join/session state, participant handle/presence state, text message archive and send flow, moderation commands, moderation audit query behavior, and chat verification hardening.
+- Non-scope: chat media upload/storage/access from Wave 2 Cluster 4, admin content curation from Wave 3 Cluster 5, and infra/deploy automation implementation.
+- Tasks: `CHAT-001`, `CHAT-002`, `CHAT-003`, `CHAT-004`, `CHAT-005`, `CHAT-006`, and `CHAT-007`.
+- Required ordering: `CHAT-001` first; `CHAT-002` after `CHAT-001`; `CHAT-003` after `CHAT-002`; `CHAT-004` after `CHAT-003`; `CHAT-005` after `CHAT-004`; `CHAT-006` after `CHAT-005`; `CHAT-007` after `CHAT-003`, `CHAT-004`, `CHAT-005`, and `CHAT-006`.
+
+### Wave 3 Cluster 7 Infra CI/CD And Verification Hardening
+- Status: planned; blocked on Wave 3 Cluster 6 completion.
+- Primary specs: `SPEC-002`, `SPEC-005`, `SPEC-006`, `SPEC-007`, `SPEC-008`, `SPEC-009`, `SPEC-010`, `SPEC-011`, `SPEC-016`, `SPEC-018`.
+- Scope: Docker Compose topology, Caddy routing, env/volume policy, CI validation workflows, analyzer freshness enforcement, backend boundary checks, migration checks, tag-gated production deploy workflow, and cross-layer verification hardening.
+- Non-scope: new product feature contracts outside approved specs and frontend/admin product-surface redesign.
+- Tasks: `INFRA-001`, `INFRA-002`, `INFRA-003`, `QA-001`, `QA-002`, `QA-003`, `QA-004`, `QA-005`, `QA-006`, and `QA-007`.
+- Required ordering: `INFRA-001` first; `INFRA-002` after `INFRA-001`; `INFRA-003` after `INFRA-001`; `QA-001`, `QA-002`, and `QA-003` after `INFRA-003`; `QA-004` and `QA-005` after `QA-001` and `QA-002`; `QA-006` after `QA-002` and `INFRA-002`; `QA-007` after `INFRA-002`, `INFRA-003`, `QA-003`, `QA-004`, and `QA-005`.
+
 ### SPEC-019 Backend Spec Reconciliation
 - Status: approved for Wave 2 tasking.
 - Scope: apply accepted backend reconciliation decisions to backend-facing specs.
