@@ -31,6 +31,11 @@ export type ChatRoomSessionRepositoryRow = Readonly<{
   updatedAt: Date;
 }>;
 
+export type ChatRoomParticipantRepositoryRow = Readonly<{
+  handle: string;
+  status: "online" | "idle";
+}>;
+
 export type ChatMessageRepositoryRow = Readonly<{
   id: string;
   roomId: string;
@@ -143,6 +148,7 @@ export interface ChatRepositoryPort {
   findSessionById(sessionId: string): Promise<ChatRoomSessionRepositoryRow | null>;
   findRoomBySlug(query: ChatRoomQuery): Promise<ChatRoomRepositoryRow | null>;
   findHandleByRoomIdAndNormalizedHandle(roomId: string, normalizedHandle: string): Promise<ChatHandleRepositoryRow | null>;
+  listParticipantsByRoomId(roomId: string): Promise<readonly ChatRoomParticipantRepositoryRow[]>;
   listMessages(query: ChatMessageListQuery): Promise<readonly ChatMessageRepositoryRow[]>;
   findUploadById(uploadId: string): Promise<ChatUploadRepositoryRow | null>;
 }

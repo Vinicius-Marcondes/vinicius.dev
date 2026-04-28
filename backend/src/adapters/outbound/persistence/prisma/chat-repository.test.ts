@@ -90,6 +90,46 @@ describe("prisma chat repository", () => {
     });
   });
 
+  it("maps room participants with online/idle status", async () => {
+    let capturedWhere: Record<string, unknown> | null = null;
+    const repository = createPrismaChatRepository({
+      chatHandle: {
+        findMany: async ({ where }: { where: Record<string, unknown> }) => {
+          capturedWhere = where;
+
+          return [
+            {
+              handle: "guest",
+              sessions: [],
+            },
+            {
+              handle: "vinicius",
+              sessions: [{ id: "session_1" }],
+            },
+          ];
+        },
+      },
+    } as unknown as PrismaDatabaseClient);
+
+    const result = await repository.listParticipantsByRoomId("room_1");
+
+    expect(capturedWhere).not.toBeNull();
+    expect(capturedWhere!).toEqual({
+      roomId: "room_1",
+      status: "active",
+    });
+    expect(result).toEqual([
+      {
+        handle: "guest",
+        status: "idle",
+      },
+      {
+        handle: "vinicius",
+        status: "online",
+      },
+    ]);
+  });
+
   it("creates and maps a chat handle row", async () => {
     let capturedData: Record<string, unknown> | null = null;
     const repository = createPrismaChatRepository({

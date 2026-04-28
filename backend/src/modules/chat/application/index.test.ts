@@ -3,9 +3,11 @@ import { describe, expect, it } from "bun:test";
 import {
   BannedChatHandleError,
   createJoinChatRoomSessionUseCase,
+  createListChatRoomParticipantsUseCase,
   createModerateChatUploadRetentionUseCase,
   createOpenChatUploadMediaUseCase,
   createUploadChatMessageWithImageUseCase,
+  InvalidChatParticipantAccessError,
   InvalidChatRoomCredentialsError,
   InvalidChatUploadAccessError,
 } from "./index";
@@ -172,6 +174,102 @@ describe("chat room join use case", () => {
         slug: "night-shift",
       }),
     ).rejects.toBeInstanceOf(BannedChatHandleError);
+  });
+});
+
+describe("chat participants list use case", () => {
+  it("returns participants only when session is active and bound to the room slug", async () => {
+    const useCase = createListChatRoomParticipantsUseCase({
+      repository: {
+        findRoomBySlug: async () => ({
+          createdAt: new Date("2026-04-28T12:00:00.000Z"),
+          id: "room_1",
+          passwordHash: "hash",
+          passwordRotatedAt: null,
+          passwordVersion: 1,
+          slug: "night-shift",
+          updatedAt: new Date("2026-04-28T12:00:00.000Z"),
+        }),
+        findSessionById: async () => ({
+          createdAt: new Date("2026-04-28T12:00:00.000Z"),
+          expiresAt: null,
+          handleId: "handle_1",
+          id: "session_1",
+          joinedAt: new Date("2026-04-28T12:00:00.000Z"),
+          lastSeenAt: new Date("2026-04-28T12:01:00.000Z"),
+          leftAt: null,
+          roomId: "room_1",
+          status: "active",
+          updatedAt: new Date("2026-04-28T12:01:00.000Z"),
+        }),
+        listParticipantsByRoomId: async (roomId) => [
+          {
+            handle: roomId === "room_1" ? "vinicius" : "unknown",
+            status: "online",
+          },
+          {
+            handle: "guest",
+            status: "idle",
+          },
+        ],
+      },
+    });
+
+    await expect(
+      useCase.execute({
+        roomSessionId: "session_1",
+        slug: "night-shift",
+      }),
+    ).resolves.toEqual({
+      items: [
+        {
+          handle: "vinicius",
+          status: "online",
+        },
+        {
+          handle: "guest",
+          status: "idle",
+        },
+      ],
+    });
+  });
+
+  it("rejects participants access when room session is invalid for the room slug", async () => {
+    const useCase = createListChatRoomParticipantsUseCase({
+      repository: {
+        findRoomBySlug: async () => ({
+          createdAt: new Date("2026-04-28T12:00:00.000Z"),
+          id: "room_1",
+          passwordHash: "hash",
+          passwordRotatedAt: null,
+          passwordVersion: 1,
+          slug: "night-shift",
+          updatedAt: new Date("2026-04-28T12:00:00.000Z"),
+        }),
+        findSessionById: async () => ({
+          createdAt: new Date("2026-04-28T12:00:00.000Z"),
+          expiresAt: null,
+          handleId: "handle_1",
+          id: "session_1",
+          joinedAt: new Date("2026-04-28T12:00:00.000Z"),
+          lastSeenAt: new Date("2026-04-28T12:01:00.000Z"),
+          leftAt: null,
+          roomId: "room_2",
+          status: "active",
+          updatedAt: new Date("2026-04-28T12:01:00.000Z"),
+        }),
+        listParticipantsByRoomId: async () => {
+          throw new Error("should not list participants");
+        },
+      },
+    });
+
+    await expect(
+      useCase.execute({
+        roomSessionId: "session_1",
+        slug: "night-shift",
+      }),
+    ).rejects.toBeInstanceOf(InvalidChatParticipantAccessError);
   });
 });
 

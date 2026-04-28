@@ -2,6 +2,7 @@ import type {
   ChatHandleRepositoryRow,
   ChatMessageListQuery,
   ChatMessageRepositoryRow,
+  ChatRoomParticipantRepositoryRow,
   ChatRepositoryPort,
   ChatRoomRepositoryRow,
   ChatRoomSessionRepositoryRow,
@@ -466,6 +467,40 @@ const moderateUploadRetention = async (
   });
 };
 
+const listParticipantsByRoomId = async (
+  client: PrismaDatabaseClient,
+  roomId: string,
+): Promise<readonly ChatRoomParticipantRepositoryRow[]> => {
+  const handles = await client.chatHandle.findMany({
+    orderBy: {
+      normalizedHandle: "asc",
+    },
+    select: {
+      handle: true,
+      sessions: {
+        select: {
+          id: true,
+        },
+        take: 1,
+        where: {
+          leftAt: null,
+          roomId,
+          status: "active",
+        },
+      },
+    },
+    where: {
+      roomId,
+      status: "active",
+    },
+  });
+
+  return handles.map((handle) => ({
+    handle: handle.handle,
+    status: handle.sessions.length > 0 ? "online" : "idle",
+  }));
+};
+
 export const createPrismaChatRepository = (client: PrismaDatabaseClient): ChatRepositoryPort => ({
   createHandle: (input): Promise<ChatHandleRepositoryRow> => createHandle(client, input),
   createMessageWithUpload: (input): Promise<CreateChatMessageWithUploadResult> =>
@@ -536,6 +571,8 @@ export const createPrismaChatRepository = (client: PrismaDatabaseClient): ChatRe
 
     return handle ? mapHandleRow(handle) : null;
   },
+  listParticipantsByRoomId: (roomId): Promise<readonly ChatRoomParticipantRepositoryRow[]> =>
+    listParticipantsByRoomId(client, roomId),
   listMessages: (_query: ChatMessageListQuery): Promise<readonly ChatMessageRepositoryRow[]> =>
     notImplemented("listMessages"),
   findUploadById: (_uploadId: string): Promise<ChatUploadRepositoryRow | null> =>

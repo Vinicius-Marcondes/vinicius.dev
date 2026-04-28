@@ -10,6 +10,7 @@ import {
 import { InvalidAdminPhotoMetadataDateError } from "@/modules/admin/application";
 import {
   BannedChatHandleError,
+  InvalidChatParticipantAccessError,
   InvalidChatRoomCredentialsError,
   InvalidChatUploadAccessError,
   InvalidChatUploadActorError,
@@ -620,6 +621,66 @@ const createChatFamily = (container: BootstrapContainer) => {
           {
             error: "denied",
             reason: "handle_banned",
+            resource: "chat",
+          },
+          403,
+        );
+      }
+
+      throw error;
+    }
+  });
+
+  chatApp.get("/rooms/:slug/participants", async (c) => {
+    if (!container.chat.listRoomParticipants) {
+      return c.json<NotImplementedResponse>(
+        {
+          family: "chat",
+          method: c.req.method,
+          route: c.req.path,
+          service: serviceName,
+          status: "not_implemented",
+        },
+        501,
+      );
+    }
+
+    const slug = c.req.param("slug")?.trim();
+
+    if (!slug) {
+      return c.json(
+        {
+          error: "invalid_path",
+          field: "slug",
+        },
+        400,
+      );
+    }
+
+    const roomSessionId = c.req.header("x-chat-room-session-id")?.trim();
+
+    if (!roomSessionId) {
+      return c.json(
+        {
+          error: "invalid_request",
+          field: "x-chat-room-session-id",
+        },
+        400,
+      );
+    }
+
+    try {
+      const response = await container.chat.listRoomParticipants.execute({
+        roomSessionId,
+        slug,
+      });
+
+      return c.json(response);
+    } catch (error) {
+      if (error instanceof InvalidChatParticipantAccessError) {
+        return c.json(
+          {
+            error: "denied",
             resource: "chat",
           },
           403,
