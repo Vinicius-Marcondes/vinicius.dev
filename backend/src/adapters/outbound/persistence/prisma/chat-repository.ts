@@ -1,4 +1,6 @@
 import type {
+  BanChatRoomHandleCommand,
+  BanChatRoomHandleResult,
   ChatHandleRepositoryRow,
   ChatMessageListItemRepositoryRow,
   ChatMessageListPage,
@@ -14,8 +16,12 @@ import type {
   CreateChatMessageWithUploadCommand,
   CreateChatMessageWithUploadResult,
   CreateChatRoomSessionCommand,
+  ModerateChatRoomMessageCommand,
+  ModerateChatRoomMessageResult,
   ModerateChatUploadRetentionCommand,
   ModerateChatUploadRetentionResult,
+  RotateChatRoomPasswordCommand,
+  RotateChatRoomPasswordResult,
 } from "@/modules/chat/ports/outbound";
 import { ChatUploadMimeType } from "../../../../../generated/prisma/client";
 
@@ -502,6 +508,376 @@ const moderateUploadRetention = async (
   });
 };
 
+const moderateMessage = async (
+  client: PrismaDatabaseClient,
+  input: ModerateChatRoomMessageCommand,
+): Promise<ModerateChatRoomMessageResult | null> => {
+  return client.$transaction(async (tx) => {
+    const message = await tx.chatMessage.findUnique({
+      select: {
+        authorHandleId: true,
+        body: true,
+        createdAt: true,
+        deletedAt: true,
+        hiddenAt: true,
+        id: true,
+        moderationState: true,
+        roomId: true,
+        roomSessionId: true,
+        sentAt: true,
+        tone: true,
+        updatedAt: true,
+      },
+      where: {
+        id: input.messageId,
+      },
+    });
+
+    if (!message) {
+      return null;
+    }
+
+    const upload = await tx.chatUpload.findUnique({
+      select: {
+        byteSize: true,
+        createdAt: true,
+        deletedAt: true,
+        displayFilename: true,
+        hiddenAt: true,
+        id: true,
+        kind: true,
+        messageId: true,
+        mimeType: true,
+        moderationState: true,
+        roomId: true,
+        storageKey: true,
+        storagePath: true,
+        updatedAt: true,
+        uploaderHandleId: true,
+        uploaderSessionId: true,
+      },
+      where: {
+        messageId: message.id,
+      },
+    });
+
+    const nextMessageHiddenAt = message.hiddenAt ?? input.occurredAt;
+    const nextMessageDeletedAt =
+      input.action === "delete_message"
+        ? message.deletedAt ?? input.occurredAt
+        : message.deletedAt;
+    const nextMessageModerationState =
+      input.action === "delete_message" ||
+      message.moderationState === "deleted" ||
+      !!message.deletedAt
+        ? "deleted"
+        : "hidden";
+
+    const updatedMessage = await tx.chatMessage.update({
+      data: {
+        deletedAt: nextMessageDeletedAt,
+        hiddenAt: nextMessageHiddenAt,
+        moderationState: nextMessageModerationState,
+      },
+      select: {
+        authorHandleId: true,
+        body: true,
+        createdAt: true,
+        deletedAt: true,
+        hiddenAt: true,
+        id: true,
+        moderationState: true,
+        roomId: true,
+        roomSessionId: true,
+        sentAt: true,
+        tone: true,
+        updatedAt: true,
+      },
+      where: {
+        id: message.id,
+      },
+    });
+
+    const updatedUpload = upload
+      ? await tx.chatUpload.update({
+          data: {
+            deletedAt: upload.deletedAt,
+            hiddenAt: upload.hiddenAt ?? input.occurredAt,
+            moderationState:
+              upload.moderationState === "deleted" || upload.deletedAt
+                ? "deleted"
+                : "hidden",
+          },
+          select: {
+            byteSize: true,
+            createdAt: true,
+            deletedAt: true,
+            displayFilename: true,
+            hiddenAt: true,
+            id: true,
+            kind: true,
+            messageId: true,
+            mimeType: true,
+            moderationState: true,
+            roomId: true,
+            storageKey: true,
+            storagePath: true,
+            updatedAt: true,
+            uploaderHandleId: true,
+            uploaderSessionId: true,
+          },
+          where: {
+            id: upload.id,
+          },
+        })
+      : null;
+
+    const audit = await tx.chatModerationAuditRecord.create({
+      data: {
+        action:
+          input.action === "delete_message" ? "delete_message" : "hide_media_metadata",
+        actorAdminUserId: input.actorAdminUserId,
+        nextState: {
+          messageDeletedAt: updatedMessage.deletedAt?.toISOString() ?? null,
+          messageHiddenAt: updatedMessage.hiddenAt?.toISOString() ?? null,
+          messageModerationState: updatedMessage.moderationState,
+          uploadDeletedAt: updatedUpload?.deletedAt?.toISOString() ?? null,
+          uploadHiddenAt: updatedUpload?.hiddenAt?.toISOString() ?? null,
+          uploadModerationState: updatedUpload?.moderationState ?? null,
+        },
+        previousState: {
+          messageDeletedAt: message.deletedAt?.toISOString() ?? null,
+          messageHiddenAt: message.hiddenAt?.toISOString() ?? null,
+          messageModerationState: message.moderationState,
+          uploadDeletedAt: upload?.deletedAt?.toISOString() ?? null,
+          uploadHiddenAt: upload?.hiddenAt?.toISOString() ?? null,
+          uploadModerationState: upload?.moderationState ?? null,
+        },
+        reason: input.reason,
+        roomId: message.roomId,
+        targetMessageId: message.id,
+        targetUploadId: upload?.id ?? null,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return {
+      auditId: audit.id,
+      message: mapMessageRow(updatedMessage),
+      upload: updatedUpload ? mapUploadRow(updatedUpload) : null,
+    };
+  });
+};
+
+const banHandle = async (
+  client: PrismaDatabaseClient,
+  input: BanChatRoomHandleCommand,
+): Promise<BanChatRoomHandleResult | null> => {
+  return client.$transaction(async (tx) => {
+    const handle = await tx.chatHandle.findUnique({
+      select: {
+        createdAt: true,
+        handle: true,
+        id: true,
+        normalizedHandle: true,
+        roomId: true,
+        status: true,
+        updatedAt: true,
+      },
+      where: {
+        id: input.handleId,
+      },
+    });
+
+    if (!handle) {
+      return null;
+    }
+
+    const nextHandle =
+      handle.status === "banned"
+        ? handle
+        : await tx.chatHandle.update({
+            data: {
+              status: "banned",
+            },
+            select: {
+              createdAt: true,
+              handle: true,
+              id: true,
+              normalizedHandle: true,
+              roomId: true,
+              status: true,
+              updatedAt: true,
+            },
+            where: {
+              id: handle.id,
+            },
+          });
+
+    const revokedSessions = await tx.chatRoomSession.updateMany({
+      data: {
+        leftAt: input.occurredAt,
+        status: "revoked",
+      },
+      where: {
+        handleId: handle.id,
+        roomId: handle.roomId,
+        status: "active",
+      },
+    });
+
+    const ban = await tx.chatBan.create({
+      data: {
+        actorAdminUserId: input.actorAdminUserId,
+        bannedAt: input.occurredAt,
+        reason: input.reason,
+        roomId: handle.roomId,
+        status: "active",
+        targetHandleId: handle.id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    const audit = await tx.chatModerationAuditRecord.create({
+      data: {
+        action: "ban_handle",
+        actorAdminUserId: input.actorAdminUserId,
+        nextState: {
+          handleStatus: nextHandle.status,
+          revokedSessionCount: revokedSessions.count,
+        },
+        previousState: {
+          handleStatus: handle.status,
+        },
+        reason: input.reason,
+        roomId: handle.roomId,
+        targetBanId: ban.id,
+        targetHandleId: handle.id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return {
+      auditId: audit.id,
+      banId: ban.id,
+      handle: mapHandleRow(nextHandle),
+      revokedSessionCount: revokedSessions.count,
+    };
+  });
+};
+
+const rotateRoomPassword = async (
+  client: PrismaDatabaseClient,
+  input: RotateChatRoomPasswordCommand,
+): Promise<RotateChatRoomPasswordResult | null> => {
+  return client.$transaction(async (tx) => {
+    const room = await tx.chatRoom.findUnique({
+      select: {
+        createdAt: true,
+        id: true,
+        passwordHash: true,
+        passwordRotatedAt: true,
+        passwordVersion: true,
+        slug: true,
+        updatedAt: true,
+      },
+      where: {
+        slug: input.slug,
+      },
+    });
+
+    if (!room) {
+      return null;
+    }
+
+    const updatedRoom = await tx.chatRoom.update({
+      data: {
+        passwordHash: input.nextPasswordHash,
+        passwordRotatedAt: input.occurredAt,
+        passwordVersion: room.passwordVersion + 1,
+      },
+      select: {
+        createdAt: true,
+        id: true,
+        passwordHash: true,
+        passwordRotatedAt: true,
+        passwordVersion: true,
+        slug: true,
+        updatedAt: true,
+      },
+      where: {
+        id: room.id,
+      },
+    });
+
+    const rotation = await tx.chatRoomPasswordRotation.create({
+      data: {
+        actorAdminUserId: input.actorAdminUserId,
+        nextPasswordHash: input.nextPasswordHash,
+        nextPasswordVersion: updatedRoom.passwordVersion,
+        previousPasswordHash: room.passwordHash,
+        previousPasswordVersion: room.passwordVersion,
+        reason: input.reason,
+        roomId: room.id,
+        rotatedAt: input.occurredAt,
+      },
+      select: {
+        id: true,
+        rotatedAt: true,
+      },
+    });
+
+    const revokedSessions = await tx.chatRoomSession.updateMany({
+      data: {
+        leftAt: input.occurredAt,
+        status: "revoked",
+      },
+      where: {
+        roomId: room.id,
+        status: "active",
+      },
+    });
+
+    const audit = await tx.chatModerationAuditRecord.create({
+      data: {
+        action: "room_password_rotation",
+        actorAdminUserId: input.actorAdminUserId,
+        nextState: {
+          passwordRotatedAt: updatedRoom.passwordRotatedAt?.toISOString() ?? null,
+          passwordVersion: updatedRoom.passwordVersion,
+          revokedSessionCount: revokedSessions.count,
+        },
+        previousState: {
+          passwordRotatedAt: room.passwordRotatedAt?.toISOString() ?? null,
+          passwordVersion: room.passwordVersion,
+        },
+        reason: input.reason,
+        roomId: room.id,
+        targetRoomPasswordRotationId: rotation.id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return {
+      auditId: audit.id,
+      revokedSessionCount: revokedSessions.count,
+      room: mapRoomRow(updatedRoom),
+      rotation: {
+        id: rotation.id,
+        rotatedAt: rotation.rotatedAt,
+      },
+    };
+  });
+};
+
 const listParticipantsByRoomId = async (
   client: PrismaDatabaseClient,
   roomId: string,
@@ -659,8 +1035,13 @@ export const createPrismaChatRepository = (client: PrismaDatabaseClient): ChatRe
   createMessageWithUpload: (input): Promise<CreateChatMessageWithUploadResult> =>
     createMessageWithUpload(client, input),
   createSession: (input): Promise<ChatRoomSessionRepositoryRow> => createSession(client, input),
+  banHandle: (input): Promise<BanChatRoomHandleResult | null> => banHandle(client, input),
+  moderateMessage: (input): Promise<ModerateChatRoomMessageResult | null> =>
+    moderateMessage(client, input),
   moderateUploadRetention: (input): Promise<ModerateChatUploadRetentionResult | null> =>
     moderateUploadRetention(client, input),
+  rotateRoomPassword: (input): Promise<RotateChatRoomPasswordResult | null> =>
+    rotateRoomPassword(client, input),
   findSessionById: async (sessionId): Promise<ChatRoomSessionRepositoryRow | null> => {
     const session = await client.chatRoomSession.findUnique({
       select: {

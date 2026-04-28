@@ -93,6 +93,68 @@ export type SendChatRoomTextMessageOutput = ChatRoomMessageOutput;
 export interface SendChatRoomTextMessagePort
   extends UseCase<SendChatRoomTextMessageInput, SendChatRoomTextMessageOutput> {}
 
+export type ModerateChatRoomMessageInput = Readonly<{
+  action: "hide_message" | "delete_message";
+  actorAdminUserId: string;
+  messageId: string;
+  reason?: string;
+}>;
+
+export type ModerateChatRoomMessageOutput = Readonly<{
+  action: "hide_message" | "delete_message";
+  auditId: string;
+  messageId: string;
+  messageModerationState: "hidden" | "deleted";
+  uploadId: string | null;
+  uploadModerationState: "hidden" | "deleted" | null;
+}>;
+
+export interface ModerateChatRoomMessagePort
+  extends UseCase<ModerateChatRoomMessageInput, ModerateChatRoomMessageOutput | null> {}
+
+export type BanChatRoomHandleInput = Readonly<{
+  actorAdminUserId: string;
+  handleId: string;
+  reason?: string;
+}>;
+
+export type BanChatRoomHandleOutput = Readonly<{
+  auditId: string;
+  banId: string;
+  handleId: string;
+  revokedSessionCount: number;
+  roomId: string;
+  status: "banned";
+}>;
+
+export interface BanChatRoomHandlePort
+  extends UseCase<BanChatRoomHandleInput, BanChatRoomHandleOutput | null> {}
+
+export type RotateChatRoomPasswordInput = Readonly<{
+  actorAdminUserId: string;
+  nextPassword: string;
+  reason?: string;
+  slug: string;
+}>;
+
+export type RotateChatRoomPasswordOutput = Readonly<{
+  auditId: string;
+  revokedSessionCount: number;
+  room: Readonly<{
+    id: string;
+    passwordVersion: number;
+    passwordRotatedAt: string | null;
+    slug: string;
+  }>;
+  rotation: Readonly<{
+    id: string;
+    rotatedAt: string;
+  }>;
+}>;
+
+export interface RotateChatRoomPasswordPort
+  extends UseCase<RotateChatRoomPasswordInput, RotateChatRoomPasswordOutput | null> {}
+
 export type UploadChatMessageImageInput = Readonly<{
   body: Uint8Array;
   displayFilename: string;

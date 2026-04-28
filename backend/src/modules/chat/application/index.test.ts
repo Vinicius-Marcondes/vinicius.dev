@@ -2,11 +2,14 @@ import { describe, expect, it } from "bun:test";
 
 import {
   BannedChatHandleError,
+  createBanChatRoomHandleUseCase,
   createJoinChatRoomSessionUseCase,
   createListChatRoomMessagesUseCase,
   createListChatRoomParticipantsUseCase,
+  createModerateChatRoomMessageUseCase,
   createModerateChatUploadRetentionUseCase,
   createOpenChatUploadMediaUseCase,
+  createRotateChatRoomPasswordUseCase,
   createSendChatRoomTextMessageUseCase,
   createUploadChatMessageWithImageUseCase,
   InvalidChatMessageAccessError,
@@ -595,6 +598,233 @@ describe("chat text message send use case", () => {
         slug: "night-shift",
       }),
     ).rejects.toBeInstanceOf(InvalidChatMessageAccessError);
+  });
+});
+
+describe("chat message moderation use case", () => {
+  it("records a hide-message moderation action", async () => {
+    const occurredAt = new Date("2026-04-28T12:06:00.000Z");
+    const capturedCalls: Array<Record<string, unknown>> = [];
+    const useCase = createModerateChatRoomMessageUseCase({
+      clock: () => occurredAt,
+      repository: {
+        moderateMessage: async (input) => {
+          capturedCalls.push(input as unknown as Record<string, unknown>);
+
+          return {
+            auditId: "audit_1",
+            message: {
+              authorHandleId: "handle_1",
+              body: "from the bunker",
+              createdAt: occurredAt,
+              deletedAt: null,
+              hiddenAt: occurredAt,
+              id: "message_1",
+              moderationState: "hidden",
+              roomId: "room_1",
+              roomSessionId: "session_1",
+              sentAt: occurredAt,
+              tone: null,
+              updatedAt: occurredAt,
+            },
+            upload: {
+              byteSize: 512,
+              createdAt: occurredAt,
+              deletedAt: null,
+              displayFilename: "drop.png",
+              hiddenAt: occurredAt,
+              id: "upload_1",
+              kind: "image",
+              messageId: "message_1",
+              mimeType: "image/png",
+              moderationState: "hidden",
+              roomId: "room_1",
+              storageKey: "room_1/upload_1.png",
+              storagePath: "room_1/upload_1.png",
+              updatedAt: occurredAt,
+              uploaderHandleId: "handle_1",
+              uploaderSessionId: "session_1",
+            },
+          };
+        },
+      },
+    });
+
+    const output = await useCase.execute({
+      action: "hide_message",
+      actorAdminUserId: " admin_1 ",
+      messageId: "message_1",
+      reason: "  redact from room thread  ",
+    });
+
+    expect(capturedCalls).toEqual([
+      {
+        action: "hide_message",
+        actorAdminUserId: "admin_1",
+        messageId: "message_1",
+        occurredAt,
+        reason: "redact from room thread",
+      },
+    ]);
+    expect(output).toEqual({
+      action: "hide_message",
+      auditId: "audit_1",
+      messageId: "message_1",
+      messageModerationState: "hidden",
+      uploadId: "upload_1",
+      uploadModerationState: "hidden",
+    });
+  });
+
+  it("returns null when target message does not exist", async () => {
+    const useCase = createModerateChatRoomMessageUseCase({
+      repository: {
+        moderateMessage: async () => null,
+      },
+    });
+
+    await expect(
+      useCase.execute({
+        action: "delete_message",
+        actorAdminUserId: "admin_1",
+        messageId: "message_404",
+      }),
+    ).resolves.toBeNull();
+  });
+});
+
+describe("chat handle ban use case", () => {
+  it("creates a ban and returns audit metadata", async () => {
+    const occurredAt = new Date("2026-04-28T12:07:00.000Z");
+    const capturedCalls: Array<Record<string, unknown>> = [];
+    const useCase = createBanChatRoomHandleUseCase({
+      clock: () => occurredAt,
+      repository: {
+        banHandle: async (input) => {
+          capturedCalls.push(input as unknown as Record<string, unknown>);
+
+          return {
+            auditId: "audit_2",
+            banId: "ban_1",
+            handle: {
+              createdAt: occurredAt,
+              handle: "vinicius",
+              id: "handle_1",
+              normalizedHandle: "vinicius",
+              roomId: "room_1",
+              status: "banned",
+              updatedAt: occurredAt,
+            },
+            revokedSessionCount: 2,
+          };
+        },
+      },
+    });
+
+    const output = await useCase.execute({
+      actorAdminUserId: " admin_1 ",
+      handleId: "handle_1",
+      reason: "  repeated abuse  ",
+    });
+
+    expect(capturedCalls).toEqual([
+      {
+        actorAdminUserId: "admin_1",
+        handleId: "handle_1",
+        occurredAt,
+        reason: "repeated abuse",
+      },
+    ]);
+    expect(output).toEqual({
+      auditId: "audit_2",
+      banId: "ban_1",
+      handleId: "handle_1",
+      revokedSessionCount: 2,
+      roomId: "room_1",
+      status: "banned",
+    });
+  });
+});
+
+describe("chat room password rotation use case", () => {
+  it("rotates password hash and returns rotation metadata", async () => {
+    const occurredAt = new Date("2026-04-28T12:08:00.000Z");
+    const capturedCalls: Array<Record<string, unknown>> = [];
+    const useCase = createRotateChatRoomPasswordUseCase({
+      clock: () => occurredAt,
+      hashRoomPassword: async (plainText) => `hash:${plainText}`,
+      repository: {
+        rotateRoomPassword: async (input) => {
+          capturedCalls.push(input as unknown as Record<string, unknown>);
+
+          return {
+            auditId: "audit_3",
+            revokedSessionCount: 3,
+            room: {
+              createdAt: occurredAt,
+              id: "room_1",
+              passwordHash: "hash:new-secret",
+              passwordRotatedAt: occurredAt,
+              passwordVersion: 4,
+              slug: "night-shift",
+              updatedAt: occurredAt,
+            },
+            rotation: {
+              id: "rotation_1",
+              rotatedAt: occurredAt,
+            },
+          };
+        },
+      },
+    });
+
+    const output = await useCase.execute({
+      actorAdminUserId: " admin_1 ",
+      nextPassword: "new-secret",
+      reason: "  leaked in public channel  ",
+      slug: " night-shift ",
+    });
+
+    expect(capturedCalls).toEqual([
+      {
+        actorAdminUserId: "admin_1",
+        nextPasswordHash: "hash:new-secret",
+        occurredAt,
+        reason: "leaked in public channel",
+        slug: "night-shift",
+      },
+    ]);
+    expect(output).toEqual({
+      auditId: "audit_3",
+      revokedSessionCount: 3,
+      room: {
+        id: "room_1",
+        passwordRotatedAt: "2026-04-28T12:08:00.000Z",
+        passwordVersion: 4,
+        slug: "night-shift",
+      },
+      rotation: {
+        id: "rotation_1",
+        rotatedAt: "2026-04-28T12:08:00.000Z",
+      },
+    });
+  });
+
+  it("returns null when room slug does not exist", async () => {
+    const useCase = createRotateChatRoomPasswordUseCase({
+      hashRoomPassword: async (plainText) => `hash:${plainText}`,
+      repository: {
+        rotateRoomPassword: async () => null,
+      },
+    });
+
+    await expect(
+      useCase.execute({
+        actorAdminUserId: "admin_1",
+        nextPassword: "new-secret",
+        slug: "unknown-room",
+      }),
+    ).resolves.toBeNull();
   });
 });
 
