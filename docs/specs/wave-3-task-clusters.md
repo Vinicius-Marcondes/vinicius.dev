@@ -63,7 +63,7 @@ Planned as the first Wave 3 executable cluster.
 Implement the non-media chat room lifecycle, message flow, moderation, and audit behavior required by approved chat and admin moderation contracts.
 
 ### Status
-Planned as the second Wave 3 executable cluster.
+Complete.
 
 ### Tasks
 | Task ID | Title | Layer | Base Branch | Branch Name | Merge Target | Source Specs | Acceptance Source |
@@ -84,7 +84,7 @@ Planned as the second Wave 3 executable cluster.
 - `CHAT-005` starts only after `CHAT-004` lands on `develop` because moderation commands apply to persisted chat message records.
 - `CHAT-006` starts only after `CHAT-005` lands on `develop` because audit query contracts depend on emitted moderation events.
 - `CHAT-007` starts only after `CHAT-003`, `CHAT-004`, `CHAT-005`, and `CHAT-006` land on `develop`.
-- Cluster 7 remains blocked until Cluster 6 is merged and validated.
+- Cluster 7 is now the current executable cluster after Cluster 6 merged and validated.
 
 ### Non-Scope
 - Chat media upload and room-gated media file delivery behavior from Wave 2 Cluster 4.
@@ -104,7 +104,7 @@ Planned as the second Wave 3 executable cluster.
 Finalize deployment topology, route/runtime configuration, CI validation workflows, and cross-layer verification so the Wave 2 and Wave 3 backend stack is release-ready under approved infrastructure and CI/CD policy.
 
 ### Status
-Planned as the third Wave 3 executable cluster.
+Current executable Wave 3 cluster.
 
 ### Tasks
 | Task ID | Title | Layer | Base Branch | Branch Name | Merge Target | Source Specs | Acceptance Source |
