@@ -47,20 +47,26 @@ import type {
   VerifyMfaChallengePort,
 } from "@/modules/auth/ports/inbound";
 import {
+  createBanChatRoomHandleUseCase,
   createJoinChatRoomSessionUseCase,
   createListChatRoomMessagesUseCase,
   createListChatRoomParticipantsUseCase,
+  createModerateChatRoomMessageUseCase,
   createModerateChatUploadRetentionUseCase,
   createOpenChatUploadMediaUseCase,
+  createRotateChatRoomPasswordUseCase,
   createSendChatRoomTextMessageUseCase,
   createUploadChatMessageWithImageUseCase,
 } from "@/modules/chat/application";
 import type {
+  BanChatRoomHandlePort,
   JoinChatRoomSessionPort,
   ListChatRoomMessagesPort,
   ListChatRoomParticipantsPort,
+  ModerateChatRoomMessagePort,
   ModerateChatUploadRetentionPort,
   OpenChatUploadMediaPort,
+  RotateChatRoomPasswordPort,
   SendChatRoomTextMessagePort,
   UploadChatMessageWithImagePort,
 } from "@/modules/chat/ports/inbound";
@@ -106,11 +112,14 @@ export type BootstrapContainer = Readonly<{
     verifyMfaChallenge: VerifyMfaChallengePort;
   }>;
   chat: Readonly<{
+    banRoomHandle?: BanChatRoomHandlePort;
     joinRoomSession?: JoinChatRoomSessionPort;
     listRoomMessages?: ListChatRoomMessagesPort;
     listRoomParticipants?: ListChatRoomParticipantsPort;
+    moderateRoomMessage?: ModerateChatRoomMessagePort;
     moderateUploadRetention: ModerateChatUploadRetentionPort;
     openUploadMedia: OpenChatUploadMediaPort;
+    rotateRoomPassword?: RotateChatRoomPasswordPort;
     sendRoomTextMessage?: SendChatRoomTextMessagePort;
     uploadMessageWithImage: UploadChatMessageWithImagePort;
   }>;
@@ -229,6 +238,9 @@ export const createContainer = (env: BootstrapEnv = Bun.env): BootstrapContainer
       }),
     },
     chat: {
+      banRoomHandle: createBanChatRoomHandleUseCase({
+        repository: persistence.chat,
+      }),
       joinRoomSession: createJoinChatRoomSessionUseCase({
         createSessionToken: () => chatSessionTokenGenerator.create(),
         hashSessionToken: (token) => chatSessionTokenHasher.hash(token),
@@ -247,6 +259,9 @@ export const createContainer = (env: BootstrapEnv = Bun.env): BootstrapContainer
       listRoomMessages: createListChatRoomMessagesUseCase({
         repository: persistence.chat,
       }),
+      moderateRoomMessage: createModerateChatRoomMessageUseCase({
+        repository: persistence.chat,
+      }),
       moderateUploadRetention: createModerateChatUploadRetentionUseCase({
         repository: persistence.chat,
       }),
@@ -256,6 +271,9 @@ export const createContainer = (env: BootstrapEnv = Bun.env): BootstrapContainer
         storage: storage.chatUploads,
       }),
       sendRoomTextMessage: createSendChatRoomTextMessageUseCase({
+        repository: persistence.chat,
+      }),
+      rotateRoomPassword: createRotateChatRoomPasswordUseCase({
         repository: persistence.chat,
       }),
       uploadMessageWithImage: createUploadChatMessageWithImageUseCase({

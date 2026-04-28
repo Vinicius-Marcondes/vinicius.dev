@@ -156,6 +156,54 @@ export type ModerateChatUploadRetentionResult = Readonly<{
   upload: ChatUploadRepositoryRow;
 }>;
 
+export type ModerateChatRoomMessageAction = "hide_message" | "delete_message";
+
+export type ModerateChatRoomMessageCommand = Readonly<{
+  action: ModerateChatRoomMessageAction;
+  actorAdminUserId: string;
+  messageId: string;
+  occurredAt: Date;
+  reason?: string;
+}>;
+
+export type ModerateChatRoomMessageResult = Readonly<{
+  auditId: string;
+  message: ChatMessageRepositoryRow;
+  upload: ChatUploadRepositoryRow | null;
+}>;
+
+export type BanChatRoomHandleCommand = Readonly<{
+  actorAdminUserId: string;
+  handleId: string;
+  occurredAt: Date;
+  reason?: string;
+}>;
+
+export type BanChatRoomHandleResult = Readonly<{
+  auditId: string;
+  banId: string;
+  handle: ChatHandleRepositoryRow;
+  revokedSessionCount: number;
+}>;
+
+export type RotateChatRoomPasswordCommand = Readonly<{
+  actorAdminUserId: string;
+  nextPasswordHash: string;
+  occurredAt: Date;
+  reason?: string;
+  slug: string;
+}>;
+
+export type RotateChatRoomPasswordResult = Readonly<{
+  auditId: string;
+  revokedSessionCount: number;
+  room: ChatRoomRepositoryRow;
+  rotation: Readonly<{
+    id: string;
+    rotatedAt: Date;
+  }>;
+}>;
+
 export type ChatRoomQuery = Readonly<{
   slug: string;
 }>;
@@ -181,6 +229,13 @@ export interface ChatRepositoryPort {
   moderateUploadRetention(
     input: ModerateChatUploadRetentionCommand,
   ): Promise<ModerateChatUploadRetentionResult | null>;
+  moderateMessage(
+    input: ModerateChatRoomMessageCommand,
+  ): Promise<ModerateChatRoomMessageResult | null>;
+  banHandle(input: BanChatRoomHandleCommand): Promise<BanChatRoomHandleResult | null>;
+  rotateRoomPassword(
+    input: RotateChatRoomPasswordCommand,
+  ): Promise<RotateChatRoomPasswordResult | null>;
   findHandleById(handleId: string): Promise<ChatHandleRepositoryRow | null>;
   findSessionById(sessionId: string): Promise<ChatRoomSessionRepositoryRow | null>;
   findRoomBySlug(query: ChatRoomQuery): Promise<ChatRoomRepositoryRow | null>;

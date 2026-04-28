@@ -14,6 +14,9 @@ describe("bootstrap container", () => {
     expect(typeof container.chat.openUploadMedia.execute).toBe("function");
     expect(typeof container.chat.joinRoomSession?.execute).toBe("function");
     expect(typeof container.chat.listRoomMessages?.execute).toBe("function");
+    expect(typeof container.chat.moderateRoomMessage?.execute).toBe("function");
+    expect(typeof container.chat.banRoomHandle?.execute).toBe("function");
+    expect(typeof container.chat.rotateRoomPassword?.execute).toBe("function");
     expect(typeof container.chat.sendRoomTextMessage?.execute).toBe("function");
     expect(typeof container.media.repository.findPhotoMediaById).toBe("function");
     expect(typeof container.media.repository.findChatUploadMediaById).toBe("function");

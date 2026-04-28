@@ -19,8 +19,11 @@ import {
 } from "@/modules/chat/application";
 import { InvalidThoughtCursorError } from "@/modules/content/application";
 import type {
+  BanChatRoomHandlePort,
   ChatUploadMimeType,
   ListChatRoomMessagesPort,
+  ModerateChatRoomMessagePort,
+  RotateChatRoomPasswordPort,
   SendChatRoomTextMessagePort,
 } from "@/modules/chat/ports/inbound";
 import type { ReplaceAdminStatusStripEntriesInput } from "@/modules/admin/ports/inbound";
@@ -553,6 +556,34 @@ const readRequiredJsonString = (
 
   return {
     value: trimmed,
+  };
+};
+
+const readOptionalJsonString = (
+  payload: Record<string, unknown>,
+  field: string,
+): { value: string | undefined } | { error: { error: "invalid_request"; field: string } } => {
+  const value = payload[field];
+
+  if (typeof value === "undefined") {
+    return {
+      value: undefined,
+    };
+  }
+
+  if (typeof value !== "string") {
+    return {
+      error: {
+        error: "invalid_request",
+        field,
+      },
+    };
+  }
+
+  const trimmed = value.trim();
+
+  return {
+    value: trimmed.length > 0 ? trimmed : undefined,
   };
 };
 
@@ -1465,6 +1496,15 @@ const createAdminFamily = (container: BootstrapContainer) => {
   }
 
   const adminApp = new Hono();
+  const moderateRoomMessageUseCase = (container.chat as {
+    moderateRoomMessage?: ModerateChatRoomMessagePort;
+  }).moderateRoomMessage;
+  const banRoomHandleUseCase = (container.chat as {
+    banRoomHandle?: BanChatRoomHandlePort;
+  }).banRoomHandle;
+  const rotateRoomPasswordUseCase = (container.chat as {
+    rotateRoomPassword?: RotateChatRoomPasswordPort;
+  }).rotateRoomPassword;
 
   const resolveSession = async (c: Context) => {
     const sessionToken = readSessionTokenFromCookie(
@@ -1485,11 +1525,14 @@ const createAdminFamily = (container: BootstrapContainer) => {
     }
 
     try {
-      await auth.resolveAdminSession.execute({
+      const resolved = await auth.resolveAdminSession.execute({
         sessionToken,
       });
 
-      return { ok: true } as const;
+      return {
+        adminUserId: resolved.admin.id,
+        ok: true,
+      } as const;
     } catch (error) {
       if (error instanceof InvalidAuthSessionError) {
         return {
@@ -1885,6 +1928,173 @@ const createAdminFamily = (container: BootstrapContainer) => {
 
       throw error;
     }
+  });
+
+  adminApp.post("/chat/messages/:id/moderation", async (c) => {
+    const session = await resolveSession(c);
+
+    if ("error" in session) {
+      return session.error;
+    }
+
+    if (!moderateRoomMessageUseCase) {
+      return c.json<NotImplementedResponse>(
+        {
+          family: "admin",
+          method: c.req.method,
+          route: c.req.path,
+          service: serviceName,
+          status: "not_implemented",
+        },
+        501,
+      );
+    }
+
+    const id = c.req.param("id")?.trim();
+
+    if (!id) {
+      return c.json({ error: "invalid_path", field: "id" }, 400);
+    }
+
+    const parsedBody = await readJsonObject(c.req.raw);
+
+    if ("error" in parsedBody) {
+      return c.json(parsedBody.error, 400);
+    }
+
+    const action = parsedBody.value.action;
+
+    if (action !== "hide_message" && action !== "delete_message") {
+      return c.json({ error: "invalid_request", field: "action" }, 400);
+    }
+
+    const reason = readOptionalJsonString(parsedBody.value, "reason");
+
+    if ("error" in reason) {
+      return c.json(reason.error, 400);
+    }
+
+    const result = await moderateRoomMessageUseCase.execute({
+      action,
+      actorAdminUserId: session.adminUserId,
+      messageId: id,
+      reason: reason.value,
+    });
+
+    if (!result) {
+      return c.json({ error: "not_found", resource: "chat_message" }, 404);
+    }
+
+    return c.json(result);
+  });
+
+  adminApp.post("/chat/handles/:id/ban", async (c) => {
+    const session = await resolveSession(c);
+
+    if ("error" in session) {
+      return session.error;
+    }
+
+    if (!banRoomHandleUseCase) {
+      return c.json<NotImplementedResponse>(
+        {
+          family: "admin",
+          method: c.req.method,
+          route: c.req.path,
+          service: serviceName,
+          status: "not_implemented",
+        },
+        501,
+      );
+    }
+
+    const id = c.req.param("id")?.trim();
+
+    if (!id) {
+      return c.json({ error: "invalid_path", field: "id" }, 400);
+    }
+
+    const parsedBody = await readJsonObject(c.req.raw);
+
+    if ("error" in parsedBody) {
+      return c.json(parsedBody.error, 400);
+    }
+
+    const reason = readOptionalJsonString(parsedBody.value, "reason");
+
+    if ("error" in reason) {
+      return c.json(reason.error, 400);
+    }
+
+    const result = await banRoomHandleUseCase.execute({
+      actorAdminUserId: session.adminUserId,
+      handleId: id,
+      reason: reason.value,
+    });
+
+    if (!result) {
+      return c.json({ error: "not_found", resource: "chat_handle" }, 404);
+    }
+
+    return c.json(result);
+  });
+
+  adminApp.post("/chat/rooms/:slug/password-rotation", async (c) => {
+    const session = await resolveSession(c);
+
+    if ("error" in session) {
+      return session.error;
+    }
+
+    if (!rotateRoomPasswordUseCase) {
+      return c.json<NotImplementedResponse>(
+        {
+          family: "admin",
+          method: c.req.method,
+          route: c.req.path,
+          service: serviceName,
+          status: "not_implemented",
+        },
+        501,
+      );
+    }
+
+    const slug = c.req.param("slug")?.trim();
+
+    if (!slug) {
+      return c.json({ error: "invalid_path", field: "slug" }, 400);
+    }
+
+    const parsedBody = await readJsonObject(c.req.raw);
+
+    if ("error" in parsedBody) {
+      return c.json(parsedBody.error, 400);
+    }
+
+    const nextPassword = readRequiredJsonString(parsedBody.value, "nextPassword");
+
+    if ("error" in nextPassword) {
+      return c.json(nextPassword.error, 400);
+    }
+
+    const reason = readOptionalJsonString(parsedBody.value, "reason");
+
+    if ("error" in reason) {
+      return c.json(reason.error, 400);
+    }
+
+    const result = await rotateRoomPasswordUseCase.execute({
+      actorAdminUserId: session.adminUserId,
+      nextPassword: nextPassword.value,
+      reason: reason.value,
+      slug,
+    });
+
+    if (!result) {
+      return c.json({ error: "not_found", resource: "chat_room" }, 404);
+    }
+
+    return c.json(result);
   });
 
   adminApp.get("/status-strip", async (c) => {

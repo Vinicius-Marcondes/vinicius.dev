@@ -867,4 +867,438 @@ describe("prisma chat repository", () => {
     expect(result?.message?.moderationState).toBe("deleted");
     expect(result?.upload.moderationState).toBe("deleted");
   });
+
+  it("moderates a room message and linked upload with audit tracking", async () => {
+    let capturedAuditData: Record<string, unknown> | null = null;
+    let capturedMessageUpdate: Record<string, unknown> | null = null;
+    let capturedUploadUpdate: Record<string, unknown> | null = null;
+    const occurredAt = new Date("2026-04-28T12:08:00.000Z");
+    const repository = createPrismaChatRepository({
+      $transaction: async <T>(
+        runInTransaction: (tx: {
+          chatMessage: {
+            findUnique: (args: { where: { id: string } }) => Promise<Record<string, unknown> | null>;
+            update: (args: {
+              data: Record<string, unknown>;
+              where: { id: string };
+            }) => Promise<Record<string, unknown>>;
+          };
+          chatModerationAuditRecord: {
+            create: (args: { data: Record<string, unknown> }) => Promise<Record<string, unknown>>;
+          };
+          chatUpload: {
+            findUnique: (args: {
+              where: { messageId: string };
+            }) => Promise<Record<string, unknown> | null>;
+            update: (args: {
+              data: Record<string, unknown>;
+              where: { id: string };
+            }) => Promise<Record<string, unknown>>;
+          };
+        }) => Promise<T>,
+      ) =>
+        runInTransaction({
+          chatMessage: {
+            findUnique: async () => ({
+              authorHandleId: "handle_1",
+              body: "night drop",
+              createdAt: new Date("2026-04-24T10:00:00.000Z"),
+              deletedAt: null,
+              hiddenAt: null,
+              id: "message_1",
+              moderationState: "visible" as const,
+              roomId: "room_1",
+              roomSessionId: "session_1",
+              sentAt: new Date("2026-04-24T10:00:00.000Z"),
+              tone: "pink" as const,
+              updatedAt: new Date("2026-04-24T10:00:00.000Z"),
+            }),
+            update: async ({ data }) => {
+              capturedMessageUpdate = data;
+
+              return {
+                authorHandleId: "handle_1",
+                body: "night drop",
+                createdAt: new Date("2026-04-24T10:00:00.000Z"),
+                deletedAt: null,
+                hiddenAt: data.hiddenAt as Date,
+                id: "message_1",
+                moderationState: data.moderationState as "hidden",
+                roomId: "room_1",
+                roomSessionId: "session_1",
+                sentAt: new Date("2026-04-24T10:00:00.000Z"),
+                tone: "pink" as const,
+                updatedAt: occurredAt,
+              };
+            },
+          },
+          chatModerationAuditRecord: {
+            create: async ({ data }) => {
+              capturedAuditData = data;
+
+              return {
+                id: "audit_3",
+              };
+            },
+          },
+          chatUpload: {
+            findUnique: async () => ({
+              byteSize: 1234,
+              createdAt: new Date("2026-04-24T10:00:00.000Z"),
+              deletedAt: null,
+              displayFilename: "drop.png",
+              hiddenAt: null,
+              id: "upload_1",
+              kind: "image" as const,
+              messageId: "message_1",
+              mimeType: "image_png" as const,
+              moderationState: "visible" as const,
+              roomId: "room_1",
+              storageKey: "room_1/upload_1.png",
+              storagePath: "room_1/upload_1.png",
+              updatedAt: new Date("2026-04-24T10:00:00.000Z"),
+              uploaderHandleId: "handle_1",
+              uploaderSessionId: "session_1",
+            }),
+            update: async ({ data }) => {
+              capturedUploadUpdate = data;
+
+              return {
+                byteSize: 1234,
+                createdAt: new Date("2026-04-24T10:00:00.000Z"),
+                deletedAt: null,
+                displayFilename: "drop.png",
+                hiddenAt: data.hiddenAt as Date,
+                id: "upload_1",
+                kind: "image" as const,
+                messageId: "message_1",
+                mimeType: "image_png" as const,
+                moderationState: data.moderationState as "hidden",
+                roomId: "room_1",
+                storageKey: "room_1/upload_1.png",
+                storagePath: "room_1/upload_1.png",
+                updatedAt: occurredAt,
+                uploaderHandleId: "handle_1",
+                uploaderSessionId: "session_1",
+              };
+            },
+          },
+        }),
+    } as unknown as PrismaDatabaseClient);
+
+    const result = await repository.moderateMessage({
+      action: "hide_message",
+      actorAdminUserId: "admin_1",
+      messageId: "message_1",
+      occurredAt,
+      reason: "redact from room history",
+    });
+
+    expect(capturedMessageUpdate).toMatchObject({
+      deletedAt: null,
+      hiddenAt: occurredAt,
+      moderationState: "hidden",
+    });
+    expect(capturedUploadUpdate).toMatchObject({
+      deletedAt: null,
+      hiddenAt: occurredAt,
+      moderationState: "hidden",
+    });
+    expect(capturedAuditData).toMatchObject({
+      action: "hide_media_metadata",
+      actorAdminUserId: "admin_1",
+      reason: "redact from room history",
+      roomId: "room_1",
+      targetMessageId: "message_1",
+      targetUploadId: "upload_1",
+    });
+    expect(result).toEqual({
+      auditId: "audit_3",
+      message: {
+        authorHandleId: "handle_1",
+        body: "night drop",
+        createdAt: new Date("2026-04-24T10:00:00.000Z"),
+        deletedAt: null,
+        hiddenAt: occurredAt,
+        id: "message_1",
+        moderationState: "hidden",
+        roomId: "room_1",
+        roomSessionId: "session_1",
+        sentAt: new Date("2026-04-24T10:00:00.000Z"),
+        tone: "pink",
+        updatedAt: occurredAt,
+      },
+      upload: {
+        byteSize: 1234,
+        createdAt: new Date("2026-04-24T10:00:00.000Z"),
+        deletedAt: null,
+        displayFilename: "drop.png",
+        hiddenAt: occurredAt,
+        id: "upload_1",
+        kind: "image",
+        messageId: "message_1",
+        mimeType: "image/png",
+        moderationState: "hidden",
+        roomId: "room_1",
+        storageKey: "room_1/upload_1.png",
+        storagePath: "room_1/upload_1.png",
+        updatedAt: occurredAt,
+        uploaderHandleId: "handle_1",
+        uploaderSessionId: "session_1",
+      },
+    });
+  });
+
+  it("creates a ban record, revokes sessions, and emits moderation audit", async () => {
+    let capturedBanData: Record<string, unknown> | null = null;
+    let capturedAuditData: Record<string, unknown> | null = null;
+    let capturedRevokeWhere: Record<string, unknown> | null = null;
+    const occurredAt = new Date("2026-04-28T12:09:00.000Z");
+    const repository = createPrismaChatRepository({
+      $transaction: async <T>(
+        runInTransaction: (tx: {
+          chatBan: {
+            create: (args: { data: Record<string, unknown> }) => Promise<Record<string, unknown>>;
+          };
+          chatHandle: {
+            findUnique: (args: { where: { id: string } }) => Promise<Record<string, unknown> | null>;
+            update: (args: {
+              data: Record<string, unknown>;
+              where: { id: string };
+            }) => Promise<Record<string, unknown>>;
+          };
+          chatModerationAuditRecord: {
+            create: (args: { data: Record<string, unknown> }) => Promise<Record<string, unknown>>;
+          };
+          chatRoomSession: {
+            updateMany: (args: {
+              data: Record<string, unknown>;
+              where: Record<string, unknown>;
+            }) => Promise<{ count: number }>;
+          };
+        }) => Promise<T>,
+      ) =>
+        runInTransaction({
+          chatBan: {
+            create: async ({ data }) => {
+              capturedBanData = data;
+
+              return {
+                id: "ban_1",
+              };
+            },
+          },
+          chatHandle: {
+            findUnique: async () => ({
+              createdAt: new Date("2026-04-24T10:00:00.000Z"),
+              handle: "vinicius",
+              id: "handle_1",
+              normalizedHandle: "vinicius",
+              roomId: "room_1",
+              status: "active" as const,
+              updatedAt: new Date("2026-04-24T10:00:00.000Z"),
+            }),
+            update: async () => ({
+              createdAt: new Date("2026-04-24T10:00:00.000Z"),
+              handle: "vinicius",
+              id: "handle_1",
+              normalizedHandle: "vinicius",
+              roomId: "room_1",
+              status: "banned" as const,
+              updatedAt: occurredAt,
+            }),
+          },
+          chatModerationAuditRecord: {
+            create: async ({ data }) => {
+              capturedAuditData = data;
+
+              return {
+                id: "audit_4",
+              };
+            },
+          },
+          chatRoomSession: {
+            updateMany: async ({ where }) => {
+              capturedRevokeWhere = where;
+
+              return {
+                count: 2,
+              };
+            },
+          },
+        }),
+    } as unknown as PrismaDatabaseClient);
+
+    const result = await repository.banHandle({
+      actorAdminUserId: "admin_1",
+      handleId: "handle_1",
+      occurredAt,
+      reason: "abuse",
+    });
+
+    expect(capturedRevokeWhere).not.toBeNull();
+    expect(capturedRevokeWhere!).toEqual({
+      handleId: "handle_1",
+      roomId: "room_1",
+      status: "active",
+    });
+    expect(capturedBanData).toMatchObject({
+      actorAdminUserId: "admin_1",
+      reason: "abuse",
+      roomId: "room_1",
+      status: "active",
+      targetHandleId: "handle_1",
+    });
+    expect(capturedAuditData).toMatchObject({
+      action: "ban_handle",
+      actorAdminUserId: "admin_1",
+      roomId: "room_1",
+      targetBanId: "ban_1",
+      targetHandleId: "handle_1",
+    });
+    expect(result).toEqual({
+      auditId: "audit_4",
+      banId: "ban_1",
+      handle: {
+        createdAt: new Date("2026-04-24T10:00:00.000Z"),
+        handle: "vinicius",
+        id: "handle_1",
+        normalizedHandle: "vinicius",
+        roomId: "room_1",
+        status: "banned",
+        updatedAt: occurredAt,
+      },
+      revokedSessionCount: 2,
+    });
+  });
+
+  it("rotates room password, revokes sessions, and records audit metadata", async () => {
+    let capturedRoomUpdateData: Record<string, unknown> | null = null;
+    let capturedRotationData: Record<string, unknown> | null = null;
+    let capturedAuditData: Record<string, unknown> | null = null;
+    const occurredAt = new Date("2026-04-28T12:10:00.000Z");
+    const repository = createPrismaChatRepository({
+      $transaction: async <T>(
+        runInTransaction: (tx: {
+          chatModerationAuditRecord: {
+            create: (args: { data: Record<string, unknown> }) => Promise<Record<string, unknown>>;
+          };
+          chatRoom: {
+            findUnique: (args: { where: { slug: string } }) => Promise<Record<string, unknown> | null>;
+            update: (args: {
+              data: Record<string, unknown>;
+              where: { id: string };
+            }) => Promise<Record<string, unknown>>;
+          };
+          chatRoomPasswordRotation: {
+            create: (args: { data: Record<string, unknown> }) => Promise<Record<string, unknown>>;
+          };
+          chatRoomSession: {
+            updateMany: (args: {
+              data: Record<string, unknown>;
+              where: Record<string, unknown>;
+            }) => Promise<{ count: number }>;
+          };
+        }) => Promise<T>,
+      ) =>
+        runInTransaction({
+          chatModerationAuditRecord: {
+            create: async ({ data }) => {
+              capturedAuditData = data;
+
+              return {
+                id: "audit_5",
+              };
+            },
+          },
+          chatRoom: {
+            findUnique: async () => ({
+              createdAt: new Date("2026-04-24T10:00:00.000Z"),
+              id: "room_1",
+              passwordHash: "hash:old",
+              passwordRotatedAt: new Date("2026-04-20T10:00:00.000Z"),
+              passwordVersion: 3,
+              slug: "night-shift",
+              updatedAt: new Date("2026-04-24T10:00:00.000Z"),
+            }),
+            update: async ({ data }) => {
+              capturedRoomUpdateData = data;
+
+              return {
+                createdAt: new Date("2026-04-24T10:00:00.000Z"),
+                id: "room_1",
+                passwordHash: "hash:new",
+                passwordRotatedAt: data.passwordRotatedAt as Date,
+                passwordVersion: data.passwordVersion as number,
+                slug: "night-shift",
+                updatedAt: occurredAt,
+              };
+            },
+          },
+          chatRoomPasswordRotation: {
+            create: async ({ data }) => {
+              capturedRotationData = data;
+
+              return {
+                id: "rotation_1",
+                rotatedAt: occurredAt,
+              };
+            },
+          },
+          chatRoomSession: {
+            updateMany: async () => ({
+              count: 4,
+            }),
+          },
+        }),
+    } as unknown as PrismaDatabaseClient);
+
+    const result = await repository.rotateRoomPassword({
+      actorAdminUserId: "admin_1",
+      nextPasswordHash: "hash:new",
+      occurredAt,
+      reason: "credential leak",
+      slug: "night-shift",
+    });
+
+    expect(capturedRoomUpdateData).toMatchObject({
+      passwordHash: "hash:new",
+      passwordRotatedAt: occurredAt,
+      passwordVersion: 4,
+    });
+    expect(capturedRotationData).toMatchObject({
+      actorAdminUserId: "admin_1",
+      nextPasswordHash: "hash:new",
+      nextPasswordVersion: 4,
+      previousPasswordHash: "hash:old",
+      previousPasswordVersion: 3,
+      reason: "credential leak",
+      roomId: "room_1",
+      rotatedAt: occurredAt,
+    });
+    expect(capturedAuditData).toMatchObject({
+      action: "room_password_rotation",
+      actorAdminUserId: "admin_1",
+      reason: "credential leak",
+      roomId: "room_1",
+      targetRoomPasswordRotationId: "rotation_1",
+    });
+    expect(result).toEqual({
+      auditId: "audit_5",
+      revokedSessionCount: 4,
+      room: {
+        createdAt: new Date("2026-04-24T10:00:00.000Z"),
+        id: "room_1",
+        passwordHash: "hash:new",
+        passwordRotatedAt: occurredAt,
+        passwordVersion: 4,
+        slug: "night-shift",
+        updatedAt: occurredAt,
+      },
+      rotation: {
+        id: "rotation_1",
+        rotatedAt: occurredAt,
+      },
+    });
+  });
 });

@@ -4,6 +4,9 @@ import type {
 } from "@/modules/media/ports/outbound";
 import type { ChatRepositoryPort } from "@/modules/chat/ports/outbound";
 import type {
+  BanChatRoomHandleInput,
+  BanChatRoomHandleOutput,
+  BanChatRoomHandlePort,
   ChatUploadMimeType,
   ChatRoomMessageOutput,
   JoinChatRoomSessionInput,
@@ -15,12 +18,18 @@ import type {
   ListChatRoomParticipantsInput,
   ListChatRoomParticipantsOutput,
   ListChatRoomParticipantsPort,
+  ModerateChatRoomMessageInput,
+  ModerateChatRoomMessageOutput,
+  ModerateChatRoomMessagePort,
   ModerateChatUploadRetentionInput,
   ModerateChatUploadRetentionOutput,
   ModerateChatUploadRetentionPort,
   OpenChatUploadMediaInput,
   OpenChatUploadMediaOutput,
   OpenChatUploadMediaPort,
+  RotateChatRoomPasswordInput,
+  RotateChatRoomPasswordOutput,
+  RotateChatRoomPasswordPort,
   SendChatRoomTextMessageInput,
   SendChatRoomTextMessageOutput,
   SendChatRoomTextMessagePort,
@@ -28,7 +37,10 @@ import type {
   UploadChatMessageWithImageOutput,
   UploadChatMessageWithImagePort,
 } from "@/modules/chat/ports/inbound";
-import type { ModerateChatUploadRetentionAction } from "@/modules/chat/ports/outbound";
+import type {
+  ModerateChatRoomMessageAction,
+  ModerateChatUploadRetentionAction,
+} from "@/modules/chat/ports/outbound";
 
 const IMAGE_ONLY_FALLBACK_BODY = "uploaded an image without a caption";
 
@@ -124,6 +136,10 @@ const hashToken = async (token: string): Promise<string> => {
     .join("");
 };
 
+const hashPassword = async (plainText: string): Promise<string> => {
+  return Bun.password.hash(plainText);
+};
+
 export type ChatApplicationDependencies = Readonly<{
   clock?: () => Date;
   createId?: () => string;
@@ -173,6 +189,22 @@ export type ChatUploadMediaAccessDependencies = Readonly<{
 export type ChatUploadRetentionDependencies = Readonly<{
   clock?: () => Date;
   repository: Pick<ChatRepositoryPort, "moderateUploadRetention">;
+}>;
+
+export type ModerateChatRoomMessageDependencies = Readonly<{
+  clock?: () => Date;
+  repository: Pick<ChatRepositoryPort, "moderateMessage">;
+}>;
+
+export type BanChatRoomHandleDependencies = Readonly<{
+  clock?: () => Date;
+  repository: Pick<ChatRepositoryPort, "banHandle">;
+}>;
+
+export type RotateChatRoomPasswordDependencies = Readonly<{
+  clock?: () => Date;
+  hashRoomPassword?: (plainText: string) => Promise<string>;
+  repository: Pick<ChatRepositoryPort, "rotateRoomPassword">;
 }>;
 
 const normalizeListMessagesLimit = (inputLimit: number | undefined): number => {
@@ -444,6 +476,112 @@ export const createSendChatRoomTextMessageUseCase = ({
       sentAt: message.sentAt,
       tone: message.tone,
     });
+  },
+});
+
+const normalizeMessageModerationAction = (
+  value: ModerateChatRoomMessageInput["action"],
+): ModerateChatRoomMessageAction => value;
+
+export const createModerateChatRoomMessageUseCase = ({
+  clock = () => new Date(),
+  repository,
+}: ModerateChatRoomMessageDependencies): ModerateChatRoomMessagePort => ({
+  execute: async (
+    input: ModerateChatRoomMessageInput,
+  ): Promise<ModerateChatRoomMessageOutput | null> => {
+    const result = await repository.moderateMessage({
+      action: normalizeMessageModerationAction(input.action),
+      actorAdminUserId: input.actorAdminUserId.trim(),
+      messageId: input.messageId,
+      occurredAt: clock(),
+      reason: input.reason?.trim() || undefined,
+    });
+
+    if (!result) {
+      return null;
+    }
+
+    const uploadModerationState =
+      result.upload?.moderationState === "hidden" || result.upload?.moderationState === "deleted"
+        ? result.upload.moderationState
+        : null;
+
+    return {
+      action: input.action,
+      auditId: result.auditId,
+      messageId: result.message.id,
+      messageModerationState:
+        result.message.moderationState === "deleted" ? "deleted" : "hidden",
+      uploadId: result.upload?.id ?? null,
+      uploadModerationState,
+    };
+  },
+});
+
+export const createBanChatRoomHandleUseCase = ({
+  clock = () => new Date(),
+  repository,
+}: BanChatRoomHandleDependencies): BanChatRoomHandlePort => ({
+  execute: async (
+    input: BanChatRoomHandleInput,
+  ): Promise<BanChatRoomHandleOutput | null> => {
+    const result = await repository.banHandle({
+      actorAdminUserId: input.actorAdminUserId.trim(),
+      handleId: input.handleId,
+      occurredAt: clock(),
+      reason: input.reason?.trim() || undefined,
+    });
+
+    if (!result) {
+      return null;
+    }
+
+    return {
+      auditId: result.auditId,
+      banId: result.banId,
+      handleId: result.handle.id,
+      revokedSessionCount: result.revokedSessionCount,
+      roomId: result.handle.roomId,
+      status: "banned",
+    };
+  },
+});
+
+export const createRotateChatRoomPasswordUseCase = ({
+  clock = () => new Date(),
+  hashRoomPassword = hashPassword,
+  repository,
+}: RotateChatRoomPasswordDependencies): RotateChatRoomPasswordPort => ({
+  execute: async (
+    input: RotateChatRoomPasswordInput,
+  ): Promise<RotateChatRoomPasswordOutput | null> => {
+    const result = await repository.rotateRoomPassword({
+      actorAdminUserId: input.actorAdminUserId.trim(),
+      nextPasswordHash: await hashRoomPassword(input.nextPassword),
+      occurredAt: clock(),
+      reason: input.reason?.trim() || undefined,
+      slug: input.slug.trim(),
+    });
+
+    if (!result) {
+      return null;
+    }
+
+    return {
+      auditId: result.auditId,
+      revokedSessionCount: result.revokedSessionCount,
+      room: {
+        id: result.room.id,
+        passwordRotatedAt: result.room.passwordRotatedAt?.toISOString() ?? null,
+        passwordVersion: result.room.passwordVersion,
+        slug: result.room.slug,
+      },
+      rotation: {
+        id: result.rotation.id,
+        rotatedAt: result.rotation.rotatedAt.toISOString(),
+      },
+    };
   },
 });
 
