@@ -12,6 +12,9 @@ import type {
   JoinChatRoomSessionInput,
   JoinChatRoomSessionOutput,
   JoinChatRoomSessionPort,
+  ListChatModerationAuditsInput,
+  ListChatModerationAuditsOutput,
+  ListChatModerationAuditsPort,
   ListChatRoomMessagesInput,
   ListChatRoomMessagesOutput,
   ListChatRoomMessagesPort,
@@ -38,6 +41,7 @@ import type {
   UploadChatMessageWithImagePort,
 } from "@/modules/chat/ports/inbound";
 import type {
+  ChatModerationAuditAction,
   ModerateChatRoomMessageAction,
   ModerateChatUploadRetentionAction,
 } from "@/modules/chat/ports/outbound";
@@ -93,6 +97,13 @@ export class InvalidChatMessageCursorError extends Error {
   }
 }
 
+export class InvalidChatModerationAuditCursorError extends Error {
+  constructor() {
+    super("chat moderation audit cursor is invalid");
+    this.name = "InvalidChatModerationAuditCursorError";
+  }
+}
+
 const MIME_EXTENSION_BY_TYPE: Record<ChatUploadMimeType, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
@@ -124,6 +135,8 @@ const normalizeHandle = (value: string): string => collapseWhitespace(value).toL
 
 const DEFAULT_CHAT_MESSAGES_PAGE_SIZE = 30;
 const MAX_CHAT_MESSAGES_PAGE_SIZE = 80;
+const DEFAULT_CHAT_MODERATION_AUDITS_PAGE_SIZE = 30;
+const MAX_CHAT_MODERATION_AUDITS_PAGE_SIZE = 80;
 
 const defaultSessionToken = (): string => crypto.randomUUID();
 
@@ -172,6 +185,10 @@ export type ListChatRoomMessagesDependencies = Readonly<{
   repository: Pick<ChatRepositoryPort, "findRoomBySlug" | "findSessionById" | "listMessages">;
 }>;
 
+export type ListChatModerationAuditsDependencies = Readonly<{
+  repository: Pick<ChatRepositoryPort, "listModerationAudits">;
+}>;
+
 export type SendChatRoomTextMessageDependencies = Readonly<{
   clock?: () => Date;
   repository: Pick<
@@ -215,6 +232,17 @@ const normalizeListMessagesLimit = (inputLimit: number | undefined): number => {
   return Math.min(Math.max(Math.trunc(inputLimit), 1), MAX_CHAT_MESSAGES_PAGE_SIZE);
 };
 
+const normalizeListModerationAuditsLimit = (inputLimit: number | undefined): number => {
+  if (typeof inputLimit !== "number" || Number.isNaN(inputLimit)) {
+    return DEFAULT_CHAT_MODERATION_AUDITS_PAGE_SIZE;
+  }
+
+  return Math.min(
+    Math.max(Math.trunc(inputLimit), 1),
+    MAX_CHAT_MODERATION_AUDITS_PAGE_SIZE,
+  );
+};
+
 const encodeChatMessageCursor = (cursor: Readonly<{ id: string; sentAt: Date }>): string => {
   return Buffer.from(
     JSON.stringify({
@@ -251,6 +279,54 @@ const decodeChatMessageCursor = (input: string): Readonly<{ id: string; sentAt: 
   }
 };
 
+const encodeChatModerationAuditCursor = (cursor: Readonly<{ createdAt: Date; id: string }>): string => {
+  return Buffer.from(
+    JSON.stringify({
+      createdAt: cursor.createdAt.toISOString(),
+      id: cursor.id,
+    }),
+    "utf8",
+  ).toString("base64url");
+};
+
+const decodeChatModerationAuditCursor = (
+  input: string,
+): Readonly<{ createdAt: Date; id: string }> => {
+  try {
+    const parsed = JSON.parse(Buffer.from(input, "base64url").toString("utf8")) as {
+      createdAt?: unknown;
+      id?: unknown;
+    };
+
+    if (typeof parsed.createdAt !== "string" || typeof parsed.id !== "string") {
+      throw new InvalidChatModerationAuditCursorError();
+    }
+
+    const createdAt = new Date(parsed.createdAt);
+
+    if (Number.isNaN(createdAt.getTime())) {
+      throw new InvalidChatModerationAuditCursorError();
+    }
+
+    return {
+      createdAt,
+      id: parsed.id,
+    };
+  } catch (_error) {
+    throw new InvalidChatModerationAuditCursorError();
+  }
+};
+
+const normalizeChatModerationAuditAction = (
+  value: ListChatModerationAuditsInput["action"],
+): ChatModerationAuditAction | undefined => value;
+
+const normalizeOptionalFilter = (value: string | undefined): string | undefined => {
+  const trimmed = value?.trim();
+
+  return trimmed && trimmed.length > 0 ? trimmed : undefined;
+};
+
 const mapChatMessageOutput = (input: Readonly<{
   attachment?: Readonly<{
     byteSize: number;
@@ -279,6 +355,38 @@ const mapChatMessageOutput = (input: Readonly<{
   body: input.body,
   id: input.id,
   sentAt: input.sentAt.toISOString(),
+});
+
+const mapChatModerationAuditOutput = (input: Readonly<{
+  action: "delete_message" | "hide_media_metadata" | "ban_handle" | "room_password_rotation";
+  actorAdminUserId: string;
+  createdAt: Date;
+  id: string;
+  nextState: unknown | null;
+  previousState: unknown | null;
+  reason: string | null;
+  roomId: string | null;
+  targetBanId: string | null;
+  targetHandleId: string | null;
+  targetMessageId: string | null;
+  targetRoomPasswordRotationId: string | null;
+  targetSessionId: string | null;
+  targetUploadId: string | null;
+}>) => ({
+  action: input.action,
+  actorAdminUserId: input.actorAdminUserId,
+  createdAt: input.createdAt.toISOString(),
+  id: input.id,
+  nextState: input.nextState,
+  previousState: input.previousState,
+  reason: input.reason,
+  roomId: input.roomId,
+  targetBanId: input.targetBanId,
+  targetHandleId: input.targetHandleId,
+  targetMessageId: input.targetMessageId,
+  targetRoomPasswordRotationId: input.targetRoomPasswordRotationId,
+  targetSessionId: input.targetSessionId,
+  targetUploadId: input.targetUploadId,
 });
 
 export const createJoinChatRoomSessionUseCase = ({
@@ -424,6 +532,31 @@ export const createListChatRoomMessagesUseCase = ({
       items: page.items.map((item) => mapChatMessageOutput(item)),
       pageInfo: {
         nextCursor: page.nextCursor ? encodeChatMessageCursor(page.nextCursor) : null,
+      },
+    };
+  },
+});
+
+export const createListChatModerationAuditsUseCase = ({
+  repository,
+}: ListChatModerationAuditsDependencies): ListChatModerationAuditsPort => ({
+  execute: async (
+    input: ListChatModerationAuditsInput,
+  ): Promise<ListChatModerationAuditsOutput> => {
+    const page = await repository.listModerationAudits({
+      action: normalizeChatModerationAuditAction(input.action),
+      actorAdminUserId: normalizeOptionalFilter(input.actorAdminUserId),
+      cursor: input.cursor ? decodeChatModerationAuditCursor(input.cursor) : undefined,
+      limit: normalizeListModerationAuditsLimit(input.limit),
+      roomId: normalizeOptionalFilter(input.roomId),
+    });
+
+    return {
+      items: page.items.map((item) => mapChatModerationAuditOutput(item)),
+      pageInfo: {
+        nextCursor: page.nextCursor
+          ? encodeChatModerationAuditCursor(page.nextCursor)
+          : null,
       },
     };
   },

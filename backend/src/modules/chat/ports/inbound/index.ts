@@ -81,6 +81,41 @@ export type ListChatRoomMessagesOutput = Readonly<{
 export interface ListChatRoomMessagesPort
   extends UseCase<ListChatRoomMessagesInput, ListChatRoomMessagesOutput> {}
 
+export type ListChatModerationAuditsInput = Readonly<{
+  action?: "delete_message" | "hide_media_metadata" | "ban_handle" | "room_password_rotation";
+  actorAdminUserId?: string;
+  cursor?: string;
+  limit?: number;
+  roomId?: string;
+}>;
+
+export type ChatModerationAuditOutput = Readonly<{
+  action: "delete_message" | "hide_media_metadata" | "ban_handle" | "room_password_rotation";
+  actorAdminUserId: string;
+  createdAt: string;
+  id: string;
+  nextState: unknown | null;
+  previousState: unknown | null;
+  reason: string | null;
+  roomId: string | null;
+  targetBanId: string | null;
+  targetHandleId: string | null;
+  targetMessageId: string | null;
+  targetRoomPasswordRotationId: string | null;
+  targetSessionId: string | null;
+  targetUploadId: string | null;
+}>;
+
+export type ListChatModerationAuditsOutput = Readonly<{
+  items: readonly ChatModerationAuditOutput[];
+  pageInfo: Readonly<{
+    nextCursor: string | null;
+  }>;
+}>;
+
+export interface ListChatModerationAuditsPort
+  extends UseCase<ListChatModerationAuditsInput, ListChatModerationAuditsOutput> {}
+
 export type SendChatRoomTextMessageInput = Readonly<{
   body: string;
   roomSessionId: string;

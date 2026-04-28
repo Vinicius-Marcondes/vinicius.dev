@@ -11,6 +11,7 @@ import { InvalidAdminPhotoMetadataDateError } from "@/modules/admin/application"
 import {
   BannedChatHandleError,
   InvalidChatMessageAccessError,
+  InvalidChatModerationAuditCursorError,
   InvalidChatMessageCursorError,
   InvalidChatParticipantAccessError,
   InvalidChatRoomCredentialsError,
@@ -21,6 +22,7 @@ import { InvalidThoughtCursorError } from "@/modules/content/application";
 import type {
   BanChatRoomHandlePort,
   ChatUploadMimeType,
+  ListChatModerationAuditsPort,
   ListChatRoomMessagesPort,
   ModerateChatRoomMessagePort,
   RotateChatRoomPasswordPort,
@@ -1499,6 +1501,9 @@ const createAdminFamily = (container: BootstrapContainer) => {
   const moderateRoomMessageUseCase = (container.chat as {
     moderateRoomMessage?: ModerateChatRoomMessagePort;
   }).moderateRoomMessage;
+  const listModerationAuditsUseCase = (container.chat as {
+    listModerationAudits?: ListChatModerationAuditsPort;
+  }).listModerationAudits;
   const banRoomHandleUseCase = (container.chat as {
     banRoomHandle?: BanChatRoomHandlePort;
   }).banRoomHandle;
@@ -1924,6 +1929,74 @@ const createAdminFamily = (container: BootstrapContainer) => {
     } catch (error) {
       if (error instanceof InvalidAdminPhotoMetadataDateError) {
         return c.json({ error: "invalid_request", field: "date" }, 400);
+      }
+
+      throw error;
+    }
+  });
+
+  adminApp.get("/chat/moderation/audits", async (c) => {
+    const session = await resolveSession(c);
+
+    if ("error" in session) {
+      return session.error;
+    }
+
+    if (!listModerationAuditsUseCase) {
+      return c.json<NotImplementedResponse>(
+        {
+          family: "admin",
+          method: c.req.method,
+          route: c.req.path,
+          service: serviceName,
+          status: "not_implemented",
+        },
+        501,
+      );
+    }
+
+    const {
+      action,
+      actorAdminUserId,
+      cursor,
+      limit: rawLimit,
+      roomId,
+    } = c.req.query();
+    const limit = parsePositiveInteger(rawLimit);
+
+    if (typeof rawLimit !== "undefined" && typeof limit === "undefined") {
+      return c.json({ error: "invalid_query", field: "limit" }, 400);
+    }
+
+    if (
+      typeof action !== "undefined" &&
+      action !== "delete_message" &&
+      action !== "hide_media_metadata" &&
+      action !== "ban_handle" &&
+      action !== "room_password_rotation"
+    ) {
+      return c.json({ error: "invalid_query", field: "action" }, 400);
+    }
+
+    try {
+      const response = await listModerationAuditsUseCase.execute({
+        action:
+          action === "delete_message" ||
+          action === "hide_media_metadata" ||
+          action === "ban_handle" ||
+          action === "room_password_rotation"
+            ? action
+            : undefined,
+        actorAdminUserId,
+        cursor,
+        limit,
+        roomId,
+      });
+
+      return c.json(response);
+    } catch (error) {
+      if (error instanceof InvalidChatModerationAuditCursorError) {
+        return c.json({ error: "invalid_query", field: "cursor" }, 400);
       }
 
       throw error;
