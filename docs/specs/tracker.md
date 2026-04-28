@@ -47,7 +47,7 @@
 
 ## Next Task Queue
 1. Create the dedicated Wave 3 planning issue and Project item for this harness advancement task.
-2. Split Wave 3 Cluster 5 into one issue per task using `wave-2-task-clusters.md` definitions.
+2. Split Wave 3 Cluster 5 into one issue per task using `wave-3-task-clusters.md` definitions.
 3. Keep Wave 3 Cluster 6 and Cluster 7 in `Spec-ready` planning state until Cluster 5 and Cluster 6 dependency checkpoints are complete.
 4. Run frontend analyzer as non-mutating validation for backend-only PRs.
 5. Keep one issue, one Project item, one branch, and one acceptance source per implementation task.

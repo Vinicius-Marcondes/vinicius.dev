@@ -31,7 +31,7 @@ The harness, GitHub Project, and `develop` must stay aligned. If implementation 
 
 Current required approvals before real task cutting:
 - the current executable cluster in [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md)
-- the owning source specs named by that cluster in [wave-2-task-clusters.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/wave-2-task-clusters.md)
+- the owning source specs named by that cluster in [wave-3-task-clusters.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/wave-3-task-clusters.md)
 - [project-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/project-structure.md) for backend-facing work
 - [ci-cd.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/ci-cd.md) for validation and release-readiness tasks
 
@@ -93,7 +93,7 @@ Use:
 The current executable cluster is `Wave 3 Cluster 5: Admin/Auth backend`.
 
 Current follow-up actions:
-1. Keep this harness/planning update synced across `tracker.md`, `wave-2-task-clusters.md`, and GitHub execution artifacts.
+1. Keep this harness/planning update synced across `tracker.md`, `wave-3-task-clusters.md`, and GitHub execution artifacts.
 2. Create one GitHub Issue and one Project item per `ADMIN-001` through `ADMIN-007` task.
 3. Keep Wave 3 Cluster 6 and Cluster 7 in planned state until their explicit dependency checkpoints are complete.
 
@@ -307,6 +307,6 @@ Before merging:
 ## Current Recommendation
 Start with:
 1. sync the harness to the latest merged cluster state
-2. create the current executable cluster as GitHub Issues from `wave-2-task-clusters.md`
+2. create the current executable cluster as GitHub Issues from `wave-3-task-clusters.md`
 3. assign one agent to the shared foundation task first
 4. parallelize only the tasks explicitly marked parallel-safe by the active cluster definition
