@@ -3,10 +3,13 @@ import { describe, expect, it } from "bun:test";
 import {
   BannedChatHandleError,
   createJoinChatRoomSessionUseCase,
+  createListChatRoomMessagesUseCase,
   createListChatRoomParticipantsUseCase,
   createModerateChatUploadRetentionUseCase,
   createOpenChatUploadMediaUseCase,
   createUploadChatMessageWithImageUseCase,
+  InvalidChatMessageAccessError,
+  InvalidChatMessageCursorError,
   InvalidChatParticipantAccessError,
   InvalidChatRoomCredentialsError,
   InvalidChatUploadAccessError,
@@ -270,6 +273,196 @@ describe("chat participants list use case", () => {
         slug: "night-shift",
       }),
     ).rejects.toBeInstanceOf(InvalidChatParticipantAccessError);
+  });
+});
+
+describe("chat message archive list use case", () => {
+  it("returns cursor-paginated messages for an active room session bound to the room slug", async () => {
+    let capturedLimit: number | undefined;
+    const useCase = createListChatRoomMessagesUseCase({
+      repository: {
+        findRoomBySlug: async () => ({
+          createdAt: new Date("2026-04-28T12:00:00.000Z"),
+          id: "room_1",
+          passwordHash: "hash",
+          passwordRotatedAt: null,
+          passwordVersion: 1,
+          slug: "night-shift",
+          updatedAt: new Date("2026-04-28T12:00:00.000Z"),
+        }),
+        findSessionById: async () => ({
+          createdAt: new Date("2026-04-28T12:00:00.000Z"),
+          expiresAt: null,
+          handleId: "handle_1",
+          id: "session_1",
+          joinedAt: new Date("2026-04-28T12:00:00.000Z"),
+          lastSeenAt: new Date("2026-04-28T12:01:00.000Z"),
+          leftAt: null,
+          roomId: "room_1",
+          status: "active",
+          updatedAt: new Date("2026-04-28T12:01:00.000Z"),
+        }),
+        listMessages: async (input) => {
+          capturedLimit = input.limit;
+
+          return {
+            items: [
+              {
+                attachment: {
+                  byteSize: 2048,
+                  fileName: "bunker.jpg",
+                  id: "upload_1",
+                  kind: "image",
+                  mimeType: "image/jpeg",
+                },
+                author: "vinicius",
+                body: "late-night check-in",
+                id: "message_2",
+                sentAt: new Date("2026-04-28T12:03:00.000Z"),
+                tone: "pink",
+              },
+              {
+                author: "ghost-operator",
+                body: "channel stable",
+                id: "message_1",
+                sentAt: new Date("2026-04-28T12:02:00.000Z"),
+                tone: null,
+              },
+            ],
+            nextCursor: {
+              id: "message_0",
+              sentAt: new Date("2026-04-28T12:01:00.000Z"),
+            },
+          };
+        },
+      },
+    });
+
+    const result = await useCase.execute({
+      cursor: Buffer.from(
+        JSON.stringify({
+          id: "message_4",
+          sentAt: "2026-04-28T12:10:00.000Z",
+        }),
+        "utf8",
+      ).toString("base64url"),
+      limit: 2,
+      roomSessionId: "session_1",
+      slug: "night-shift",
+    });
+
+    expect(capturedLimit).toBe(2);
+    expect(result).toEqual({
+      items: [
+        {
+          attachment: {
+            byteSize: 2048,
+            fileName: "bunker.jpg",
+            id: "upload_1",
+            kind: "image",
+            mimeType: "image/jpeg",
+          },
+          author: "vinicius",
+          body: "late-night check-in",
+          id: "message_2",
+          sentAt: "2026-04-28T12:03:00.000Z",
+          tone: "pink",
+        },
+        {
+          author: "ghost-operator",
+          body: "channel stable",
+          id: "message_1",
+          sentAt: "2026-04-28T12:02:00.000Z",
+        },
+      ],
+      pageInfo: {
+        nextCursor: Buffer.from(
+          JSON.stringify({
+            id: "message_0",
+            sentAt: "2026-04-28T12:01:00.000Z",
+          }),
+          "utf8",
+        ).toString("base64url"),
+      },
+    });
+  });
+
+  it("rejects archive access when room session is invalid for the room slug", async () => {
+    const useCase = createListChatRoomMessagesUseCase({
+      repository: {
+        findRoomBySlug: async () => ({
+          createdAt: new Date("2026-04-28T12:00:00.000Z"),
+          id: "room_1",
+          passwordHash: "hash",
+          passwordRotatedAt: null,
+          passwordVersion: 1,
+          slug: "night-shift",
+          updatedAt: new Date("2026-04-28T12:00:00.000Z"),
+        }),
+        findSessionById: async () => ({
+          createdAt: new Date("2026-04-28T12:00:00.000Z"),
+          expiresAt: null,
+          handleId: "handle_1",
+          id: "session_1",
+          joinedAt: new Date("2026-04-28T12:00:00.000Z"),
+          lastSeenAt: new Date("2026-04-28T12:01:00.000Z"),
+          leftAt: null,
+          roomId: "room_2",
+          status: "active",
+          updatedAt: new Date("2026-04-28T12:01:00.000Z"),
+        }),
+        listMessages: async () => {
+          throw new Error("should not list messages");
+        },
+      },
+    });
+
+    await expect(
+      useCase.execute({
+        roomSessionId: "session_1",
+        slug: "night-shift",
+      }),
+    ).rejects.toBeInstanceOf(InvalidChatMessageAccessError);
+  });
+
+  it("rejects archive access when cursor is malformed", async () => {
+    const useCase = createListChatRoomMessagesUseCase({
+      repository: {
+        findRoomBySlug: async () => ({
+          createdAt: new Date("2026-04-28T12:00:00.000Z"),
+          id: "room_1",
+          passwordHash: "hash",
+          passwordRotatedAt: null,
+          passwordVersion: 1,
+          slug: "night-shift",
+          updatedAt: new Date("2026-04-28T12:00:00.000Z"),
+        }),
+        findSessionById: async () => ({
+          createdAt: new Date("2026-04-28T12:00:00.000Z"),
+          expiresAt: null,
+          handleId: "handle_1",
+          id: "session_1",
+          joinedAt: new Date("2026-04-28T12:00:00.000Z"),
+          lastSeenAt: new Date("2026-04-28T12:01:00.000Z"),
+          leftAt: null,
+          roomId: "room_1",
+          status: "active",
+          updatedAt: new Date("2026-04-28T12:01:00.000Z"),
+        }),
+        listMessages: async () => ({
+          items: [],
+          nextCursor: null,
+        }),
+      },
+    });
+
+    await expect(
+      useCase.execute({
+        cursor: "invalid-cursor",
+        roomSessionId: "session_1",
+        slug: "night-shift",
+      }),
+    ).rejects.toBeInstanceOf(InvalidChatMessageCursorError);
   });
 });
 

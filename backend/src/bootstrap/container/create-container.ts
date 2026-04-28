@@ -48,6 +48,7 @@ import type {
 } from "@/modules/auth/ports/inbound";
 import {
   createJoinChatRoomSessionUseCase,
+  createListChatRoomMessagesUseCase,
   createListChatRoomParticipantsUseCase,
   createModerateChatUploadRetentionUseCase,
   createOpenChatUploadMediaUseCase,
@@ -55,6 +56,7 @@ import {
 } from "@/modules/chat/application";
 import type {
   JoinChatRoomSessionPort,
+  ListChatRoomMessagesPort,
   ListChatRoomParticipantsPort,
   ModerateChatUploadRetentionPort,
   OpenChatUploadMediaPort,
@@ -103,6 +105,7 @@ export type BootstrapContainer = Readonly<{
   }>;
   chat: Readonly<{
     joinRoomSession?: JoinChatRoomSessionPort;
+    listRoomMessages?: ListChatRoomMessagesPort;
     listRoomParticipants?: ListChatRoomParticipantsPort;
     moderateUploadRetention: ModerateChatUploadRetentionPort;
     openUploadMedia: OpenChatUploadMediaPort;
@@ -236,6 +239,9 @@ export const createContainer = (env: BootstrapEnv = Bun.env): BootstrapContainer
           }),
       }),
       listRoomParticipants: createListChatRoomParticipantsUseCase({
+        repository: persistence.chat,
+      }),
+      listRoomMessages: createListChatRoomMessagesUseCase({
         repository: persistence.chat,
       }),
       moderateUploadRetention: createModerateChatUploadRetentionUseCase({

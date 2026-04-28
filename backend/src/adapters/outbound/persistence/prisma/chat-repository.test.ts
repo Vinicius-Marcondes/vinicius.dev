@@ -130,6 +130,129 @@ describe("prisma chat repository", () => {
     ]);
   });
 
+  it("maps room message archive rows with cursor pagination and attachment metadata", async () => {
+    let capturedTake = -1;
+    let capturedWhere: Record<string, unknown> = {};
+    const repository = createPrismaChatRepository({
+      chatMessage: {
+        findMany: async ({
+          take,
+          where,
+        }: {
+          take: number;
+          where: Record<string, unknown>;
+        }) => {
+          capturedTake = take;
+          capturedWhere = where;
+
+          return [
+            {
+              authorHandle: {
+                handle: "vinicius",
+              },
+              body: "late-night check-in",
+              id: "message_3",
+              sentAt: new Date("2026-04-24T10:03:00.000Z"),
+              tone: "pink" as const,
+              upload: {
+                byteSize: 2048,
+                displayFilename: "drop.png",
+                id: "upload_1",
+                kind: "image" as const,
+                mimeType: "image_png" as const,
+                moderationState: "visible" as const,
+              },
+            },
+            {
+              authorHandle: {
+                handle: "ghost-operator",
+              },
+              body: "signal copy",
+              id: "message_2",
+              sentAt: new Date("2026-04-24T10:02:00.000Z"),
+              tone: null,
+              upload: {
+                byteSize: 1024,
+                displayFilename: "hidden.png",
+                id: "upload_hidden",
+                kind: "image" as const,
+                mimeType: "image_png" as const,
+                moderationState: "hidden" as const,
+              },
+            },
+            {
+              authorHandle: {
+                handle: "system",
+              },
+              body: "older row",
+              id: "message_1",
+              sentAt: new Date("2026-04-24T10:01:00.000Z"),
+              tone: "system" as const,
+              upload: null,
+            },
+          ];
+        },
+      },
+    } as unknown as PrismaDatabaseClient);
+
+    const page = await repository.listMessages({
+      cursor: {
+        id: "message_5",
+        sentAt: new Date("2026-04-24T10:05:00.000Z"),
+      },
+      limit: 2,
+      roomId: "room_1",
+    });
+
+    expect(capturedTake).toBe(3);
+    expect(capturedWhere).toEqual({
+      OR: [
+        {
+          sentAt: {
+            lt: new Date("2026-04-24T10:05:00.000Z"),
+          },
+        },
+        {
+          id: {
+            lt: "message_5",
+          },
+          sentAt: new Date("2026-04-24T10:05:00.000Z"),
+        },
+      ],
+      moderationState: "visible",
+      roomId: "room_1",
+    });
+    expect(page).toEqual({
+      items: [
+        {
+          attachment: {
+            byteSize: 2048,
+            fileName: "drop.png",
+            id: "upload_1",
+            kind: "image",
+            mimeType: "image/png",
+          },
+          author: "vinicius",
+          body: "late-night check-in",
+          id: "message_3",
+          sentAt: new Date("2026-04-24T10:03:00.000Z"),
+          tone: "pink",
+        },
+        {
+          author: "ghost-operator",
+          body: "signal copy",
+          id: "message_2",
+          sentAt: new Date("2026-04-24T10:02:00.000Z"),
+          tone: null,
+        },
+      ],
+      nextCursor: {
+        id: "message_2",
+        sentAt: new Date("2026-04-24T10:02:00.000Z"),
+      },
+    });
+  });
+
   it("creates and maps a chat handle row", async () => {
     let capturedData: Record<string, unknown> | null = null;
     const repository = createPrismaChatRepository({

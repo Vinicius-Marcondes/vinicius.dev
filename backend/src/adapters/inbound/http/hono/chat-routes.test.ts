@@ -4,6 +4,8 @@ import type { BootstrapContainer } from "@/bootstrap/container";
 import type {
   JoinChatRoomSessionInput,
   JoinChatRoomSessionOutput,
+  ListChatRoomMessagesInput,
+  ListChatRoomMessagesOutput,
   ListChatRoomParticipantsInput,
   ListChatRoomParticipantsOutput,
   UploadChatMessageWithImageInput,
@@ -11,6 +13,8 @@ import type {
 } from "@/modules/chat/ports/inbound";
 import {
   BannedChatHandleError,
+  InvalidChatMessageAccessError,
+  InvalidChatMessageCursorError,
   InvalidChatParticipantAccessError,
   InvalidChatRoomCredentialsError,
   InvalidChatUploadActorError,
@@ -42,6 +46,21 @@ const defaultParticipantsResponse: ListChatRoomParticipantsOutput = {
   ],
 };
 
+const defaultMessagesResponse: ListChatRoomMessagesOutput = {
+  items: [
+    {
+      author: "vinicius",
+      body: "late-night check-in",
+      id: "message_1",
+      sentAt: "2026-04-24T12:00:00.000Z",
+      tone: "pink",
+    },
+  ],
+  pageInfo: {
+    nextCursor: null,
+  },
+};
+
 const createTestContainer = ({
   executeJoin = async (): Promise<JoinChatRoomSessionOutput> => ({
     participant: {
@@ -63,6 +82,8 @@ const createTestContainer = ({
   }),
   executeParticipants = async (): Promise<ListChatRoomParticipantsOutput> =>
     defaultParticipantsResponse,
+  executeMessages = async (): Promise<ListChatRoomMessagesOutput> =>
+    defaultMessagesResponse,
   executeUpload = async (): Promise<UploadChatMessageWithImageOutput> => defaultUploadResponse,
 }: Readonly<{
   executeJoin?: (
@@ -71,6 +92,9 @@ const createTestContainer = ({
   executeParticipants?: (
     input: ListChatRoomParticipantsInput,
   ) => ListChatRoomParticipantsOutput | Promise<ListChatRoomParticipantsOutput>;
+  executeMessages?: (
+    input: ListChatRoomMessagesInput,
+  ) => ListChatRoomMessagesOutput | Promise<ListChatRoomMessagesOutput>;
   executeUpload?: (
     input: UploadChatMessageWithImageInput,
   ) => UploadChatMessageWithImageOutput | Promise<UploadChatMessageWithImageOutput>;
@@ -82,6 +106,9 @@ const createTestContainer = ({
     listRoomParticipants: {
       execute: executeParticipants,
     },
+    listRoomMessages: {
+      execute: executeMessages,
+    },
     moderateUploadRetention: {
       execute: async () => null,
     },
@@ -91,6 +118,12 @@ const createTestContainer = ({
     uploadMessageWithImage: {
       execute: executeUpload,
     },
+  } as BootstrapContainer["chat"] & {
+    listRoomMessages: {
+      execute: (
+        input: ListChatRoomMessagesInput,
+      ) => ListChatRoomMessagesOutput | Promise<ListChatRoomMessagesOutput>;
+    };
   },
   config: {
     auth: {
@@ -456,6 +489,185 @@ describe("chat routes", () => {
     await expect(response.json()).resolves.toEqual({
       error: "denied",
       resource: "chat",
+    });
+  });
+
+  it("maps a valid message archive request into the chat messages use case", async () => {
+    let capturedInput: ListChatRoomMessagesInput | undefined;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeMessages: async (input) => {
+          capturedInput = input;
+
+          return {
+            items: [
+              {
+                author: "vinicius",
+                body: "late-night check-in",
+                id: "message_2",
+                sentAt: "2026-04-24T12:02:00.000Z",
+                tone: "pink",
+              },
+              {
+                attachment: {
+                  byteSize: 1234,
+                  fileName: "scan.png",
+                  id: "upload_1",
+                  kind: "image",
+                  mimeType: "image/png",
+                },
+                author: "ghost-operator",
+                body: "drop archived",
+                id: "message_1",
+                sentAt: "2026-04-24T12:01:00.000Z",
+              },
+            ],
+            pageInfo: {
+              nextCursor: "cursor_1",
+            },
+          };
+        },
+      }),
+    );
+
+    const response = await app.request(
+      "/api/chat/rooms/night-shift/messages?cursor=cursor_0&limit=20",
+      {
+        headers: {
+          "x-chat-room-session-id": " session_1 ",
+        },
+        method: "GET",
+      },
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      items: [
+        {
+          author: "vinicius",
+          body: "late-night check-in",
+          id: "message_2",
+          sentAt: "2026-04-24T12:02:00.000Z",
+          tone: "pink",
+        },
+        {
+          attachment: {
+            byteSize: 1234,
+            fileName: "scan.png",
+            id: "upload_1",
+            kind: "image",
+            mimeType: "image/png",
+          },
+          author: "ghost-operator",
+          body: "drop archived",
+          id: "message_1",
+          sentAt: "2026-04-24T12:01:00.000Z",
+        },
+      ],
+      pageInfo: {
+        nextCursor: "cursor_1",
+      },
+    });
+    expect(capturedInput).toEqual({
+      cursor: "cursor_0",
+      limit: 20,
+      roomSessionId: "session_1",
+      slug: "night-shift",
+    });
+  });
+
+  it("rejects message archive requests with invalid limit query before calling the core", async () => {
+    let called = false;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeMessages: async () => {
+          called = true;
+          throw new Error("should not run");
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/rooms/night-shift/messages?limit=0", {
+      headers: {
+        "x-chat-room-session-id": "session_1",
+      },
+      method: "GET",
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "invalid_query",
+      field: "limit",
+    });
+    expect(called).toBe(false);
+  });
+
+  it("rejects message archive requests missing room session header", async () => {
+    let called = false;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeMessages: async () => {
+          called = true;
+          throw new Error("should not run");
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/rooms/night-shift/messages", {
+      method: "GET",
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "invalid_request",
+      field: "x-chat-room-session-id",
+    });
+    expect(called).toBe(false);
+  });
+
+  it("returns denied when archive access is invalid for the room session", async () => {
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeMessages: async () => {
+          throw new InvalidChatMessageAccessError();
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/rooms/night-shift/messages", {
+      headers: {
+        "x-chat-room-session-id": "session_1",
+      },
+      method: "GET",
+    });
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      error: "denied",
+      resource: "chat",
+    });
+  });
+
+  it("maps malformed archive cursor errors to invalid_query", async () => {
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeMessages: async () => {
+          throw new InvalidChatMessageCursorError();
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/rooms/night-shift/messages?cursor=bad", {
+      headers: {
+        "x-chat-room-session-id": "session_1",
+      },
+      method: "GET",
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "invalid_query",
+      field: "cursor",
     });
   });
 
