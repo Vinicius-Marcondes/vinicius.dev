@@ -20,8 +20,10 @@
     "verify": "bun scripts/verify.ts"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
-    "hono": "^4.6.17"
+    "hono": "^4.6.17",
+    "pg": "^8.20.0"
   },
   "devDependencies": {
     "@types/bun": "^1.1.14",

@@ -1,13 +1,20 @@
 import { extname } from "node:path";
 
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 
+import {
+  InvalidAuthCredentialsError,
+  InvalidAuthSessionError,
+  MfaChallengeNotPendingError,
+} from "@/modules/auth/application";
+import { InvalidAdminPhotoMetadataDateError } from "@/modules/admin/application";
 import {
   InvalidChatUploadAccessError,
   InvalidChatUploadActorError,
 } from "@/modules/chat/application";
 import { InvalidThoughtCursorError } from "@/modules/content/application";
 import type { ChatUploadMimeType } from "@/modules/chat/ports/inbound";
+import type { ReplaceAdminStatusStripEntriesInput } from "@/modules/admin/ports/inbound";
 import type { BootstrapContainer } from "@/bootstrap/container";
 
 import { presentThoughtsRssFeed } from "./rss-presenter";
@@ -479,6 +486,67 @@ const collectUploadFiles = (formData: FormData): File[] => {
   return files;
 };
 
+const readJsonObject = async (
+  request: Request,
+): Promise<{ value: Record<string, unknown> } | { error: { error: "invalid_request"; field: string } }> => {
+  let payload: unknown;
+
+  try {
+    payload = await request.json();
+  } catch (_error) {
+    return {
+      error: {
+        error: "invalid_request",
+        field: "body",
+      },
+    };
+  }
+
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return {
+      error: {
+        error: "invalid_request",
+        field: "body",
+      },
+    };
+  }
+
+  return {
+    value: payload as Record<string, unknown>,
+  };
+};
+
+const readRequiredJsonString = (
+  payload: Record<string, unknown>,
+  field: string,
+): { value: string } | { error: { error: "invalid_request"; field: string } } => {
+  const value = payload[field];
+
+  if (typeof value !== "string") {
+    return {
+      error: {
+        error: "invalid_request",
+        field,
+      },
+    };
+  }
+
+  const trimmed = value.trim();
+
+  if (trimmed.length === 0) {
+    return {
+      error: {
+        error: "invalid_request",
+        field,
+      },
+    };
+  }
+
+  return {
+    value: trimmed,
+  };
+};
+
 const createChatFamily = (container: BootstrapContainer) => {
   const chatApp = new Hono();
 
@@ -715,6 +783,888 @@ const createChatFamily = (container: BootstrapContainer) => {
   return chatApp;
 };
 
+const parseCookieMap = (cookieHeader: string | undefined): Record<string, string> => {
+  if (!cookieHeader) {
+    return {};
+  }
+
+  return cookieHeader
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .reduce<Record<string, string>>((acc, pair) => {
+      const separator = pair.indexOf("=");
+
+      if (separator < 1) {
+        return acc;
+      }
+
+      const key = pair.slice(0, separator).trim();
+      const value = pair.slice(separator + 1).trim();
+
+      if (!key) {
+        return acc;
+      }
+
+      acc[key] = decodeURIComponent(value);
+      return acc;
+    }, {});
+};
+
+const readSessionTokenFromCookie = (
+  request: Request,
+  sessionCookieName: string,
+): string | null => {
+  const cookies = parseCookieMap(request.headers.get("cookie") ?? undefined);
+  const value = cookies[sessionCookieName];
+
+  if (!value) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const buildSessionCookieHeader = (
+  input: Readonly<{
+    cookieName: string;
+    maxAgeSeconds: number;
+    secure: boolean;
+    token: string;
+  }>,
+) => {
+  const secureFlag = input.secure ? "; Secure" : "";
+
+  return `${input.cookieName}=${encodeURIComponent(input.token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${input.maxAgeSeconds}${secureFlag}`;
+};
+
+const buildClearedSessionCookieHeader = (
+  input: Readonly<{
+    cookieName: string;
+    secure: boolean;
+  }>,
+) => {
+  const secureFlag = input.secure ? "; Secure" : "";
+
+  return `${input.cookieName}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT${secureFlag}`;
+};
+
+const presentAuthReadyState = (input: Readonly<{
+  state: "ready";
+  admin: Readonly<{
+    id: string;
+    email: string;
+  }>;
+  session: Readonly<{
+    id: string;
+    expiresAt: string;
+  }>;
+}>) => ({
+  admin: input.admin,
+  session: input.session,
+  state: "ready" as const,
+});
+
+const createAuthFamily = (container: BootstrapContainer) => {
+  const auth = container.auth;
+
+  if (!auth) {
+    return createNotImplementedFamily("auth");
+  }
+
+  const authApp = new Hono();
+
+  authApp.post("/login", async (c) => {
+    const parsedBody = await readJsonObject(c.req.raw);
+
+    if ("error" in parsedBody) {
+      return c.json(parsedBody.error, 400);
+    }
+
+    const email = readRequiredJsonString(parsedBody.value, "email");
+
+    if ("error" in email) {
+      return c.json(email.error, 400);
+    }
+
+    const password = readRequiredJsonString(parsedBody.value, "password");
+
+    if ("error" in password) {
+      return c.json(password.error, 400);
+    }
+
+    try {
+      const result = await auth.loginWithCredentials.execute({
+        email: email.value,
+        password: password.value,
+      });
+
+      if (result.state === "ready") {
+        c.header(
+          "Set-Cookie",
+          buildSessionCookieHeader({
+            cookieName: container.config.auth.sessionCookieName,
+            maxAgeSeconds: container.config.auth.sessionMaxAgeSeconds,
+            secure: container.config.server.nodeEnv === "production",
+            token: result.sessionToken,
+          }),
+        );
+
+        return c.json(presentAuthReadyState(result));
+      }
+
+      return c.json(result);
+    } catch (error) {
+      if (error instanceof InvalidAuthCredentialsError) {
+        return c.json(
+          {
+            error: "denied",
+            resource: "auth",
+          },
+          401,
+        );
+      }
+
+      throw error;
+    }
+  });
+
+  authApp.post("/mfa/verify", async (c) => {
+    const parsedBody = await readJsonObject(c.req.raw);
+
+    if ("error" in parsedBody) {
+      return c.json(parsedBody.error, 400);
+    }
+
+    const challengeId = readRequiredJsonString(parsedBody.value, "challengeId");
+
+    if ("error" in challengeId) {
+      return c.json(challengeId.error, 400);
+    }
+
+    const code = readRequiredJsonString(parsedBody.value, "code");
+
+    if ("error" in code) {
+      return c.json(code.error, 400);
+    }
+
+    try {
+      const result = await auth.verifyMfaChallenge.execute({
+        challengeId: challengeId.value,
+        code: code.value,
+      });
+
+      c.header(
+        "Set-Cookie",
+        buildSessionCookieHeader({
+          cookieName: container.config.auth.sessionCookieName,
+          maxAgeSeconds: container.config.auth.sessionMaxAgeSeconds,
+          secure: container.config.server.nodeEnv === "production",
+          token: result.sessionToken,
+        }),
+      );
+
+      return c.json(presentAuthReadyState(result));
+    } catch (error) {
+      if (error instanceof InvalidAuthCredentialsError) {
+        return c.json(
+          {
+            error: "denied",
+            resource: "auth",
+          },
+          401,
+        );
+      }
+
+      if (error instanceof MfaChallengeNotPendingError) {
+        return c.json(
+          {
+            error: "challenge_not_pending",
+            resource: "mfa_challenge",
+          },
+          409,
+        );
+      }
+
+      if (error instanceof InvalidAuthSessionError) {
+        return c.json(
+          {
+            error: "denied",
+            resource: "auth",
+          },
+          401,
+        );
+      }
+
+      throw error;
+    }
+  });
+
+  authApp.post("/session/refresh", async (c) => {
+    const sessionToken = readSessionTokenFromCookie(
+      c.req.raw,
+      container.config.auth.sessionCookieName,
+    );
+
+    if (!sessionToken) {
+      return c.json(
+        {
+          error: "denied",
+          resource: "auth",
+        },
+        401,
+      );
+    }
+
+    try {
+      const result = await auth.refreshAdminSession.execute({ sessionToken });
+
+      c.header(
+        "Set-Cookie",
+        buildSessionCookieHeader({
+          cookieName: container.config.auth.sessionCookieName,
+          maxAgeSeconds: container.config.auth.sessionMaxAgeSeconds,
+          secure: container.config.server.nodeEnv === "production",
+          token: result.sessionToken,
+        }),
+      );
+
+      return c.json(presentAuthReadyState(result));
+    } catch (error) {
+      if (error instanceof InvalidAuthSessionError) {
+        return c.json(
+          {
+            error: "denied",
+            resource: "auth",
+          },
+          401,
+        );
+      }
+
+      throw error;
+    }
+  });
+
+  authApp.post("/logout", async (c) => {
+    const sessionToken = readSessionTokenFromCookie(
+      c.req.raw,
+      container.config.auth.sessionCookieName,
+    );
+
+    if (!sessionToken) {
+      return c.json(
+        {
+          error: "denied",
+          resource: "auth",
+        },
+        401,
+      );
+    }
+
+    try {
+      const result = await auth.logoutAdminSession.execute({ sessionToken });
+
+      c.header(
+        "Set-Cookie",
+        buildClearedSessionCookieHeader({
+          cookieName: container.config.auth.sessionCookieName,
+          secure: container.config.server.nodeEnv === "production",
+        }),
+      );
+
+      return c.json(result);
+    } catch (error) {
+      if (error instanceof InvalidAuthSessionError) {
+        return c.json(
+          {
+            error: "denied",
+            resource: "auth",
+          },
+          401,
+        );
+      }
+
+      throw error;
+    }
+  });
+
+  authApp.all("*", (c) =>
+    c.json<NotImplementedResponse>(
+      {
+        family: "auth",
+        method: c.req.method,
+        route: c.req.path,
+        service: serviceName,
+        status: "not_implemented",
+      },
+      501,
+    ),
+  );
+
+  return authApp;
+};
+
+const parseBooleanQuery = (value: string | undefined): boolean | undefined => {
+  if (typeof value === "undefined") {
+    return undefined;
+  }
+
+  if (value === "true") {
+    return true;
+  }
+
+  if (value === "false") {
+    return false;
+  }
+
+  return undefined;
+};
+
+const createAdminFamily = (container: BootstrapContainer) => {
+  const admin = container.admin;
+  const auth = container.auth;
+
+  if (!admin || !auth) {
+    return createNotImplementedFamily("admin");
+  }
+
+  const adminApp = new Hono();
+
+  const resolveSession = async (c: Context) => {
+    const sessionToken = readSessionTokenFromCookie(
+      c.req.raw,
+      container.config.auth.sessionCookieName,
+    );
+
+    if (!sessionToken) {
+      return {
+        error: c.json(
+          {
+            error: "denied",
+            resource: "auth",
+          },
+          401,
+        ),
+      } as const;
+    }
+
+    try {
+      await auth.resolveAdminSession.execute({
+        sessionToken,
+      });
+
+      return { ok: true } as const;
+    } catch (error) {
+      if (error instanceof InvalidAuthSessionError) {
+        return {
+          error: c.json(
+            {
+              error: "denied",
+              resource: "auth",
+            },
+            401,
+          ),
+        } as const;
+      }
+
+      throw error;
+    }
+  };
+
+  adminApp.get("/dashboard/summary", async (c) => {
+    const session = await resolveSession(c);
+
+    if ("error" in session) {
+      return session.error;
+    }
+
+    const response = await admin.getDashboardSummary.execute();
+    return c.json(response);
+  });
+
+  adminApp.get("/thoughts", async (c) => {
+    const session = await resolveSession(c);
+
+    if ("error" in session) {
+      return session.error;
+    }
+
+    const query = c.req.query();
+    const page = parsePositiveInteger(query.page);
+    const pageSize = parsePositiveInteger(query.pageSize);
+    const featured = parseBooleanQuery(query.featured);
+
+    if (typeof query.page !== "undefined" && typeof page === "undefined") {
+      return c.json({ error: "invalid_query", field: "page" }, 400);
+    }
+
+    if (typeof query.pageSize !== "undefined" && typeof pageSize === "undefined") {
+      return c.json({ error: "invalid_query", field: "pageSize" }, 400);
+    }
+
+    if (typeof query.featured !== "undefined" && typeof featured === "undefined") {
+      return c.json({ error: "invalid_query", field: "featured" }, 400);
+    }
+
+    if (query.status && query.status !== "draft" && query.status !== "published") {
+      return c.json({ error: "invalid_query", field: "status" }, 400);
+    }
+
+    if (query.type && query.type !== "essay" && query.type !== "note") {
+      return c.json({ error: "invalid_query", field: "type" }, 400);
+    }
+
+    const response = await admin.listThoughts.execute({
+      featured,
+      page,
+      pageSize,
+      search: query.search,
+      status: query.status === "draft" || query.status === "published" ? query.status : undefined,
+      type: query.type === "essay" || query.type === "note" ? query.type : undefined,
+    });
+
+    return c.json(response);
+  });
+
+  adminApp.patch("/thoughts/:id/curation", async (c) => {
+    const session = await resolveSession(c);
+
+    if ("error" in session) {
+      return session.error;
+    }
+
+    const id = c.req.param("id")?.trim();
+
+    if (!id) {
+      return c.json({ error: "invalid_path", field: "id" }, 400);
+    }
+
+    const parsedBody = await readJsonObject(c.req.raw);
+
+    if ("error" in parsedBody) {
+      return c.json(parsedBody.error, 400);
+    }
+
+    const featuredRaw = parsedBody.value.featured;
+    const statusRaw = parsedBody.value.status;
+
+    if (typeof featuredRaw !== "undefined" && typeof featuredRaw !== "boolean") {
+      return c.json({ error: "invalid_request", field: "featured" }, 400);
+    }
+
+    if (
+      typeof statusRaw !== "undefined" &&
+      statusRaw !== "draft" &&
+      statusRaw !== "published"
+    ) {
+      return c.json({ error: "invalid_request", field: "status" }, 400);
+    }
+
+    const result = await admin.updateThoughtCuration.execute({
+      featured: typeof featuredRaw === "boolean" ? featuredRaw : undefined,
+      id,
+      status: statusRaw === "draft" || statusRaw === "published" ? statusRaw : undefined,
+    });
+
+    if (!result) {
+      return c.json({ error: "not_found", resource: "thought" }, 404);
+    }
+
+    return c.json(result);
+  });
+
+  adminApp.get("/projects", async (c) => {
+    const session = await resolveSession(c);
+
+    if ("error" in session) {
+      return session.error;
+    }
+
+    const query = c.req.query();
+    const page = parsePositiveInteger(query.page);
+    const pageSize = parsePositiveInteger(query.pageSize);
+    const featured = parseBooleanQuery(query.featured);
+
+    if (typeof query.page !== "undefined" && typeof page === "undefined") {
+      return c.json({ error: "invalid_query", field: "page" }, 400);
+    }
+
+    if (typeof query.pageSize !== "undefined" && typeof pageSize === "undefined") {
+      return c.json({ error: "invalid_query", field: "pageSize" }, 400);
+    }
+
+    if (typeof query.featured !== "undefined" && typeof featured === "undefined") {
+      return c.json({ error: "invalid_query", field: "featured" }, 400);
+    }
+
+    if (
+      query.status &&
+      query.status !== "live" &&
+      query.status !== "archived" &&
+      query.status !== "in-progress"
+    ) {
+      return c.json({ error: "invalid_query", field: "status" }, 400);
+    }
+
+    const response = await admin.listProjects.execute({
+      featured,
+      page,
+      pageSize,
+      search: query.search,
+      status:
+        query.status === "live" ||
+        query.status === "archived" ||
+        query.status === "in-progress"
+          ? query.status
+          : undefined,
+    });
+
+    return c.json(response);
+  });
+
+  adminApp.patch("/projects/:id/curation", async (c) => {
+    const session = await resolveSession(c);
+
+    if ("error" in session) {
+      return session.error;
+    }
+
+    const id = c.req.param("id")?.trim();
+
+    if (!id) {
+      return c.json({ error: "invalid_path", field: "id" }, 400);
+    }
+
+    const parsedBody = await readJsonObject(c.req.raw);
+
+    if ("error" in parsedBody) {
+      return c.json(parsedBody.error, 400);
+    }
+
+    const featuredRaw = parsedBody.value.featured;
+    const statusRaw = parsedBody.value.status;
+
+    if (typeof featuredRaw !== "undefined" && typeof featuredRaw !== "boolean") {
+      return c.json({ error: "invalid_request", field: "featured" }, 400);
+    }
+
+    if (
+      typeof statusRaw !== "undefined" &&
+      statusRaw !== "live" &&
+      statusRaw !== "archived" &&
+      statusRaw !== "in-progress"
+    ) {
+      return c.json({ error: "invalid_request", field: "status" }, 400);
+    }
+
+    const result = await admin.updateProjectCuration.execute({
+      featured: typeof featuredRaw === "boolean" ? featuredRaw : undefined,
+      id,
+      status:
+        statusRaw === "live" || statusRaw === "archived" || statusRaw === "in-progress"
+          ? statusRaw
+          : undefined,
+    });
+
+    if (!result) {
+      return c.json({ error: "not_found", resource: "project" }, 404);
+    }
+
+    return c.json(result);
+  });
+
+  adminApp.get("/photos", async (c) => {
+    const session = await resolveSession(c);
+
+    if ("error" in session) {
+      return session.error;
+    }
+
+    const query = c.req.query();
+    const page = parsePositiveInteger(query.page);
+    const pageSize = parsePositiveInteger(query.pageSize);
+    const year = parsePositiveInteger(query.year);
+    const featured = parseBooleanQuery(query.featured);
+
+    if (typeof query.page !== "undefined" && typeof page === "undefined") {
+      return c.json({ error: "invalid_query", field: "page" }, 400);
+    }
+
+    if (typeof query.pageSize !== "undefined" && typeof pageSize === "undefined") {
+      return c.json({ error: "invalid_query", field: "pageSize" }, 400);
+    }
+
+    if (typeof query.year !== "undefined" && typeof year === "undefined") {
+      return c.json({ error: "invalid_query", field: "year" }, 400);
+    }
+
+    if (typeof query.featured !== "undefined" && typeof featured === "undefined") {
+      return c.json({ error: "invalid_query", field: "featured" }, 400);
+    }
+
+    if (query.status && query.status !== "draft" && query.status !== "published") {
+      return c.json({ error: "invalid_query", field: "status" }, 400);
+    }
+
+    const response = await admin.listPhotos.execute({
+      featured,
+      location: query.location,
+      page,
+      pageSize,
+      search: query.search,
+      status: query.status === "draft" || query.status === "published" ? query.status : undefined,
+      year,
+    });
+
+    return c.json(response);
+  });
+
+  adminApp.patch("/photos/:id/curation", async (c) => {
+    const session = await resolveSession(c);
+
+    if ("error" in session) {
+      return session.error;
+    }
+
+    const id = c.req.param("id")?.trim();
+
+    if (!id) {
+      return c.json({ error: "invalid_path", field: "id" }, 400);
+    }
+
+    const parsedBody = await readJsonObject(c.req.raw);
+
+    if ("error" in parsedBody) {
+      return c.json(parsedBody.error, 400);
+    }
+
+    const featuredRaw = parsedBody.value.featured;
+    const statusRaw = parsedBody.value.status;
+
+    if (typeof featuredRaw !== "undefined" && typeof featuredRaw !== "boolean") {
+      return c.json({ error: "invalid_request", field: "featured" }, 400);
+    }
+
+    if (
+      typeof statusRaw !== "undefined" &&
+      statusRaw !== "draft" &&
+      statusRaw !== "published"
+    ) {
+      return c.json({ error: "invalid_request", field: "status" }, 400);
+    }
+
+    const result = await admin.updatePhotoCuration.execute({
+      featured: typeof featuredRaw === "boolean" ? featuredRaw : undefined,
+      id,
+      status: statusRaw === "draft" || statusRaw === "published" ? statusRaw : undefined,
+    });
+
+    if (!result) {
+      return c.json({ error: "not_found", resource: "photo" }, 404);
+    }
+
+    return c.json(result);
+  });
+
+  adminApp.patch("/photos/:id/metadata", async (c) => {
+    const session = await resolveSession(c);
+
+    if ("error" in session) {
+      return session.error;
+    }
+
+    const id = c.req.param("id")?.trim();
+
+    if (!id) {
+      return c.json({ error: "invalid_path", field: "id" }, 400);
+    }
+
+    const parsedBody = await readJsonObject(c.req.raw);
+
+    if ("error" in parsedBody) {
+      return c.json(parsedBody.error, 400);
+    }
+
+    const tone = parsedBody.value.tone;
+    const tags = parsedBody.value.tags;
+
+    if (
+      typeof tone !== "undefined" &&
+      tone !== "amber" &&
+      tone !== "cyan" &&
+      tone !== "mono" &&
+      tone !== "sunset" &&
+      tone !== "violet"
+    ) {
+      return c.json({ error: "invalid_request", field: "tone" }, 400);
+    }
+
+    if (
+      typeof tags !== "undefined" &&
+      (!Array.isArray(tags) || tags.some((entry) => typeof entry !== "string"))
+    ) {
+      return c.json({ error: "invalid_request", field: "tags" }, 400);
+    }
+
+    try {
+      const result = await admin.updatePhotoMetadata.execute({
+        camera:
+          typeof parsedBody.value.camera === "string" || parsedBody.value.camera === null
+            ? parsedBody.value.camera
+            : undefined,
+        caption:
+          typeof parsedBody.value.caption === "string" || parsedBody.value.caption === null
+            ? parsedBody.value.caption
+            : undefined,
+        date: typeof parsedBody.value.date === "string" ? parsedBody.value.date : undefined,
+        film:
+          typeof parsedBody.value.film === "string" || parsedBody.value.film === null
+            ? parsedBody.value.film
+            : undefined,
+        frame: typeof parsedBody.value.frame === "string" ? parsedBody.value.frame : undefined,
+        id,
+        location:
+          typeof parsedBody.value.location === "string" ? parsedBody.value.location : undefined,
+        tags: Array.isArray(tags) ? tags.map((entry) => entry.trim()).filter(Boolean) : undefined,
+        title: typeof parsedBody.value.title === "string" ? parsedBody.value.title : undefined,
+        tone:
+          tone === "amber" ||
+          tone === "cyan" ||
+          tone === "mono" ||
+          tone === "sunset" ||
+          tone === "violet"
+            ? tone
+            : undefined,
+      });
+
+      if (!result) {
+        return c.json({ error: "not_found", resource: "photo" }, 404);
+      }
+
+      return c.json(result);
+    } catch (error) {
+      if (error instanceof InvalidAdminPhotoMetadataDateError) {
+        return c.json({ error: "invalid_request", field: "date" }, 400);
+      }
+
+      throw error;
+    }
+  });
+
+  adminApp.get("/status-strip", async (c) => {
+    const session = await resolveSession(c);
+
+    if ("error" in session) {
+      return session.error;
+    }
+
+    const response = await admin.listStatusStripEntries.execute();
+    return c.json(response);
+  });
+
+  adminApp.put("/status-strip", async (c) => {
+    const session = await resolveSession(c);
+
+    if ("error" in session) {
+      return session.error;
+    }
+
+    const parsedBody = await readJsonObject(c.req.raw);
+
+    if ("error" in parsedBody) {
+      return c.json(parsedBody.error, 400);
+    }
+
+    const items = parsedBody.value.items;
+
+    if (!Array.isArray(items)) {
+      return c.json({ error: "invalid_request", field: "items" }, 400);
+    }
+
+    type StatusStripEntryInput = ReplaceAdminStatusStripEntriesInput["items"][number];
+    const normalizedItems: StatusStripEntryInput[] = [];
+    const displayOrderSet = new Set<number>();
+
+    for (const [index, item] of items.entries()) {
+      if (!item || typeof item !== "object" || Array.isArray(item)) {
+        return c.json({ error: "invalid_request", field: `items[${index}]` }, 400);
+      }
+
+      const cast = item as Record<string, unknown>;
+      const label = cast.label;
+      const value = cast.value;
+      const displayOrderRaw = cast.displayOrder;
+      const accent = cast.accent;
+      const id = cast.id;
+
+      if (typeof label !== "string" || label.trim().length === 0) {
+        return c.json({ error: "invalid_request", field: `items[${index}].label` }, 400);
+      }
+
+      if (typeof value !== "string" || value.trim().length === 0) {
+        return c.json({ error: "invalid_request", field: `items[${index}].value` }, 400);
+      }
+
+      if (
+        typeof displayOrderRaw !== "number" ||
+        !Number.isInteger(displayOrderRaw) ||
+        displayOrderRaw < 1
+      ) {
+        return c.json({ error: "invalid_request", field: `items[${index}].displayOrder` }, 400);
+      }
+
+      if (
+        typeof accent !== "undefined" &&
+        accent !== "amber" &&
+        accent !== "cyan" &&
+        accent !== "pink"
+      ) {
+        return c.json({ error: "invalid_request", field: `items[${index}].accent` }, 400);
+      }
+
+      const displayOrder = displayOrderRaw;
+      const normalizedAccent: StatusStripEntryInput["accent"] =
+        accent === "amber" || accent === "cyan" || accent === "pink" ? accent : undefined;
+
+      if (displayOrderSet.has(displayOrder)) {
+        return c.json({ error: "conflict", reason: "duplicate_display_order" }, 409);
+      }
+
+      displayOrderSet.add(displayOrder);
+      normalizedItems.push({
+        accent: normalizedAccent,
+        displayOrder,
+        id: typeof id === "string" && id.trim().length > 0 ? id.trim() : undefined,
+        label: label.trim(),
+        value: value.trim(),
+      });
+    }
+
+    const response = await admin.replaceStatusStripEntries.execute({
+      items: normalizedItems,
+    });
+
+    return c.json(response);
+  });
+
+  adminApp.all("*", (c) =>
+    c.json<NotImplementedResponse>(
+      {
+        family: "admin",
+        method: c.req.method,
+        route: c.req.path,
+        service: serviceName,
+        status: "not_implemented",
+      },
+      501,
+    ),
+  );
+
+  return adminApp;
+};
+
 const createSitemapFamily = () => {
   const sitemapApp = new Hono();
 
@@ -751,8 +1701,8 @@ export const createHonoHttpAdapter = (container: BootstrapContainer) => {
   app.route("/api/sitemap", createSitemapFamily());
   app.route("/api/status-strip", createStatusStripFamily(container));
   app.route("/api/chat", createChatFamily(container));
-  mountPlaceholderFamily(app, "/api/admin", "admin");
-  mountPlaceholderFamily(app, "/api/auth", "auth");
+  app.route("/api/auth", createAuthFamily(container));
+  app.route("/api/admin", createAdminFamily(container));
 
   app.get(container.config.server.mediaPhotoOriginalPath, async (c) => {
     const id = c.req.param("id")?.trim();
