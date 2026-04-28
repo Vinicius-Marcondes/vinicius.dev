@@ -8,6 +8,8 @@ import type {
   ListChatRoomMessagesOutput,
   ListChatRoomParticipantsInput,
   ListChatRoomParticipantsOutput,
+  SendChatRoomTextMessageInput,
+  SendChatRoomTextMessageOutput,
   UploadChatMessageWithImageInput,
   UploadChatMessageWithImageOutput,
 } from "@/modules/chat/ports/inbound";
@@ -61,6 +63,14 @@ const defaultMessagesResponse: ListChatRoomMessagesOutput = {
   },
 };
 
+const defaultTextMessageResponse: SendChatRoomTextMessageOutput = {
+  author: "vinicius",
+  body: "message body",
+  id: "message_2",
+  sentAt: "2026-04-24T12:01:00.000Z",
+  tone: "cyan",
+};
+
 const createTestContainer = ({
   executeJoin = async (): Promise<JoinChatRoomSessionOutput> => ({
     participant: {
@@ -84,6 +94,8 @@ const createTestContainer = ({
     defaultParticipantsResponse,
   executeMessages = async (): Promise<ListChatRoomMessagesOutput> =>
     defaultMessagesResponse,
+  executeSendText = async (): Promise<SendChatRoomTextMessageOutput> =>
+    defaultTextMessageResponse,
   executeUpload = async (): Promise<UploadChatMessageWithImageOutput> => defaultUploadResponse,
 }: Readonly<{
   executeJoin?: (
@@ -95,6 +107,9 @@ const createTestContainer = ({
   executeMessages?: (
     input: ListChatRoomMessagesInput,
   ) => ListChatRoomMessagesOutput | Promise<ListChatRoomMessagesOutput>;
+  executeSendText?: (
+    input: SendChatRoomTextMessageInput,
+  ) => SendChatRoomTextMessageOutput | Promise<SendChatRoomTextMessageOutput>;
   executeUpload?: (
     input: UploadChatMessageWithImageInput,
   ) => UploadChatMessageWithImageOutput | Promise<UploadChatMessageWithImageOutput>;
@@ -108,6 +123,9 @@ const createTestContainer = ({
     },
     listRoomMessages: {
       execute: executeMessages,
+    },
+    sendRoomTextMessage: {
+      execute: executeSendText,
     },
     moderateUploadRetention: {
       execute: async () => null,
@@ -123,6 +141,11 @@ const createTestContainer = ({
       execute: (
         input: ListChatRoomMessagesInput,
       ) => ListChatRoomMessagesOutput | Promise<ListChatRoomMessagesOutput>;
+    };
+    sendRoomTextMessage: {
+      execute: (
+        input: SendChatRoomTextMessageInput,
+      ) => SendChatRoomTextMessageOutput | Promise<SendChatRoomTextMessageOutput>;
     };
   },
   config: {
@@ -668,6 +691,141 @@ describe("chat routes", () => {
     await expect(response.json()).resolves.toEqual({
       error: "invalid_query",
       field: "cursor",
+    });
+  });
+
+  it("maps a valid text message request into the send-text use case", async () => {
+    let capturedInput: SendChatRoomTextMessageInput | undefined;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeSendText: async (input) => {
+          capturedInput = input;
+
+          return {
+            author: "vinicius",
+            body: "from the bunker",
+            id: "message_3",
+            sentAt: "2026-04-24T12:03:00.000Z",
+            tone: "system",
+          };
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/rooms/night-shift/messages", {
+      body: JSON.stringify({
+        body: "  from the bunker  ",
+        tone: "system",
+      }),
+      headers: {
+        "content-type": "application/json",
+        "x-chat-room-session-id": " session_1 ",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(201);
+    await expect(response.json()).resolves.toEqual({
+      item: {
+        author: "vinicius",
+        body: "from the bunker",
+        id: "message_3",
+        sentAt: "2026-04-24T12:03:00.000Z",
+        tone: "system",
+      },
+    });
+    expect(capturedInput).toEqual({
+      body: "from the bunker",
+      roomSessionId: "session_1",
+      slug: "night-shift",
+      tone: "system",
+    });
+  });
+
+  it("rejects text message requests missing room session header", async () => {
+    let called = false;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeSendText: async () => {
+          called = true;
+          throw new Error("should not run");
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/rooms/night-shift/messages", {
+      body: JSON.stringify({
+        body: "message body",
+      }),
+      headers: {
+        "content-type": "application/json",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "invalid_request",
+      field: "x-chat-room-session-id",
+    });
+    expect(called).toBe(false);
+  });
+
+  it("rejects text message requests with invalid tone before calling the core", async () => {
+    let called = false;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeSendText: async () => {
+          called = true;
+          throw new Error("should not run");
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/rooms/night-shift/messages", {
+      body: JSON.stringify({
+        body: "message body",
+        tone: "violet",
+      }),
+      headers: {
+        "content-type": "application/json",
+        "x-chat-room-session-id": "session_1",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "invalid_request",
+      field: "tone",
+    });
+    expect(called).toBe(false);
+  });
+
+  it("returns denied when text message access is invalid for the room session", async () => {
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeSendText: async () => {
+          throw new InvalidChatMessageAccessError();
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/rooms/night-shift/messages", {
+      body: JSON.stringify({
+        body: "message body",
+      }),
+      headers: {
+        "content-type": "application/json",
+        "x-chat-room-session-id": "session_1",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      error: "denied",
+      resource: "chat",
     });
   });
 

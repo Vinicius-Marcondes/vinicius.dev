@@ -7,6 +7,7 @@ import {
   createListChatRoomParticipantsUseCase,
   createModerateChatUploadRetentionUseCase,
   createOpenChatUploadMediaUseCase,
+  createSendChatRoomTextMessageUseCase,
   createUploadChatMessageWithImageUseCase,
   InvalidChatMessageAccessError,
   InvalidChatMessageCursorError,
@@ -463,6 +464,137 @@ describe("chat message archive list use case", () => {
         slug: "night-shift",
       }),
     ).rejects.toBeInstanceOf(InvalidChatMessageCursorError);
+  });
+});
+
+describe("chat text message send use case", () => {
+  it("creates a text message for an active room session bound to the room slug", async () => {
+    const now = new Date("2026-04-28T12:05:00.000Z");
+    let capturedCreateInput: Record<string, unknown> | undefined;
+    const useCase = createSendChatRoomTextMessageUseCase({
+      clock: () => now,
+      repository: {
+        createTextMessage: async (input) => {
+          capturedCreateInput = input as unknown as Record<string, unknown>;
+
+          return {
+            authorHandleId: input.authorHandleId,
+            body: input.body,
+            createdAt: now,
+            deletedAt: null,
+            hiddenAt: null,
+            id: "message_1",
+            moderationState: "visible",
+            roomId: input.roomId,
+            roomSessionId: input.roomSessionId,
+            sentAt: now,
+            tone: input.tone,
+            updatedAt: now,
+          };
+        },
+        findHandleById: async () => ({
+          createdAt: now,
+          handle: "vinicius",
+          id: "handle_1",
+          normalizedHandle: "vinicius",
+          roomId: "room_1",
+          status: "active",
+          updatedAt: now,
+        }),
+        findRoomBySlug: async () => ({
+          createdAt: now,
+          id: "room_1",
+          passwordHash: "hash",
+          passwordRotatedAt: null,
+          passwordVersion: 1,
+          slug: "night-shift",
+          updatedAt: now,
+        }),
+        findSessionById: async () => ({
+          createdAt: now,
+          expiresAt: null,
+          handleId: "handle_1",
+          id: "session_1",
+          joinedAt: now,
+          lastSeenAt: now,
+          leftAt: null,
+          roomId: "room_1",
+          status: "active",
+          updatedAt: now,
+        }),
+      },
+    });
+
+    const result = await useCase.execute({
+      body: "  message from   bunker  ",
+      roomSessionId: "session_1",
+      slug: "night-shift",
+      tone: "pink",
+    });
+
+    expect(capturedCreateInput).toEqual({
+      authorHandleId: "handle_1",
+      body: "message from bunker",
+      roomId: "room_1",
+      roomSessionId: "session_1",
+      sentAt: now,
+      tone: "pink",
+    });
+    expect(result).toEqual({
+      author: "vinicius",
+      body: "message from bunker",
+      id: "message_1",
+      sentAt: "2026-04-28T12:05:00.000Z",
+      tone: "pink",
+    });
+  });
+
+  it("rejects text message send when room session is invalid for the room slug", async () => {
+    const useCase = createSendChatRoomTextMessageUseCase({
+      repository: {
+        createTextMessage: async () => {
+          throw new Error("should not create message");
+        },
+        findHandleById: async () => ({
+          createdAt: new Date("2026-04-28T12:00:00.000Z"),
+          handle: "vinicius",
+          id: "handle_1",
+          normalizedHandle: "vinicius",
+          roomId: "room_1",
+          status: "active",
+          updatedAt: new Date("2026-04-28T12:00:00.000Z"),
+        }),
+        findRoomBySlug: async () => ({
+          createdAt: new Date("2026-04-28T12:00:00.000Z"),
+          id: "room_1",
+          passwordHash: "hash",
+          passwordRotatedAt: null,
+          passwordVersion: 1,
+          slug: "night-shift",
+          updatedAt: new Date("2026-04-28T12:00:00.000Z"),
+        }),
+        findSessionById: async () => ({
+          createdAt: new Date("2026-04-28T12:00:00.000Z"),
+          expiresAt: null,
+          handleId: "handle_1",
+          id: "session_1",
+          joinedAt: new Date("2026-04-28T12:00:00.000Z"),
+          lastSeenAt: new Date("2026-04-28T12:00:00.000Z"),
+          leftAt: null,
+          roomId: "room_2",
+          status: "active",
+          updatedAt: new Date("2026-04-28T12:00:00.000Z"),
+        }),
+      },
+    });
+
+    await expect(
+      useCase.execute({
+        body: "message body",
+        roomSessionId: "session_1",
+        slug: "night-shift",
+      }),
+    ).rejects.toBeInstanceOf(InvalidChatMessageAccessError);
   });
 });
 
