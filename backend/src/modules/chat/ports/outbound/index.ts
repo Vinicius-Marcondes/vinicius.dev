@@ -73,6 +73,34 @@ export type ChatMessageCursor = Readonly<{
   sentAt: Date;
 }>;
 
+export type ChatModerationAuditAction =
+  | "delete_message"
+  | "hide_media_metadata"
+  | "ban_handle"
+  | "room_password_rotation";
+
+export type ChatModerationAuditCursor = Readonly<{
+  createdAt: Date;
+  id: string;
+}>;
+
+export type ChatModerationAuditRepositoryRow = Readonly<{
+  action: ChatModerationAuditAction;
+  actorAdminUserId: string;
+  createdAt: Date;
+  id: string;
+  nextState: unknown | null;
+  previousState: unknown | null;
+  reason: string | null;
+  roomId: string | null;
+  targetBanId: string | null;
+  targetHandleId: string | null;
+  targetMessageId: string | null;
+  targetRoomPasswordRotationId: string | null;
+  targetSessionId: string | null;
+  targetUploadId: string | null;
+}>;
+
 export type ChatUploadRepositoryRow = Readonly<{
   id: string;
   roomId: string;
@@ -172,6 +200,19 @@ export type ModerateChatRoomMessageResult = Readonly<{
   upload: ChatUploadRepositoryRow | null;
 }>;
 
+export type ChatModerationAuditListQuery = Readonly<{
+  action?: ChatModerationAuditAction;
+  actorAdminUserId?: string;
+  cursor?: ChatModerationAuditCursor;
+  limit: number;
+  roomId?: string;
+}>;
+
+export type ChatModerationAuditListPage = Readonly<{
+  items: readonly ChatModerationAuditRepositoryRow[];
+  nextCursor: ChatModerationAuditCursor | null;
+}>;
+
 export type BanChatRoomHandleCommand = Readonly<{
   actorAdminUserId: string;
   handleId: string;
@@ -242,5 +283,6 @@ export interface ChatRepositoryPort {
   findHandleByRoomIdAndNormalizedHandle(roomId: string, normalizedHandle: string): Promise<ChatHandleRepositoryRow | null>;
   listParticipantsByRoomId(roomId: string): Promise<readonly ChatRoomParticipantRepositoryRow[]>;
   listMessages(query: ChatMessageListQuery): Promise<ChatMessageListPage>;
+  listModerationAudits(query: ChatModerationAuditListQuery): Promise<ChatModerationAuditListPage>;
   findUploadById(uploadId: string): Promise<ChatUploadRepositoryRow | null>;
 }

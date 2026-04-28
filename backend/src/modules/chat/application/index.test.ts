@@ -4,6 +4,7 @@ import {
   BannedChatHandleError,
   createBanChatRoomHandleUseCase,
   createJoinChatRoomSessionUseCase,
+  createListChatModerationAuditsUseCase,
   createListChatRoomMessagesUseCase,
   createListChatRoomParticipantsUseCase,
   createModerateChatRoomMessageUseCase,
@@ -12,6 +13,7 @@ import {
   createRotateChatRoomPasswordUseCase,
   createSendChatRoomTextMessageUseCase,
   createUploadChatMessageWithImageUseCase,
+  InvalidChatModerationAuditCursorError,
   InvalidChatMessageAccessError,
   InvalidChatMessageCursorError,
   InvalidChatParticipantAccessError,
@@ -467,6 +469,123 @@ describe("chat message archive list use case", () => {
         slug: "night-shift",
       }),
     ).rejects.toBeInstanceOf(InvalidChatMessageCursorError);
+  });
+});
+
+describe("chat moderation audits list use case", () => {
+  it("lists moderation audits with normalized filters and cursor pagination", async () => {
+    const cursor = Buffer.from(
+      JSON.stringify({
+        createdAt: "2026-04-28T12:05:00.000Z",
+        id: "audit_3",
+      }),
+      "utf8",
+    ).toString("base64url");
+    let capturedQuery: Record<string, unknown> | undefined;
+    const useCase = createListChatModerationAuditsUseCase({
+      repository: {
+        listModerationAudits: async (input) => {
+          capturedQuery = input as unknown as Record<string, unknown>;
+
+          return {
+            items: [
+              {
+                action: "ban_handle",
+                actorAdminUserId: "admin_1",
+                createdAt: new Date("2026-04-28T12:06:00.000Z"),
+                id: "audit_2",
+                nextState: {
+                  handleStatus: "banned",
+                },
+                previousState: {
+                  handleStatus: "active",
+                },
+                reason: "abuse",
+                roomId: "room_1",
+                targetBanId: "ban_1",
+                targetHandleId: "handle_1",
+                targetMessageId: null,
+                targetRoomPasswordRotationId: null,
+                targetSessionId: null,
+                targetUploadId: null,
+              },
+            ],
+            nextCursor: {
+              createdAt: new Date("2026-04-28T12:06:00.000Z"),
+              id: "audit_2",
+            },
+          };
+        },
+      },
+    });
+
+    const output = await useCase.execute({
+      action: "ban_handle",
+      actorAdminUserId: "  admin_1  ",
+      cursor,
+      limit: 999,
+      roomId: "  room_1  ",
+    });
+
+    expect(capturedQuery).toEqual({
+      action: "ban_handle",
+      actorAdminUserId: "admin_1",
+      cursor: {
+        createdAt: new Date("2026-04-28T12:05:00.000Z"),
+        id: "audit_3",
+      },
+      limit: 80,
+      roomId: "room_1",
+    });
+    expect(output).toEqual({
+      items: [
+        {
+          action: "ban_handle",
+          actorAdminUserId: "admin_1",
+          createdAt: "2026-04-28T12:06:00.000Z",
+          id: "audit_2",
+          nextState: {
+            handleStatus: "banned",
+          },
+          previousState: {
+            handleStatus: "active",
+          },
+          reason: "abuse",
+          roomId: "room_1",
+          targetBanId: "ban_1",
+          targetHandleId: "handle_1",
+          targetMessageId: null,
+          targetRoomPasswordRotationId: null,
+          targetSessionId: null,
+          targetUploadId: null,
+        },
+      ],
+      pageInfo: {
+        nextCursor: Buffer.from(
+          JSON.stringify({
+            createdAt: "2026-04-28T12:06:00.000Z",
+            id: "audit_2",
+          }),
+          "utf8",
+        ).toString("base64url"),
+      },
+    });
+  });
+
+  it("rejects malformed moderation audit cursor input", async () => {
+    const useCase = createListChatModerationAuditsUseCase({
+      repository: {
+        listModerationAudits: async () => {
+          throw new Error("should not list moderation audits");
+        },
+      },
+    });
+
+    await expect(
+      useCase.execute({
+        cursor: "invalid-cursor",
+      }),
+    ).rejects.toBeInstanceOf(InvalidChatModerationAuditCursorError);
   });
 });
 

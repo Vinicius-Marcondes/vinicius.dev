@@ -3,9 +3,12 @@ import { describe, expect, it } from "bun:test";
 import type { BootstrapContainer } from "@/bootstrap/container";
 import { InvalidAdminPhotoMetadataDateError } from "@/modules/admin/application";
 import { InvalidAuthSessionError } from "@/modules/auth/application";
+import { InvalidChatModerationAuditCursorError } from "@/modules/chat/application";
 import type {
   BanChatRoomHandleInput,
   BanChatRoomHandleOutput,
+  ListChatModerationAuditsInput,
+  ListChatModerationAuditsOutput,
   ModerateChatRoomMessageInput,
   ModerateChatRoomMessageOutput,
   RotateChatRoomPasswordInput,
@@ -84,6 +87,12 @@ const createTestContainer = (
     executeBanHandle?: (
       input: BanChatRoomHandleInput,
     ) => BanChatRoomHandleOutput | Promise<BanChatRoomHandleOutput> | null | Promise<null>;
+    executeListModerationAudits?: (
+      input: ListChatModerationAuditsInput,
+    ) =>
+      | ListChatModerationAuditsOutput
+      | Promise<ListChatModerationAuditsOutput>
+      | Promise<never>;
     executeModerateMessage?: (
       input: ModerateChatRoomMessageInput,
     ) =>
@@ -246,6 +255,16 @@ const createTestContainer = (
     banRoomHandle: {
       execute: options.executeBanHandle ?? (async () => null),
     },
+    listModerationAudits: {
+      execute:
+        options.executeListModerationAudits ??
+        (async () => ({
+          items: [],
+          pageInfo: {
+            nextCursor: null,
+          },
+        })),
+    },
     moderateRoomMessage: {
       execute: options.executeModerateMessage ?? (async () => null),
     },
@@ -279,6 +298,14 @@ const createTestContainer = (
       execute: (
         input: BanChatRoomHandleInput,
       ) => BanChatRoomHandleOutput | Promise<BanChatRoomHandleOutput> | null | Promise<null>;
+    };
+    listModerationAudits: {
+      execute: (
+        input: ListChatModerationAuditsInput,
+      ) =>
+        | ListChatModerationAuditsOutput
+        | Promise<ListChatModerationAuditsOutput>
+        | Promise<never>;
     };
     moderateRoomMessage: {
       execute: (
@@ -440,6 +467,177 @@ describe("admin routes", () => {
     await expect(response.json()).resolves.toEqual({
       error: "denied",
       resource: "auth",
+    });
+  });
+
+  it("maps moderation audit listing query params into the use case", async () => {
+    let capturedInput: ListChatModerationAuditsInput | undefined;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeListModerationAudits: async (input) => {
+          capturedInput = input;
+
+          return {
+            items: [
+              {
+                action: "ban_handle",
+                actorAdminUserId: "admin_1",
+                createdAt: "2026-04-28T12:09:00.000Z",
+                id: "audit_2",
+                nextState: {
+                  handleStatus: "banned",
+                },
+                previousState: {
+                  handleStatus: "active",
+                },
+                reason: "abuse",
+                roomId: "room_1",
+                targetBanId: "ban_1",
+                targetHandleId: "handle_1",
+                targetMessageId: null,
+                targetRoomPasswordRotationId: null,
+                targetSessionId: null,
+                targetUploadId: null,
+              },
+            ],
+            pageInfo: {
+              nextCursor: "cursor_1",
+            },
+          };
+        },
+      }),
+    );
+
+    const response = await app.request(
+      "/api/admin/chat/moderation/audits?cursor=cursor_0&limit=20&action=ban_handle&roomId=room_1&actorAdminUserId=admin_2",
+      {
+        headers: {
+          cookie: "vinicius.dev-session=session-token-1",
+        },
+      },
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      items: [
+        {
+          action: "ban_handle",
+          actorAdminUserId: "admin_1",
+          createdAt: "2026-04-28T12:09:00.000Z",
+          id: "audit_2",
+          nextState: {
+            handleStatus: "banned",
+          },
+          previousState: {
+            handleStatus: "active",
+          },
+          reason: "abuse",
+          roomId: "room_1",
+          targetBanId: "ban_1",
+          targetHandleId: "handle_1",
+          targetMessageId: null,
+          targetRoomPasswordRotationId: null,
+          targetSessionId: null,
+          targetUploadId: null,
+        },
+      ],
+      pageInfo: {
+        nextCursor: "cursor_1",
+      },
+    });
+    expect(capturedInput).toEqual({
+      action: "ban_handle",
+      actorAdminUserId: "admin_2",
+      cursor: "cursor_0",
+      limit: 20,
+      roomId: "room_1",
+    });
+  });
+
+  it("rejects invalid moderation audit action query values", async () => {
+    let called = false;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeListModerationAudits: async () => {
+          called = true;
+
+          return {
+            items: [],
+            pageInfo: {
+              nextCursor: null,
+            },
+          };
+        },
+      }),
+    );
+
+    const response = await app.request(
+      "/api/admin/chat/moderation/audits?action=invalid_action",
+      {
+        headers: {
+          cookie: "vinicius.dev-session=session-token-1",
+        },
+      },
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "invalid_query",
+      field: "action",
+    });
+    expect(called).toBe(false);
+  });
+
+  it("rejects invalid moderation audit limit query values", async () => {
+    let called = false;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeListModerationAudits: async () => {
+          called = true;
+
+          return {
+            items: [],
+            pageInfo: {
+              nextCursor: null,
+            },
+          };
+        },
+      }),
+    );
+
+    const response = await app.request("/api/admin/chat/moderation/audits?limit=0", {
+      headers: {
+        cookie: "vinicius.dev-session=session-token-1",
+      },
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "invalid_query",
+      field: "limit",
+    });
+    expect(called).toBe(false);
+  });
+
+  it("maps malformed moderation audit cursor errors to invalid_query", async () => {
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeListModerationAudits: async () => {
+          throw new InvalidChatModerationAuditCursorError();
+        },
+      }),
+    );
+
+    const response = await app.request("/api/admin/chat/moderation/audits?cursor=bad", {
+      headers: {
+        cookie: "vinicius.dev-session=session-token-1",
+      },
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "invalid_query",
+      field: "cursor",
     });
   });
 

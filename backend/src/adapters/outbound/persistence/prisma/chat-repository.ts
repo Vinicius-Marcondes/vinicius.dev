@@ -2,6 +2,10 @@ import type {
   BanChatRoomHandleCommand,
   BanChatRoomHandleResult,
   ChatHandleRepositoryRow,
+  ChatModerationAuditAction,
+  ChatModerationAuditListPage,
+  ChatModerationAuditListQuery,
+  ChatModerationAuditRepositoryRow,
   ChatMessageListItemRepositoryRow,
   ChatMessageListPage,
   ChatMessageListQuery,
@@ -878,6 +882,128 @@ const rotateRoomPassword = async (
   });
 };
 
+const mapModerationAuditRow = (row: {
+  action: ChatModerationAuditAction;
+  actorAdminUserId: string;
+  createdAt: Date;
+  id: string;
+  nextState: unknown | null;
+  previousState: unknown | null;
+  reason: string | null;
+  roomId: string | null;
+  targetBanId: string | null;
+  targetHandleId: string | null;
+  targetMessageId: string | null;
+  targetRoomPasswordRotationId: string | null;
+  targetSessionId: string | null;
+  targetUploadId: string | null;
+}): ChatModerationAuditRepositoryRow => ({
+  action: row.action,
+  actorAdminUserId: row.actorAdminUserId,
+  createdAt: row.createdAt,
+  id: row.id,
+  nextState: row.nextState,
+  previousState: row.previousState,
+  reason: row.reason,
+  roomId: row.roomId,
+  targetBanId: row.targetBanId,
+  targetHandleId: row.targetHandleId,
+  targetMessageId: row.targetMessageId,
+  targetRoomPasswordRotationId: row.targetRoomPasswordRotationId,
+  targetSessionId: row.targetSessionId,
+  targetUploadId: row.targetUploadId,
+});
+
+const buildModerationAuditCursorWhere = (
+  query: ChatModerationAuditListQuery,
+):
+  | {
+      OR: Array<
+        | { createdAt: { lt: Date } }
+        | { createdAt: Date; id: { lt: string } }
+      >;
+    }
+  | undefined => {
+  if (!query.cursor) {
+    return undefined;
+  }
+
+  return {
+    OR: [
+      {
+        createdAt: {
+          lt: query.cursor.createdAt,
+        },
+      },
+      {
+        createdAt: query.cursor.createdAt,
+        id: {
+          lt: query.cursor.id,
+        },
+      },
+    ],
+  };
+};
+
+const listModerationAudits = async (
+  client: PrismaDatabaseClient,
+  query: ChatModerationAuditListQuery,
+): Promise<ChatModerationAuditListPage> => {
+  const rows = await client.chatModerationAuditRecord.findMany({
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    select: {
+      action: true,
+      actorAdminUserId: true,
+      createdAt: true,
+      id: true,
+      nextState: true,
+      previousState: true,
+      reason: true,
+      roomId: true,
+      targetBanId: true,
+      targetHandleId: true,
+      targetMessageId: true,
+      targetRoomPasswordRotationId: true,
+      targetSessionId: true,
+      targetUploadId: true,
+    },
+    take: query.limit + 1,
+    where: {
+      ...buildModerationAuditCursorWhere(query),
+      ...(query.action
+        ? {
+            action: query.action,
+          }
+        : {}),
+      ...(query.roomId
+        ? {
+            roomId: query.roomId,
+          }
+        : {}),
+      ...(query.actorAdminUserId
+        ? {
+            actorAdminUserId: query.actorAdminUserId,
+          }
+        : {}),
+    },
+  });
+
+  const pageRows = rows.slice(0, query.limit);
+  const hasNextPage = rows.length > query.limit;
+  const nextCursorRow = pageRows.at(pageRows.length - 1);
+
+  return {
+    items: pageRows.map(mapModerationAuditRow),
+    nextCursor:
+      hasNextPage && nextCursorRow
+        ? {
+            createdAt: nextCursorRow.createdAt,
+            id: nextCursorRow.id,
+          }
+        : null,
+  };
+};
+
 const listParticipantsByRoomId = async (
   client: PrismaDatabaseClient,
   roomId: string,
@@ -1127,6 +1253,8 @@ export const createPrismaChatRepository = (client: PrismaDatabaseClient): ChatRe
     listParticipantsByRoomId(client, roomId),
   listMessages: (query: ChatMessageListQuery): Promise<ChatMessageListPage> =>
     listMessages(client, query),
+  listModerationAudits: (query: ChatModerationAuditListQuery): Promise<ChatModerationAuditListPage> =>
+    listModerationAudits(client, query),
   findUploadById: (_uploadId: string): Promise<ChatUploadRepositoryRow | null> =>
     notImplemented("findUploadById"),
 });

@@ -279,6 +279,167 @@ describe("prisma chat repository", () => {
     });
   });
 
+  it("maps moderation audit rows with cursor pagination and optional filters", async () => {
+    let capturedTake = -1;
+    let capturedWhere: Record<string, unknown> = {};
+    const repository = createPrismaChatRepository({
+      chatModerationAuditRecord: {
+        findMany: async ({
+          take,
+          where,
+        }: {
+          take: number;
+          where: Record<string, unknown>;
+        }) => {
+          capturedTake = take;
+          capturedWhere = where;
+
+          return [
+            {
+              action: "ban_handle" as const,
+              actorAdminUserId: "admin_1",
+              createdAt: new Date("2026-04-28T12:09:00.000Z"),
+              id: "audit_3",
+              nextState: {
+                handleStatus: "banned",
+              },
+              previousState: {
+                handleStatus: "active",
+              },
+              reason: "abuse",
+              roomId: "room_1",
+              targetBanId: "ban_1",
+              targetHandleId: "handle_1",
+              targetMessageId: null,
+              targetRoomPasswordRotationId: null,
+              targetSessionId: null,
+              targetUploadId: null,
+            },
+            {
+              action: "ban_handle" as const,
+              actorAdminUserId: "admin_1",
+              createdAt: new Date("2026-04-28T12:08:00.000Z"),
+              id: "audit_2",
+              nextState: {
+                handleStatus: "banned",
+              },
+              previousState: {
+                handleStatus: "active",
+              },
+              reason: "abuse",
+              roomId: "room_1",
+              targetBanId: "ban_1",
+              targetHandleId: "handle_1",
+              targetMessageId: null,
+              targetRoomPasswordRotationId: null,
+              targetSessionId: null,
+              targetUploadId: null,
+            },
+            {
+              action: "ban_handle" as const,
+              actorAdminUserId: "admin_1",
+              createdAt: new Date("2026-04-28T12:07:00.000Z"),
+              id: "audit_1",
+              nextState: {
+                handleStatus: "banned",
+              },
+              previousState: {
+                handleStatus: "active",
+              },
+              reason: "abuse",
+              roomId: "room_1",
+              targetBanId: "ban_1",
+              targetHandleId: "handle_1",
+              targetMessageId: null,
+              targetRoomPasswordRotationId: null,
+              targetSessionId: null,
+              targetUploadId: null,
+            },
+          ];
+        },
+      },
+    } as unknown as PrismaDatabaseClient);
+
+    const page = await repository.listModerationAudits({
+      action: "ban_handle",
+      actorAdminUserId: "admin_1",
+      cursor: {
+        createdAt: new Date("2026-04-28T12:10:00.000Z"),
+        id: "audit_4",
+      },
+      limit: 2,
+      roomId: "room_1",
+    });
+
+    expect(capturedTake).toBe(3);
+    expect(capturedWhere).toEqual({
+      OR: [
+        {
+          createdAt: {
+            lt: new Date("2026-04-28T12:10:00.000Z"),
+          },
+        },
+        {
+          createdAt: new Date("2026-04-28T12:10:00.000Z"),
+          id: {
+            lt: "audit_4",
+          },
+        },
+      ],
+      action: "ban_handle",
+      actorAdminUserId: "admin_1",
+      roomId: "room_1",
+    });
+    expect(page).toEqual({
+      items: [
+        {
+          action: "ban_handle",
+          actorAdminUserId: "admin_1",
+          createdAt: new Date("2026-04-28T12:09:00.000Z"),
+          id: "audit_3",
+          nextState: {
+            handleStatus: "banned",
+          },
+          previousState: {
+            handleStatus: "active",
+          },
+          reason: "abuse",
+          roomId: "room_1",
+          targetBanId: "ban_1",
+          targetHandleId: "handle_1",
+          targetMessageId: null,
+          targetRoomPasswordRotationId: null,
+          targetSessionId: null,
+          targetUploadId: null,
+        },
+        {
+          action: "ban_handle",
+          actorAdminUserId: "admin_1",
+          createdAt: new Date("2026-04-28T12:08:00.000Z"),
+          id: "audit_2",
+          nextState: {
+            handleStatus: "banned",
+          },
+          previousState: {
+            handleStatus: "active",
+          },
+          reason: "abuse",
+          roomId: "room_1",
+          targetBanId: "ban_1",
+          targetHandleId: "handle_1",
+          targetMessageId: null,
+          targetRoomPasswordRotationId: null,
+          targetSessionId: null,
+          targetUploadId: null,
+        },
+      ],
+      nextCursor: {
+        createdAt: new Date("2026-04-28T12:08:00.000Z"),
+        id: "audit_2",
+      },
+    });
+  });
+
   it("creates and maps a chat handle row", async () => {
     let capturedData: Record<string, unknown> | null = null;
     const repository = createPrismaChatRepository({

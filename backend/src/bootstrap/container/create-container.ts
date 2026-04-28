@@ -49,6 +49,7 @@ import type {
 import {
   createBanChatRoomHandleUseCase,
   createJoinChatRoomSessionUseCase,
+  createListChatModerationAuditsUseCase,
   createListChatRoomMessagesUseCase,
   createListChatRoomParticipantsUseCase,
   createModerateChatRoomMessageUseCase,
@@ -61,6 +62,7 @@ import {
 import type {
   BanChatRoomHandlePort,
   JoinChatRoomSessionPort,
+  ListChatModerationAuditsPort,
   ListChatRoomMessagesPort,
   ListChatRoomParticipantsPort,
   ModerateChatRoomMessagePort,
@@ -114,6 +116,7 @@ export type BootstrapContainer = Readonly<{
   chat: Readonly<{
     banRoomHandle?: BanChatRoomHandlePort;
     joinRoomSession?: JoinChatRoomSessionPort;
+    listModerationAudits?: ListChatModerationAuditsPort;
     listRoomMessages?: ListChatRoomMessagesPort;
     listRoomParticipants?: ListChatRoomParticipantsPort;
     moderateRoomMessage?: ModerateChatRoomMessagePort;
@@ -254,6 +257,9 @@ export const createContainer = (env: BootstrapEnv = Bun.env): BootstrapContainer
           }),
       }),
       listRoomParticipants: createListChatRoomParticipantsUseCase({
+        repository: persistence.chat,
+      }),
+      listModerationAudits: createListChatModerationAuditsUseCase({
         repository: persistence.chat,
       }),
       listRoomMessages: createListChatRoomMessagesUseCase({
