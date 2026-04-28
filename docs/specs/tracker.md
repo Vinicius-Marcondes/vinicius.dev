@@ -46,11 +46,10 @@
 - The frontend migration wave cleared the previous browser Babel, CDN React, global `window.*`, missing TypeScript, and missing screen blockers.
 
 ## Next Task Queue
-1. Split Wave 3 Cluster 6 into one issue per task using `wave-3-task-clusters.md` definitions.
-2. Keep Wave 3 Cluster 7 in `Spec-ready` planning state until Cluster 6 dependency checkpoints are complete.
-3. Preserve one issue, one Project item, one branch, and one acceptance source per implementation task.
-4. Run frontend analyzer as non-mutating validation for backend-only PRs.
-5. Keep Wave 3 Cluster 7 blocked until Cluster 6 implementation and verification closeout.
+1. Start Wave 3 Cluster 7 with `INFRA-001` on its dedicated `infra/` branch.
+2. Preserve one issue, one Project item, one branch, and one acceptance source per implementation task.
+3. Run frontend analyzer as non-mutating validation for backend-only PRs.
+4. Follow the approved Cluster 7 dependency order for `INFRA-002`, `INFRA-003`, and the `QA-*` tasks after `INFRA-001` lands.
 
 ## Current Executable Cluster
 ### SPEC-025 Wave 3 Cluster Planning
@@ -70,20 +69,22 @@
 - Integrated verification: `bun run typecheck`, `bun test`, and `bun run verify` passed after Cluster 5 implementation.
 
 ### Wave 3 Cluster 6 Chat Backend And Moderation
-- Status: planned as next executable implementation cluster.
+- Status: complete.
 - Primary specs: `SPEC-006`, `SPEC-007`, `SPEC-009`, `SPEC-011`, `SPEC-016`, `SPEC-018`.
 - Scope: room password gate, room join/session state, participant handle/presence state, text message archive and send flow, moderation commands, moderation audit query behavior, and chat verification hardening.
 - Non-scope: chat media upload/storage/access from Wave 2 Cluster 4, admin content curation from Wave 3 Cluster 5, and infra/deploy automation implementation.
 - Tasks: `CHAT-001`, `CHAT-002`, `CHAT-003`, `CHAT-004`, `CHAT-005`, `CHAT-006`, and `CHAT-007`.
 - Required ordering: `CHAT-001` first; `CHAT-002` after `CHAT-001`; `CHAT-003` after `CHAT-002`; `CHAT-004` after `CHAT-003`; `CHAT-005` after `CHAT-004`; `CHAT-006` after `CHAT-005`; `CHAT-007` after `CHAT-003`, `CHAT-004`, `CHAT-005`, and `CHAT-006`.
+- Merged PRs: `#79`, `#80`, `#81`, `#82`, `#83`, `#84`, and `#85`.
 
 ### Wave 3 Cluster 7 Infra CI/CD And Verification Hardening
-- Status: planned; blocked on Wave 3 Cluster 6 completion.
+- Status: current executable implementation cluster.
 - Primary specs: `SPEC-002`, `SPEC-005`, `SPEC-006`, `SPEC-007`, `SPEC-008`, `SPEC-009`, `SPEC-010`, `SPEC-011`, `SPEC-016`, `SPEC-018`.
 - Scope: Docker Compose topology, Caddy routing, env/volume policy, CI validation workflows, analyzer freshness enforcement, backend boundary checks, migration checks, tag-gated production deploy workflow, and cross-layer verification hardening.
 - Non-scope: new product feature contracts outside approved specs and frontend/admin product-surface redesign.
 - Tasks: `INFRA-001`, `INFRA-002`, `INFRA-003`, `QA-001`, `QA-002`, `QA-003`, `QA-004`, `QA-005`, `QA-006`, and `QA-007`.
 - Required ordering: `INFRA-001` first; `INFRA-002` after `INFRA-001`; `INFRA-003` after `INFRA-001`; `QA-001`, `QA-002`, and `QA-003` after `INFRA-003`; `QA-004` and `QA-005` after `QA-001` and `QA-002`; `QA-006` after `QA-002` and `INFRA-002`; `QA-007` after `INFRA-002`, `INFRA-003`, `QA-003`, `QA-004`, and `QA-005`.
+- GitHub issues: `#87`, `#88`, `#89`, `#90`, `#91`, `#92`, `#93`, `#94`, `#95`, and `#96` are created and staged in Project `#2` as `Spec-ready`.
 
 ### SPEC-019 Backend Spec Reconciliation
 - Status: approved for Wave 2 tasking.
