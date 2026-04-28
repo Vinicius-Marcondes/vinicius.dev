@@ -36,6 +36,165 @@ describe("prisma chat repository", () => {
     });
   });
 
+  it("maps a room row for slug-based join lookup", async () => {
+    const repository = createPrismaChatRepository({
+      chatRoom: {
+        findUnique: async () => ({
+          createdAt: new Date("2026-04-24T10:00:00.000Z"),
+          id: "room_1",
+          passwordHash: "hash:open-sesame",
+          passwordRotatedAt: new Date("2026-04-20T08:00:00.000Z"),
+          passwordVersion: 3,
+          slug: "night-shift",
+          updatedAt: new Date("2026-04-24T10:05:00.000Z"),
+        }),
+      },
+    } as unknown as PrismaDatabaseClient);
+
+    await expect(repository.findRoomBySlug({ slug: "night-shift" })).resolves.toEqual({
+      createdAt: new Date("2026-04-24T10:00:00.000Z"),
+      id: "room_1",
+      passwordHash: "hash:open-sesame",
+      passwordRotatedAt: new Date("2026-04-20T08:00:00.000Z"),
+      passwordVersion: 3,
+      slug: "night-shift",
+      updatedAt: new Date("2026-04-24T10:05:00.000Z"),
+    });
+  });
+
+  it("maps handle lookup by room and normalized handle", async () => {
+    const repository = createPrismaChatRepository({
+      chatHandle: {
+        findUnique: async () => ({
+          createdAt: new Date("2026-04-24T10:00:00.000Z"),
+          handle: "Vinicius",
+          id: "handle_1",
+          normalizedHandle: "vinicius",
+          roomId: "room_1",
+          status: "active" as const,
+          updatedAt: new Date("2026-04-24T10:05:00.000Z"),
+        }),
+      },
+    } as unknown as PrismaDatabaseClient);
+
+    await expect(
+      repository.findHandleByRoomIdAndNormalizedHandle("room_1", "vinicius"),
+    ).resolves.toEqual({
+      createdAt: new Date("2026-04-24T10:00:00.000Z"),
+      handle: "Vinicius",
+      id: "handle_1",
+      normalizedHandle: "vinicius",
+      roomId: "room_1",
+      status: "active",
+      updatedAt: new Date("2026-04-24T10:05:00.000Z"),
+    });
+  });
+
+  it("creates and maps a chat handle row", async () => {
+    let capturedData: Record<string, unknown> | null = null;
+    const repository = createPrismaChatRepository({
+      chatHandle: {
+        create: async ({ data }: { data: Record<string, unknown> }) => {
+          capturedData = data;
+
+          return {
+            createdAt: new Date("2026-04-24T10:00:00.000Z"),
+            handle: "Vinicius",
+            id: "handle_1",
+            normalizedHandle: "vinicius",
+            roomId: "room_1",
+            status: "active" as const,
+            updatedAt: new Date("2026-04-24T10:05:00.000Z"),
+          };
+        },
+      },
+    } as unknown as PrismaDatabaseClient);
+
+    const result = await repository.createHandle({
+      handle: "Vinicius",
+      normalizedHandle: "vinicius",
+      roomId: "room_1",
+      status: "active",
+    });
+
+    expect(capturedData).not.toBeNull();
+    expect(capturedData!).toEqual({
+      handle: "Vinicius",
+      normalizedHandle: "vinicius",
+      roomId: "room_1",
+      status: "active",
+    });
+    expect(result).toEqual({
+      createdAt: new Date("2026-04-24T10:00:00.000Z"),
+      handle: "Vinicius",
+      id: "handle_1",
+      normalizedHandle: "vinicius",
+      roomId: "room_1",
+      status: "active",
+      updatedAt: new Date("2026-04-24T10:05:00.000Z"),
+    });
+  });
+
+  it("creates and maps a room session row", async () => {
+    let capturedData: Record<string, unknown> | null = null;
+    const repository = createPrismaChatRepository({
+      chatRoomSession: {
+        create: async ({ data }: { data: Record<string, unknown> }) => {
+          capturedData = data;
+
+          return {
+            createdAt: new Date("2026-04-24T10:00:00.000Z"),
+            expiresAt: null,
+            handleId: "handle_1",
+            id: "session_1",
+            joinedAt: new Date("2026-04-24T10:00:00.000Z"),
+            lastSeenAt: new Date("2026-04-24T10:00:00.000Z"),
+            leftAt: null,
+            roomId: "room_1",
+            status: "active" as const,
+            updatedAt: new Date("2026-04-24T10:05:00.000Z"),
+          };
+        },
+      },
+    } as unknown as PrismaDatabaseClient);
+
+    const joinedAt = new Date("2026-04-24T10:00:00.000Z");
+    const result = await repository.createSession({
+      expiresAt: null,
+      handleId: "handle_1",
+      joinedAt,
+      lastSeenAt: joinedAt,
+      leftAt: null,
+      roomId: "room_1",
+      sessionTokenHash: "hash:session-token",
+      status: "active",
+    });
+
+    expect(capturedData).not.toBeNull();
+    expect(capturedData!).toEqual({
+      expiresAt: null,
+      handleId: "handle_1",
+      joinedAt,
+      lastSeenAt: joinedAt,
+      leftAt: null,
+      roomId: "room_1",
+      sessionTokenHash: "hash:session-token",
+      status: "active",
+    });
+    expect(result).toEqual({
+      createdAt: new Date("2026-04-24T10:00:00.000Z"),
+      expiresAt: null,
+      handleId: "handle_1",
+      id: "session_1",
+      joinedAt: new Date("2026-04-24T10:00:00.000Z"),
+      lastSeenAt: new Date("2026-04-24T10:00:00.000Z"),
+      leftAt: null,
+      roomId: "room_1",
+      status: "active",
+      updatedAt: new Date("2026-04-24T10:05:00.000Z"),
+    });
+  });
+
   it("persists and maps a message with upload metadata in one transaction", async () => {
     let capturedMessageData: Record<string, unknown> | null = null;
     let capturedUploadData: Record<string, unknown> | null = null;

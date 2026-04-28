@@ -9,6 +9,8 @@ import {
 } from "@/modules/auth/application";
 import { InvalidAdminPhotoMetadataDateError } from "@/modules/admin/application";
 import {
+  BannedChatHandleError,
+  InvalidChatRoomCredentialsError,
   InvalidChatUploadAccessError,
   InvalidChatUploadActorError,
 } from "@/modules/chat/application";
@@ -549,6 +551,84 @@ const readRequiredJsonString = (
 
 const createChatFamily = (container: BootstrapContainer) => {
   const chatApp = new Hono();
+
+  chatApp.post("/rooms/:slug/join", async (c) => {
+    if (!container.chat.joinRoomSession) {
+      return c.json<NotImplementedResponse>(
+        {
+          family: "chat",
+          method: c.req.method,
+          route: c.req.path,
+          service: serviceName,
+          status: "not_implemented",
+        },
+        501,
+      );
+    }
+
+    const slug = c.req.param("slug")?.trim();
+
+    if (!slug) {
+      return c.json(
+        {
+          error: "invalid_path",
+          field: "slug",
+        },
+        400,
+      );
+    }
+
+    const parsedBody = await readJsonObject(c.req.raw);
+
+    if ("error" in parsedBody) {
+      return c.json(parsedBody.error, 400);
+    }
+
+    const handle = readRequiredJsonString(parsedBody.value, "handle");
+
+    if ("error" in handle) {
+      return c.json(handle.error, 400);
+    }
+
+    const password = readRequiredJsonString(parsedBody.value, "password");
+
+    if ("error" in password) {
+      return c.json(password.error, 400);
+    }
+
+    try {
+      const response = await container.chat.joinRoomSession.execute({
+        handle: handle.value,
+        password: password.value,
+        slug,
+      });
+
+      return c.json(response);
+    } catch (error) {
+      if (error instanceof InvalidChatRoomCredentialsError) {
+        return c.json(
+          {
+            error: "denied",
+            resource: "chat",
+          },
+          401,
+        );
+      }
+
+      if (error instanceof BannedChatHandleError) {
+        return c.json(
+          {
+            error: "denied",
+            reason: "handle_banned",
+            resource: "chat",
+          },
+          403,
+        );
+      }
+
+      throw error;
+    }
+  });
 
   chatApp.get("/uploads/:id/media", async (c) => {
     c.header("Cache-Control", "private, no-store");

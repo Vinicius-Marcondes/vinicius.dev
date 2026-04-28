@@ -2,6 +2,34 @@ import type { UseCase } from "@/modules/shared/application/use-case";
 
 export type ChatUploadMimeType = "image/jpeg" | "image/png" | "image/webp";
 
+export type JoinChatRoomSessionInput = Readonly<{
+  handle: string;
+  password: string;
+  slug: string;
+}>;
+
+export type JoinChatRoomSessionOutput = Readonly<{
+  participant: Readonly<{
+    handle: string;
+    id: string;
+    status: "online";
+  }>;
+  room: Readonly<{
+    id: string;
+    slug: string;
+  }>;
+  session: Readonly<{
+    handleId: string;
+    id: string;
+    joinedAt: string;
+    roomId: string;
+    status: "active" | "revoked" | "expired";
+  }>;
+}>;
+
+export interface JoinChatRoomSessionPort
+  extends UseCase<JoinChatRoomSessionInput, JoinChatRoomSessionOutput> {}
+
 export type UploadChatMessageImageInput = Readonly<{
   body: Uint8Array;
   displayFilename: string;

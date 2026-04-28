@@ -2,19 +2,66 @@ import { describe, expect, it } from "bun:test";
 
 import type { BootstrapContainer } from "@/bootstrap/container";
 import type {
+  JoinChatRoomSessionInput,
+  JoinChatRoomSessionOutput,
   UploadChatMessageWithImageInput,
   UploadChatMessageWithImageOutput,
 } from "@/modules/chat/ports/inbound";
-import { InvalidChatUploadActorError } from "@/modules/chat/application";
+import {
+  BannedChatHandleError,
+  InvalidChatRoomCredentialsError,
+  InvalidChatUploadActorError,
+} from "@/modules/chat/application";
 
 import { createHonoHttpAdapter } from "./http-adapter";
 
-const createTestContainer = (
-  executeUpload: (
+const defaultUploadResponse: UploadChatMessageWithImageOutput = {
+  attachment: {
+    byteSize: 4,
+    fileName: "scan.png",
+    id: "upload_1",
+    kind: "image",
+    mimeType: "image/png",
+  },
+  authorHandleId: "handle_1",
+  body: "message body",
+  id: "message_1",
+  sentAt: "2026-04-24T12:00:00.000Z",
+  tone: "cyan",
+};
+
+const createTestContainer = ({
+  executeJoin = async (): Promise<JoinChatRoomSessionOutput> => ({
+    participant: {
+      handle: "vinicius",
+      id: "handle_1",
+      status: "online",
+    },
+    room: {
+      id: "room_1",
+      slug: "night-shift",
+    },
+    session: {
+      handleId: "handle_1",
+      id: "session_1",
+      joinedAt: "2026-04-24T12:00:00.000Z",
+      roomId: "room_1",
+      status: "active",
+    },
+  }),
+  executeUpload = async (): Promise<UploadChatMessageWithImageOutput> => defaultUploadResponse,
+}: Readonly<{
+  executeJoin?: (
+    input: JoinChatRoomSessionInput,
+  ) => JoinChatRoomSessionOutput | Promise<JoinChatRoomSessionOutput>;
+  executeUpload?: (
     input: UploadChatMessageWithImageInput,
-  ) => UploadChatMessageWithImageOutput | Promise<UploadChatMessageWithImageOutput>,
-): BootstrapContainer => ({
+  ) => UploadChatMessageWithImageOutput | Promise<UploadChatMessageWithImageOutput>;
+}> = {}): BootstrapContainer => ({
   chat: {
+    joinRoomSession: {
+      execute: executeJoin,
+    },
     moderateUploadRetention: {
       execute: async () => null,
     },
@@ -147,6 +194,156 @@ const createUploadFormData = ({
 };
 
 describe("chat routes", () => {
+  it("maps a valid join request into the chat join use case", async () => {
+    let capturedInput: JoinChatRoomSessionInput | undefined;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeJoin: async (input) => {
+          capturedInput = input;
+
+          return {
+            participant: {
+              handle: "vinicius",
+              id: "handle_1",
+              status: "online",
+            },
+            room: {
+              id: "room_1",
+              slug: "night-shift",
+            },
+            session: {
+              handleId: "handle_1",
+              id: "session_1",
+              joinedAt: "2026-04-24T12:00:00.000Z",
+              roomId: "room_1",
+              status: "active",
+            },
+          };
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/rooms/night-shift/join", {
+      body: JSON.stringify({
+        handle: " vinicius ",
+        password: " open-sesame ",
+      }),
+      headers: {
+        "content-type": "application/json",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      participant: {
+        handle: "vinicius",
+        id: "handle_1",
+        status: "online",
+      },
+      room: {
+        id: "room_1",
+        slug: "night-shift",
+      },
+      session: {
+        handleId: "handle_1",
+        id: "session_1",
+        joinedAt: "2026-04-24T12:00:00.000Z",
+        roomId: "room_1",
+        status: "active",
+      },
+    });
+    expect(capturedInput).toEqual({
+      handle: "vinicius",
+      password: "open-sesame",
+      slug: "night-shift",
+    });
+  });
+
+  it("rejects invalid join payloads before calling the core", async () => {
+    let called = false;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeJoin: async () => {
+          called = true;
+          throw new Error("should not run");
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/rooms/night-shift/join", {
+      body: JSON.stringify({
+        handle: "vinicius",
+      }),
+      headers: {
+        "content-type": "application/json",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "invalid_request",
+      field: "password",
+    });
+    expect(called).toBe(false);
+  });
+
+  it("returns denied when chat room credentials are invalid", async () => {
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeJoin: async () => {
+          throw new InvalidChatRoomCredentialsError();
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/rooms/night-shift/join", {
+      body: JSON.stringify({
+        handle: "vinicius",
+        password: "wrong",
+      }),
+      headers: {
+        "content-type": "application/json",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({
+      error: "denied",
+      resource: "chat",
+    });
+  });
+
+  it("returns denied with reason when handle is banned", async () => {
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeJoin: async () => {
+          throw new BannedChatHandleError();
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/rooms/night-shift/join", {
+      body: JSON.stringify({
+        handle: "vinicius",
+        password: "open-sesame",
+      }),
+      headers: {
+        "content-type": "application/json",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      error: "denied",
+      reason: "handle_banned",
+      resource: "chat",
+    });
+  });
+
   it("maps a valid upload request into the chat upload use case", async () => {
     let capturedAuthorHandleId: string | undefined;
     let capturedMimeType: string | undefined;
@@ -154,27 +351,16 @@ describe("chat routes", () => {
     let capturedRoomSessionId: string | undefined;
     let capturedTone: "cyan" | "pink" | "system" | null | undefined;
     const app = createHonoHttpAdapter(
-      createTestContainer(async (input) => {
-        capturedAuthorHandleId = input.authorHandleId;
-        capturedMimeType = input.image.mimeType;
-        capturedRoomId = input.roomId;
-        capturedRoomSessionId = input.roomSessionId;
-        capturedTone = input.tone;
+      createTestContainer({
+        executeUpload: async (input) => {
+          capturedAuthorHandleId = input.authorHandleId;
+          capturedMimeType = input.image.mimeType;
+          capturedRoomId = input.roomId;
+          capturedRoomSessionId = input.roomSessionId;
+          capturedTone = input.tone;
 
-        return {
-          attachment: {
-            byteSize: 4,
-            fileName: "scan.png",
-            id: "upload_1",
-            kind: "image",
-            mimeType: "image/png",
-          },
-          authorHandleId: "handle_1",
-          body: "message body",
-          id: "message_1",
-          sentAt: "2026-04-24T12:00:00.000Z",
-          tone: "cyan",
-        };
+          return defaultUploadResponse;
+        },
       }),
     );
 
@@ -210,9 +396,11 @@ describe("chat routes", () => {
   it("rejects invalid MIME types before reaching the core", async () => {
     let called = false;
     const app = createHonoHttpAdapter(
-      createTestContainer(async () => {
-        called = true;
-        throw new Error("should not run");
+      createTestContainer({
+        executeUpload: async () => {
+          called = true;
+          throw new Error("should not run");
+        },
       }),
     );
 
@@ -236,9 +424,11 @@ describe("chat routes", () => {
   it("rejects oversized uploads before reaching the core", async () => {
     let called = false;
     const app = createHonoHttpAdapter(
-      createTestContainer(async () => {
-        called = true;
-        throw new Error("should not run");
+      createTestContainer({
+        executeUpload: async () => {
+          called = true;
+          throw new Error("should not run");
+        },
       }),
     );
 
@@ -259,9 +449,11 @@ describe("chat routes", () => {
   it("rejects multiple upload files per message", async () => {
     let called = false;
     const app = createHonoHttpAdapter(
-      createTestContainer(async () => {
-        called = true;
-        throw new Error("should not run");
+      createTestContainer({
+        executeUpload: async () => {
+          called = true;
+          throw new Error("should not run");
+        },
       }),
     );
     const formData = createUploadFormData();
@@ -283,8 +475,10 @@ describe("chat routes", () => {
 
   it("returns denied when the room session and author ids do not match", async () => {
     const app = createHonoHttpAdapter(
-      createTestContainer(async () => {
-        throw new InvalidChatUploadActorError();
+      createTestContainer({
+        executeUpload: async () => {
+          throw new InvalidChatUploadActorError();
+        },
       }),
     );
 
