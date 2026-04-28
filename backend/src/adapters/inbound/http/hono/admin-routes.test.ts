@@ -727,6 +727,37 @@ describe("admin routes", () => {
     expect(called).toBe(false);
   });
 
+  it("rejects moderation requests with non-string reason payloads", async () => {
+    let called = false;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeModerateMessage: async () => {
+          called = true;
+          throw new Error("should not run");
+        },
+      }),
+    );
+
+    const response = await app.request("/api/admin/chat/messages/message_1/moderation", {
+      body: JSON.stringify({
+        action: "hide_message",
+        reason: { value: "invalid" },
+      }),
+      headers: {
+        "content-type": "application/json",
+        cookie: "vinicius.dev-session=session-token-1",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "invalid_request",
+      field: "reason",
+    });
+    expect(called).toBe(false);
+  });
+
   it("returns not_found when chat moderation target message does not exist", async () => {
     const app = createHonoHttpAdapter(
       createTestContainer({
@@ -795,6 +826,31 @@ describe("admin routes", () => {
       actorAdminUserId: "admin_1",
       handleId: "handle_1",
       reason: "repeated abuse",
+    });
+  });
+
+  it("returns not_found when chat handle ban target does not exist", async () => {
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeBanHandle: async () => null,
+      }),
+    );
+
+    const response = await app.request("/api/admin/chat/handles/handle_404/ban", {
+      body: JSON.stringify({
+        reason: "repeated abuse",
+      }),
+      headers: {
+        "content-type": "application/json",
+        cookie: "vinicius.dev-session=session-token-1",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({
+      error: "not_found",
+      resource: "chat_handle",
     });
   });
 
@@ -900,6 +956,31 @@ describe("admin routes", () => {
       field: "nextPassword",
     });
     expect(called).toBe(false);
+  });
+
+  it("returns not_found when room password rotation target does not exist", async () => {
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeRotateRoomPassword: async () => null,
+      }),
+    );
+
+    const response = await app.request("/api/admin/chat/rooms/unknown/password-rotation", {
+      body: JSON.stringify({
+        nextPassword: "new-secret",
+      }),
+      headers: {
+        "content-type": "application/json",
+        cookie: "vinicius.dev-session=session-token-1",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({
+      error: "not_found",
+      resource: "chat_room",
+    });
   });
 
   it("rejects invalid thoughts query parameters", async () => {

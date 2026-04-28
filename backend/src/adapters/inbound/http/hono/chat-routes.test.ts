@@ -365,6 +365,36 @@ describe("chat routes", () => {
     expect(called).toBe(false);
   });
 
+  it("rejects join requests with a blank room slug before calling the core", async () => {
+    let called = false;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeJoin: async () => {
+          called = true;
+          throw new Error("should not run");
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/rooms/%20/join", {
+      body: JSON.stringify({
+        handle: "vinicius",
+        password: "open-sesame",
+      }),
+      headers: {
+        "content-type": "application/json",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "invalid_path",
+      field: "slug",
+    });
+    expect(called).toBe(false);
+  });
+
   it("returns denied when chat room credentials are invalid", async () => {
     const app = createHonoHttpAdapter(
       createTestContainer({
@@ -798,6 +828,34 @@ describe("chat routes", () => {
     await expect(response.json()).resolves.toEqual({
       error: "invalid_request",
       field: "tone",
+    });
+    expect(called).toBe(false);
+  });
+
+  it("rejects text message requests with malformed JSON before calling the core", async () => {
+    let called = false;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeSendText: async () => {
+          called = true;
+          throw new Error("should not run");
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/rooms/night-shift/messages", {
+      body: "{",
+      headers: {
+        "content-type": "application/json",
+        "x-chat-room-session-id": "session_1",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "invalid_request",
+      field: "body",
     });
     expect(called).toBe(false);
   });

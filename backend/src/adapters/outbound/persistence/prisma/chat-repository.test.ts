@@ -1210,6 +1210,32 @@ describe("prisma chat repository", () => {
     });
   });
 
+  it("returns null when moderating a message that does not exist", async () => {
+    const repository = createPrismaChatRepository({
+      $transaction: async <T>(
+        runInTransaction: (tx: {
+          chatMessage: {
+            findUnique: (args: { where: { id: string } }) => Promise<Record<string, unknown> | null>;
+          };
+        }) => Promise<T>,
+      ) =>
+        runInTransaction({
+          chatMessage: {
+            findUnique: async () => null,
+          },
+        }),
+    } as unknown as PrismaDatabaseClient);
+
+    await expect(
+      repository.moderateMessage({
+        action: "hide_message",
+        actorAdminUserId: "admin_1",
+        messageId: "message_404",
+        occurredAt: new Date("2026-04-28T12:08:00.000Z"),
+      }),
+    ).resolves.toBeNull();
+  });
+
   it("creates a ban record, revokes sessions, and emits moderation audit", async () => {
     let capturedBanData: Record<string, unknown> | null = null;
     let capturedAuditData: Record<string, unknown> | null = null;
@@ -1331,6 +1357,31 @@ describe("prisma chat repository", () => {
       },
       revokedSessionCount: 2,
     });
+  });
+
+  it("returns null when banning a handle that does not exist", async () => {
+    const repository = createPrismaChatRepository({
+      $transaction: async <T>(
+        runInTransaction: (tx: {
+          chatHandle: {
+            findUnique: (args: { where: { id: string } }) => Promise<Record<string, unknown> | null>;
+          };
+        }) => Promise<T>,
+      ) =>
+        runInTransaction({
+          chatHandle: {
+            findUnique: async () => null,
+          },
+        }),
+    } as unknown as PrismaDatabaseClient);
+
+    await expect(
+      repository.banHandle({
+        actorAdminUserId: "admin_1",
+        handleId: "handle_404",
+        occurredAt: new Date("2026-04-28T12:09:00.000Z"),
+      }),
+    ).resolves.toBeNull();
   });
 
   it("rotates room password, revokes sessions, and records audit metadata", async () => {
@@ -1461,5 +1512,31 @@ describe("prisma chat repository", () => {
         rotatedAt: occurredAt,
       },
     });
+  });
+
+  it("returns null when rotating password for a room slug that does not exist", async () => {
+    const repository = createPrismaChatRepository({
+      $transaction: async <T>(
+        runInTransaction: (tx: {
+          chatRoom: {
+            findUnique: (args: { where: { slug: string } }) => Promise<Record<string, unknown> | null>;
+          };
+        }) => Promise<T>,
+      ) =>
+        runInTransaction({
+          chatRoom: {
+            findUnique: async () => null,
+          },
+        }),
+    } as unknown as PrismaDatabaseClient);
+
+    await expect(
+      repository.rotateRoomPassword({
+        actorAdminUserId: "admin_1",
+        nextPasswordHash: "hash:new",
+        occurredAt: new Date("2026-04-28T12:10:00.000Z"),
+        slug: "unknown-room",
+      }),
+    ).resolves.toBeNull();
   });
 });
