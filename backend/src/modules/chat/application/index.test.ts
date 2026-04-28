@@ -1,11 +1,179 @@
 import { describe, expect, it } from "bun:test";
 
 import {
+  BannedChatHandleError,
+  createJoinChatRoomSessionUseCase,
   createModerateChatUploadRetentionUseCase,
   createOpenChatUploadMediaUseCase,
   createUploadChatMessageWithImageUseCase,
+  InvalidChatRoomCredentialsError,
   InvalidChatUploadAccessError,
 } from "./index";
+
+describe("chat room join use case", () => {
+  it("verifies room credentials, creates handle when needed, and issues an active room session", async () => {
+    const now = new Date("2026-04-28T10:00:00.000Z");
+    let capturedCreateHandle: Record<string, unknown> | undefined;
+    let capturedCreateSession: Record<string, unknown> | undefined;
+    const useCase = createJoinChatRoomSessionUseCase({
+      clock: () => now,
+      createSessionToken: () => "session-token-1",
+      hashSessionToken: async (token) => `hash:${token}`,
+      repository: {
+        createHandle: async (input) => {
+          capturedCreateHandle = input as unknown as Record<string, unknown>;
+
+          return {
+            createdAt: now,
+            handle: "Vinicius",
+            id: "handle_1",
+            normalizedHandle: input.normalizedHandle,
+            roomId: input.roomId,
+            status: "active",
+            updatedAt: now,
+          };
+        },
+        createSession: async (input) => {
+          capturedCreateSession = input as unknown as Record<string, unknown>;
+
+          return {
+            createdAt: now,
+            expiresAt: null,
+            handleId: input.handleId,
+            id: "session_1",
+            joinedAt: input.joinedAt,
+            lastSeenAt: input.lastSeenAt,
+            leftAt: null,
+            roomId: input.roomId,
+            status: "active",
+            updatedAt: now,
+          };
+        },
+        findHandleByRoomIdAndNormalizedHandle: async () => null,
+        findRoomBySlug: async () => ({
+          createdAt: now,
+          id: "room_1",
+          passwordHash: "hash:open-sesame",
+          passwordRotatedAt: null,
+          passwordVersion: 1,
+          slug: "night-shift",
+          updatedAt: now,
+        }),
+      },
+      verifyRoomPassword: async ({ passwordHash, plainText }) =>
+        passwordHash === `hash:${plainText}`,
+    });
+
+    const result = await useCase.execute({
+      handle: "  Vinicius  ",
+      password: "open-sesame",
+      slug: "night-shift",
+    });
+
+    expect(capturedCreateHandle).toMatchObject({
+      handle: "Vinicius",
+      normalizedHandle: "vinicius",
+      roomId: "room_1",
+      status: "active",
+    });
+    expect(capturedCreateSession).toMatchObject({
+      handleId: "handle_1",
+      roomId: "room_1",
+      sessionTokenHash: "hash:session-token-1",
+      status: "active",
+    });
+    expect(result).toEqual({
+      participant: {
+        handle: "Vinicius",
+        id: "handle_1",
+        status: "online",
+      },
+      room: {
+        id: "room_1",
+        slug: "night-shift",
+      },
+      session: {
+        handleId: "handle_1",
+        id: "session_1",
+        joinedAt: "2026-04-28T10:00:00.000Z",
+        roomId: "room_1",
+        status: "active",
+      },
+    });
+  });
+
+  it("rejects room join with invalid credentials", async () => {
+    const useCase = createJoinChatRoomSessionUseCase({
+      repository: {
+        createHandle: async () => {
+          throw new Error("should not create handle");
+        },
+        createSession: async () => {
+          throw new Error("should not create session");
+        },
+        findHandleByRoomIdAndNormalizedHandle: async () => null,
+        findRoomBySlug: async () => ({
+          createdAt: new Date("2026-04-28T10:00:00.000Z"),
+          id: "room_1",
+          passwordHash: "hash:open-sesame",
+          passwordRotatedAt: null,
+          passwordVersion: 1,
+          slug: "night-shift",
+          updatedAt: new Date("2026-04-28T10:00:00.000Z"),
+        }),
+      },
+      verifyRoomPassword: async () => false,
+    });
+
+    await expect(
+      useCase.execute({
+        handle: "vinicius",
+        password: "wrong-password",
+        slug: "night-shift",
+      }),
+    ).rejects.toBeInstanceOf(InvalidChatRoomCredentialsError);
+  });
+
+  it("rejects room join when handle is banned", async () => {
+    const useCase = createJoinChatRoomSessionUseCase({
+      repository: {
+        createHandle: async () => {
+          throw new Error("should not create handle");
+        },
+        createSession: async () => {
+          throw new Error("should not create session");
+        },
+        findHandleByRoomIdAndNormalizedHandle: async () => ({
+          createdAt: new Date("2026-04-28T10:00:00.000Z"),
+          handle: "vinicius",
+          id: "handle_1",
+          normalizedHandle: "vinicius",
+          roomId: "room_1",
+          status: "banned",
+          updatedAt: new Date("2026-04-28T10:00:00.000Z"),
+        }),
+        findRoomBySlug: async () => ({
+          createdAt: new Date("2026-04-28T10:00:00.000Z"),
+          id: "room_1",
+          passwordHash: "hash:open-sesame",
+          passwordRotatedAt: null,
+          passwordVersion: 1,
+          slug: "night-shift",
+          updatedAt: new Date("2026-04-28T10:00:00.000Z"),
+        }),
+      },
+      verifyRoomPassword: async () => true,
+    });
+
+    await expect(
+      useCase.execute({
+        handle: "vinicius",
+        password: "open-sesame",
+        slug: "night-shift",
+      }),
+    ).rejects.toBeInstanceOf(BannedChatHandleError);
+  });
+});
 
 describe("chat upload message with image use case", () => {
   it("writes the upload and persists message/upload metadata", async () => {

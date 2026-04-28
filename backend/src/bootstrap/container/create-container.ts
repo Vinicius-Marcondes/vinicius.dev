@@ -47,11 +47,13 @@ import type {
   VerifyMfaChallengePort,
 } from "@/modules/auth/ports/inbound";
 import {
+  createJoinChatRoomSessionUseCase,
   createModerateChatUploadRetentionUseCase,
   createOpenChatUploadMediaUseCase,
   createUploadChatMessageWithImageUseCase,
 } from "@/modules/chat/application";
 import type {
+  JoinChatRoomSessionPort,
   ModerateChatUploadRetentionPort,
   OpenChatUploadMediaPort,
   UploadChatMessageWithImagePort,
@@ -98,6 +100,7 @@ export type BootstrapContainer = Readonly<{
     verifyMfaChallenge: VerifyMfaChallengePort;
   }>;
   chat: Readonly<{
+    joinRoomSession?: JoinChatRoomSessionPort;
     moderateUploadRetention: ModerateChatUploadRetentionPort;
     openUploadMedia: OpenChatUploadMediaPort;
     uploadMessageWithImage: UploadChatMessageWithImagePort;
@@ -138,6 +141,9 @@ export const createContainer = (env: BootstrapEnv = Bun.env): BootstrapContainer
   const authClock = createSystemAuthClock();
   const authMfaCodeHasher = createBunMfaCodeHashPort();
   const authSessionTokenHasher = createHmacSessionTokenHashPort(config.auth.sessionSecret);
+  const chatSessionTokenHasher = createHmacSessionTokenHashPort(config.auth.roomPasswordSecret);
+  const chatPasswordHasher = createBunPasswordHashPort();
+  const chatSessionTokenGenerator = createCryptoSessionTokenGenerator();
 
   return {
     admin: {
@@ -214,6 +220,18 @@ export const createContainer = (env: BootstrapEnv = Bun.env): BootstrapContainer
       }),
     },
     chat: {
+      joinRoomSession: createJoinChatRoomSessionUseCase({
+        createSessionToken: () => chatSessionTokenGenerator.create(),
+        hashSessionToken: (token) => chatSessionTokenHasher.hash(token),
+        repository: persistence.chat,
+        verifyRoomPassword: ({ passwordHash, plainText }) =>
+          chatPasswordHasher.verify({
+            passwordHash,
+            passwordHashAlgorithm: "bun-password",
+            passwordHashParams: null,
+            plainText,
+          }),
+      }),
       moderateUploadRetention: createModerateChatUploadRetentionUseCase({
         repository: persistence.chat,
       }),

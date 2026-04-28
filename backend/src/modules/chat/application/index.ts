@@ -5,6 +5,9 @@ import type {
 import type { ChatRepositoryPort } from "@/modules/chat/ports/outbound";
 import type {
   ChatUploadMimeType,
+  JoinChatRoomSessionInput,
+  JoinChatRoomSessionOutput,
+  JoinChatRoomSessionPort,
   ModerateChatUploadRetentionInput,
   ModerateChatUploadRetentionOutput,
   ModerateChatUploadRetentionPort,
@@ -18,6 +21,20 @@ import type {
 import type { ModerateChatUploadRetentionAction } from "@/modules/chat/ports/outbound";
 
 const IMAGE_ONLY_FALLBACK_BODY = "uploaded an image without a caption";
+
+export class InvalidChatRoomCredentialsError extends Error {
+  constructor() {
+    super("chat room credentials are invalid");
+    this.name = "InvalidChatRoomCredentialsError";
+  }
+}
+
+export class BannedChatHandleError extends Error {
+  constructor() {
+    super("chat handle is banned");
+    this.name = "BannedChatHandleError";
+  }
+}
 
 export class InvalidChatUploadActorError extends Error {
   constructor() {
@@ -58,11 +75,40 @@ const buildStorageKey = (roomId: string, uploadId: string, mimeType: ChatUploadM
   return `${sanitizeStorageSegment(roomId)}/${uploadId}.${MIME_EXTENSION_BY_TYPE[mimeType]}`;
 };
 
+const collapseWhitespace = (value: string): string => value.trim().replace(/\s+/g, " ");
+
+const normalizeHandle = (value: string): string => collapseWhitespace(value).toLowerCase();
+
+const defaultSessionToken = (): string => crypto.randomUUID();
+
+const hashToken = async (token: string): Promise<string> => {
+  const bytes = new TextEncoder().encode(token);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+
+  return Array.from(new Uint8Array(digest))
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("");
+};
+
 export type ChatApplicationDependencies = Readonly<{
   clock?: () => Date;
   createId?: () => string;
   repository: Pick<ChatRepositoryPort, "createMessageWithUpload" | "findSessionById">;
   storage: ChatUploadStoragePort;
+}>;
+
+export type JoinChatRoomSessionDependencies = Readonly<{
+  clock?: () => Date;
+  createSessionToken?: () => string;
+  hashSessionToken?: (token: string) => Promise<string>;
+  repository: Pick<
+    ChatRepositoryPort,
+    | "createHandle"
+    | "createSession"
+    | "findHandleByRoomIdAndNormalizedHandle"
+    | "findRoomBySlug"
+  >;
+  verifyRoomPassword?: (input: Readonly<{ passwordHash: string; plainText: string }>) => Promise<boolean>;
 }>;
 
 export type ChatUploadMediaAccessDependencies = Readonly<{
@@ -75,6 +121,91 @@ export type ChatUploadRetentionDependencies = Readonly<{
   clock?: () => Date;
   repository: Pick<ChatRepositoryPort, "moderateUploadRetention">;
 }>;
+
+export const createJoinChatRoomSessionUseCase = ({
+  clock = () => new Date(),
+  createSessionToken = defaultSessionToken,
+  hashSessionToken = hashToken,
+  repository,
+  verifyRoomPassword = async ({ passwordHash, plainText }) => {
+    try {
+      return await Bun.password.verify(plainText, passwordHash);
+    } catch (_error) {
+      return false;
+    }
+  },
+}: JoinChatRoomSessionDependencies): JoinChatRoomSessionPort => ({
+  execute: async (
+    input: JoinChatRoomSessionInput,
+  ): Promise<JoinChatRoomSessionOutput> => {
+    const room = await repository.findRoomBySlug({
+      slug: input.slug.trim(),
+    });
+
+    if (!room) {
+      throw new InvalidChatRoomCredentialsError();
+    }
+
+    const validPassword = await verifyRoomPassword({
+      passwordHash: room.passwordHash,
+      plainText: input.password,
+    });
+
+    if (!validPassword) {
+      throw new InvalidChatRoomCredentialsError();
+    }
+
+    const normalizedHandle = normalizeHandle(input.handle);
+    let participant = await repository.findHandleByRoomIdAndNormalizedHandle(
+      room.id,
+      normalizedHandle,
+    );
+
+    if (participant?.status === "banned") {
+      throw new BannedChatHandleError();
+    }
+
+    if (!participant) {
+      participant = await repository.createHandle({
+        handle: collapseWhitespace(input.handle),
+        normalizedHandle,
+        roomId: room.id,
+        status: "active",
+      });
+    }
+
+    const joinedAt = clock();
+    const session = await repository.createSession({
+      expiresAt: null,
+      handleId: participant.id,
+      joinedAt,
+      lastSeenAt: joinedAt,
+      leftAt: null,
+      roomId: room.id,
+      sessionTokenHash: await hashSessionToken(createSessionToken()),
+      status: "active",
+    });
+
+    return {
+      participant: {
+        handle: participant.handle,
+        id: participant.id,
+        status: "online",
+      },
+      room: {
+        id: room.id,
+        slug: room.slug,
+      },
+      session: {
+        handleId: session.handleId,
+        id: session.id,
+        joinedAt: session.joinedAt.toISOString(),
+        roomId: session.roomId,
+        status: session.status,
+      },
+    };
+  },
+});
 
 export const createUploadChatMessageWithImageUseCase = ({
   clock = () => new Date(),

@@ -1,6 +1,4 @@
 import type {
-  CreateChatMessageWithUploadCommand,
-  CreateChatMessageWithUploadResult,
   ChatHandleRepositoryRow,
   ChatMessageListQuery,
   ChatMessageRepositoryRow,
@@ -8,6 +6,10 @@ import type {
   ChatRoomRepositoryRow,
   ChatRoomSessionRepositoryRow,
   ChatUploadRepositoryRow,
+  CreateChatHandleCommand,
+  CreateChatMessageWithUploadCommand,
+  CreateChatMessageWithUploadResult,
+  CreateChatRoomSessionCommand,
   ModerateChatUploadRetentionCommand,
   ModerateChatUploadRetentionResult,
 } from "@/modules/chat/ports/outbound";
@@ -94,6 +96,42 @@ const mapSessionRow = (row: {
   joinedAt: row.joinedAt,
   lastSeenAt: row.lastSeenAt,
   leftAt: row.leftAt,
+  roomId: row.roomId,
+  status: row.status,
+  updatedAt: row.updatedAt,
+});
+
+const mapRoomRow = (row: {
+  createdAt: Date;
+  id: string;
+  passwordHash: string;
+  passwordRotatedAt: Date | null;
+  passwordVersion: number;
+  slug: string;
+  updatedAt: Date;
+}): ChatRoomRepositoryRow => ({
+  createdAt: row.createdAt,
+  id: row.id,
+  passwordHash: row.passwordHash,
+  passwordRotatedAt: row.passwordRotatedAt,
+  passwordVersion: row.passwordVersion,
+  slug: row.slug,
+  updatedAt: row.updatedAt,
+});
+
+const mapHandleRow = (row: {
+  createdAt: Date;
+  handle: string;
+  id: string;
+  normalizedHandle: string;
+  roomId: string;
+  status: "active" | "banned";
+  updatedAt: Date;
+}): ChatHandleRepositoryRow => ({
+  createdAt: row.createdAt,
+  handle: row.handle,
+  id: row.id,
+  normalizedHandle: row.normalizedHandle,
   roomId: row.roomId,
   status: row.status,
   updatedAt: row.updatedAt,
@@ -204,6 +242,63 @@ const createMessageWithUpload = async (
       upload: mapUploadRow(upload),
     };
   });
+};
+
+const createHandle = async (
+  client: PrismaDatabaseClient,
+  input: CreateChatHandleCommand,
+): Promise<ChatHandleRepositoryRow> => {
+  const handle = await client.chatHandle.create({
+    data: {
+      handle: input.handle,
+      normalizedHandle: input.normalizedHandle,
+      roomId: input.roomId,
+      status: input.status,
+    },
+    select: {
+      createdAt: true,
+      handle: true,
+      id: true,
+      normalizedHandle: true,
+      roomId: true,
+      status: true,
+      updatedAt: true,
+    },
+  });
+
+  return mapHandleRow(handle);
+};
+
+const createSession = async (
+  client: PrismaDatabaseClient,
+  input: CreateChatRoomSessionCommand,
+): Promise<ChatRoomSessionRepositoryRow> => {
+  const session = await client.chatRoomSession.create({
+    data: {
+      expiresAt: input.expiresAt,
+      handleId: input.handleId,
+      joinedAt: input.joinedAt,
+      lastSeenAt: input.lastSeenAt,
+      leftAt: input.leftAt,
+      roomId: input.roomId,
+      sessionTokenHash: input.sessionTokenHash,
+      status: input.status,
+    },
+    select: {
+      createdAt: true,
+      expiresAt: true,
+      handleId: true,
+      id: true,
+      joinedAt: true,
+      lastSeenAt: true,
+      leftAt: true,
+      roomId: true,
+      status: true,
+      updatedAt: true,
+    },
+  });
+
+  return mapSessionRow(session);
 };
 
 const moderateUploadRetention = async (
@@ -372,8 +467,10 @@ const moderateUploadRetention = async (
 };
 
 export const createPrismaChatRepository = (client: PrismaDatabaseClient): ChatRepositoryPort => ({
+  createHandle: (input): Promise<ChatHandleRepositoryRow> => createHandle(client, input),
   createMessageWithUpload: (input): Promise<CreateChatMessageWithUploadResult> =>
     createMessageWithUpload(client, input),
+  createSession: (input): Promise<ChatRoomSessionRepositoryRow> => createSession(client, input),
   moderateUploadRetention: (input): Promise<ModerateChatUploadRetentionResult | null> =>
     moderateUploadRetention(client, input),
   findSessionById: async (sessionId): Promise<ChatRoomSessionRepositoryRow | null> => {
@@ -397,9 +494,48 @@ export const createPrismaChatRepository = (client: PrismaDatabaseClient): ChatRe
 
     return session ? mapSessionRow(session) : null;
   },
-  findRoomBySlug: (_query): Promise<ChatRoomRepositoryRow | null> => notImplemented("findRoomBySlug"),
-  findHandleByRoomIdAndNormalizedHandle: (_roomId, _normalizedHandle): Promise<ChatHandleRepositoryRow | null> =>
-    notImplemented("findHandleByRoomIdAndNormalizedHandle"),
+  findRoomBySlug: async (query): Promise<ChatRoomRepositoryRow | null> => {
+    const room = await client.chatRoom.findUnique({
+      select: {
+        createdAt: true,
+        id: true,
+        passwordHash: true,
+        passwordRotatedAt: true,
+        passwordVersion: true,
+        slug: true,
+        updatedAt: true,
+      },
+      where: {
+        slug: query.slug,
+      },
+    });
+
+    return room ? mapRoomRow(room) : null;
+  },
+  findHandleByRoomIdAndNormalizedHandle: async (
+    roomId,
+    normalizedHandle,
+  ): Promise<ChatHandleRepositoryRow | null> => {
+    const handle = await client.chatHandle.findUnique({
+      select: {
+        createdAt: true,
+        handle: true,
+        id: true,
+        normalizedHandle: true,
+        roomId: true,
+        status: true,
+        updatedAt: true,
+      },
+      where: {
+        roomId_normalizedHandle: {
+          normalizedHandle,
+          roomId,
+        },
+      },
+    });
+
+    return handle ? mapHandleRow(handle) : null;
+  },
   listMessages: (_query: ChatMessageListQuery): Promise<readonly ChatMessageRepositoryRow[]> =>
     notImplemented("listMessages"),
   findUploadById: (_uploadId: string): Promise<ChatUploadRepositoryRow | null> =>
