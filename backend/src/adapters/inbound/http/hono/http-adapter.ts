@@ -10,13 +10,18 @@ import {
 import { InvalidAdminPhotoMetadataDateError } from "@/modules/admin/application";
 import {
   BannedChatHandleError,
+  InvalidChatMessageAccessError,
+  InvalidChatMessageCursorError,
   InvalidChatParticipantAccessError,
   InvalidChatRoomCredentialsError,
   InvalidChatUploadAccessError,
   InvalidChatUploadActorError,
 } from "@/modules/chat/application";
 import { InvalidThoughtCursorError } from "@/modules/content/application";
-import type { ChatUploadMimeType } from "@/modules/chat/ports/inbound";
+import type {
+  ChatUploadMimeType,
+  ListChatRoomMessagesPort,
+} from "@/modules/chat/ports/inbound";
 import type { ReplaceAdminStatusStripEntriesInput } from "@/modules/admin/ports/inbound";
 import type { BootstrapContainer } from "@/bootstrap/container";
 
@@ -552,6 +557,9 @@ const readRequiredJsonString = (
 
 const createChatFamily = (container: BootstrapContainer) => {
   const chatApp = new Hono();
+  const listRoomMessagesUseCase = (container.chat as {
+    listRoomMessages?: ListChatRoomMessagesPort;
+  }).listRoomMessages;
 
   chatApp.post("/rooms/:slug/join", async (c) => {
     if (!container.chat.joinRoomSession) {
@@ -684,6 +692,91 @@ const createChatFamily = (container: BootstrapContainer) => {
             resource: "chat",
           },
           403,
+        );
+      }
+
+      throw error;
+    }
+  });
+
+  chatApp.get("/rooms/:slug/messages", async (c) => {
+    if (!listRoomMessagesUseCase) {
+      return c.json<NotImplementedResponse>(
+        {
+          family: "chat",
+          method: c.req.method,
+          route: c.req.path,
+          service: serviceName,
+          status: "not_implemented",
+        },
+        501,
+      );
+    }
+
+    const slug = c.req.param("slug")?.trim();
+
+    if (!slug) {
+      return c.json(
+        {
+          error: "invalid_path",
+          field: "slug",
+        },
+        400,
+      );
+    }
+
+    const roomSessionId = c.req.header("x-chat-room-session-id")?.trim();
+
+    if (!roomSessionId) {
+      return c.json(
+        {
+          error: "invalid_request",
+          field: "x-chat-room-session-id",
+        },
+        400,
+      );
+    }
+
+    const { cursor, limit: rawLimit } = c.req.query();
+    const limit = parsePositiveInteger(rawLimit);
+
+    if (typeof rawLimit !== "undefined" && typeof limit === "undefined") {
+      return c.json(
+        {
+          error: "invalid_query",
+          field: "limit",
+        },
+        400,
+      );
+    }
+
+    try {
+      const response = await listRoomMessagesUseCase.execute({
+        cursor,
+        limit,
+        roomSessionId,
+        slug,
+      });
+
+      return c.json(response);
+    } catch (error) {
+      if (error instanceof InvalidChatMessageAccessError) {
+        return c.json(
+          {
+            error: "denied",
+            resource: "chat",
+          },
+          403,
+        );
+      }
+
+      if (error instanceof InvalidChatMessageCursorError) {
+        return c.json(
+          {
+            error: "invalid_query",
+            field: "cursor",
+          },
+          400,
         );
       }
 

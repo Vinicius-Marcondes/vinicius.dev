@@ -47,6 +47,40 @@ export type ListChatRoomParticipantsOutput = Readonly<{
 export interface ListChatRoomParticipantsPort
   extends UseCase<ListChatRoomParticipantsInput, ListChatRoomParticipantsOutput> {}
 
+export type ListChatRoomMessagesInput = Readonly<{
+  cursor?: string;
+  limit?: number;
+  roomSessionId: string;
+  slug: string;
+}>;
+
+export type ChatMessageAttachmentOutput = Readonly<{
+  byteSize: number;
+  fileName: string;
+  id: string;
+  kind: "image";
+  mimeType: ChatUploadMimeType;
+}>;
+
+export type ChatRoomMessageOutput = Readonly<{
+  attachment?: ChatMessageAttachmentOutput;
+  author: string;
+  body: string;
+  id: string;
+  sentAt: string;
+  tone?: "cyan" | "pink" | "system";
+}>;
+
+export type ListChatRoomMessagesOutput = Readonly<{
+  items: readonly ChatRoomMessageOutput[];
+  pageInfo: Readonly<{
+    nextCursor: string | null;
+  }>;
+}>;
+
+export interface ListChatRoomMessagesPort
+  extends UseCase<ListChatRoomMessagesInput, ListChatRoomMessagesOutput> {}
+
 export type UploadChatMessageImageInput = Readonly<{
   body: Uint8Array;
   displayFilename: string;
@@ -62,16 +96,8 @@ export type UploadChatMessageWithImageInput = Readonly<{
   tone?: "cyan" | "pink" | "system" | null;
 }>;
 
-export type UploadChatMessageAttachment = Readonly<{
-  byteSize: number;
-  fileName: string;
-  id: string;
-  kind: "image";
-  mimeType: ChatUploadMimeType;
-}>;
-
 export type UploadChatMessageWithImageOutput = Readonly<{
-  attachment: UploadChatMessageAttachment;
+  attachment: ChatMessageAttachmentOutput;
   authorHandleId: string;
   body: string;
   id: string;

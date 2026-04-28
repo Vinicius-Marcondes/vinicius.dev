@@ -51,6 +51,28 @@ export type ChatMessageRepositoryRow = Readonly<{
   updatedAt: Date;
 }>;
 
+export type ChatMessageAttachmentRepositoryRow = Readonly<{
+  byteSize: number;
+  fileName: string;
+  id: string;
+  kind: "image";
+  mimeType: "image/jpeg" | "image/png" | "image/webp";
+}>;
+
+export type ChatMessageListItemRepositoryRow = Readonly<{
+  attachment?: ChatMessageAttachmentRepositoryRow;
+  author: string;
+  body: string;
+  id: string;
+  sentAt: Date;
+  tone: "cyan" | "pink" | "system" | null;
+}>;
+
+export type ChatMessageCursor = Readonly<{
+  id: string;
+  sentAt: Date;
+}>;
+
 export type ChatUploadRepositoryRow = Readonly<{
   id: string;
   roomId: string;
@@ -130,10 +152,14 @@ export type ChatRoomQuery = Readonly<{
 }>;
 
 export type ChatMessageListQuery = Readonly<{
+  cursor?: ChatMessageCursor;
+  limit: number;
   roomId: string;
-  roomSessionId?: string;
-  cursor?: string;
-  limit?: number;
+}>;
+
+export type ChatMessageListPage = Readonly<{
+  items: readonly ChatMessageListItemRepositoryRow[];
+  nextCursor: ChatMessageCursor | null;
 }>;
 
 export interface ChatRepositoryPort {
@@ -149,6 +175,6 @@ export interface ChatRepositoryPort {
   findRoomBySlug(query: ChatRoomQuery): Promise<ChatRoomRepositoryRow | null>;
   findHandleByRoomIdAndNormalizedHandle(roomId: string, normalizedHandle: string): Promise<ChatHandleRepositoryRow | null>;
   listParticipantsByRoomId(roomId: string): Promise<readonly ChatRoomParticipantRepositoryRow[]>;
-  listMessages(query: ChatMessageListQuery): Promise<readonly ChatMessageRepositoryRow[]>;
+  listMessages(query: ChatMessageListQuery): Promise<ChatMessageListPage>;
   findUploadById(uploadId: string): Promise<ChatUploadRepositoryRow | null>;
 }

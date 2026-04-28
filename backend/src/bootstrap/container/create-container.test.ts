@@ -13,6 +13,7 @@ describe("bootstrap container", () => {
     expect(typeof container.chat.moderateUploadRetention.execute).toBe("function");
     expect(typeof container.chat.openUploadMedia.execute).toBe("function");
     expect(typeof container.chat.joinRoomSession?.execute).toBe("function");
+    expect(typeof container.chat.listRoomMessages?.execute).toBe("function");
     expect(typeof container.media.repository.findPhotoMediaById).toBe("function");
     expect(typeof container.media.repository.findChatUploadMediaById).toBe("function");
     expect(typeof container.media.storage.photos.openOriginal).toBe("function");

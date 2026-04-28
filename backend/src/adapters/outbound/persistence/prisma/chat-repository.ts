@@ -1,5 +1,7 @@
 import type {
   ChatHandleRepositoryRow,
+  ChatMessageListItemRepositoryRow,
+  ChatMessageListPage,
   ChatMessageListQuery,
   ChatMessageRepositoryRow,
   ChatRoomParticipantRepositoryRow,
@@ -501,6 +503,122 @@ const listParticipantsByRoomId = async (
   }));
 };
 
+const buildMessageCursorWhere = (
+  query: ChatMessageListQuery,
+):
+  | {
+      OR: Array<
+        | { sentAt: { lt: Date } }
+        | { id: { lt: string }; sentAt: Date }
+      >;
+    }
+  | undefined => {
+  if (!query.cursor) {
+    return undefined;
+  }
+
+  return {
+    OR: [
+      {
+        sentAt: {
+          lt: query.cursor.sentAt,
+        },
+      },
+      {
+        id: {
+          lt: query.cursor.id,
+        },
+        sentAt: query.cursor.sentAt,
+      },
+    ],
+  };
+};
+
+const mapMessageListRow = (row: {
+  authorHandle: {
+    handle: string;
+  };
+  body: string;
+  id: string;
+  sentAt: Date;
+  tone: "cyan" | "pink" | "system" | null;
+  upload: null | {
+    byteSize: number;
+    displayFilename: string;
+    id: string;
+    kind: "image";
+    mimeType: ChatUploadMimeType;
+    moderationState: "visible" | "hidden" | "deleted";
+  };
+}): ChatMessageListItemRepositoryRow => ({
+  ...(row.upload && row.upload.moderationState === "visible"
+    ? {
+        attachment: {
+          byteSize: row.upload.byteSize,
+          fileName: row.upload.displayFilename,
+          id: row.upload.id,
+          kind: row.upload.kind,
+          mimeType: mapUploadMimeTypeFromPrisma(row.upload.mimeType),
+        },
+      }
+    : {}),
+  author: row.authorHandle.handle,
+  body: row.body,
+  id: row.id,
+  sentAt: row.sentAt,
+  tone: row.tone,
+});
+
+const listMessages = async (
+  client: PrismaDatabaseClient,
+  query: ChatMessageListQuery,
+): Promise<ChatMessageListPage> => {
+  const rows = await client.chatMessage.findMany({
+    orderBy: [{ sentAt: "desc" }, { id: "desc" }],
+    select: {
+      authorHandle: {
+        select: {
+          handle: true,
+        },
+      },
+      body: true,
+      id: true,
+      sentAt: true,
+      tone: true,
+      upload: {
+        select: {
+          byteSize: true,
+          displayFilename: true,
+          id: true,
+          kind: true,
+          mimeType: true,
+          moderationState: true,
+        },
+      },
+    },
+    take: query.limit + 1,
+    where: {
+      ...buildMessageCursorWhere(query),
+      moderationState: "visible",
+      roomId: query.roomId,
+    },
+  });
+
+  const pageRows = rows.slice(0, query.limit);
+  const hasNextPage = rows.length > query.limit;
+  const nextCursorRow = pageRows.at(pageRows.length - 1);
+
+  return {
+    items: pageRows.map(mapMessageListRow),
+    nextCursor: hasNextPage && nextCursorRow
+      ? {
+          id: nextCursorRow.id,
+          sentAt: nextCursorRow.sentAt,
+        }
+      : null,
+  };
+};
+
 export const createPrismaChatRepository = (client: PrismaDatabaseClient): ChatRepositoryPort => ({
   createHandle: (input): Promise<ChatHandleRepositoryRow> => createHandle(client, input),
   createMessageWithUpload: (input): Promise<CreateChatMessageWithUploadResult> =>
@@ -573,8 +691,8 @@ export const createPrismaChatRepository = (client: PrismaDatabaseClient): ChatRe
   },
   listParticipantsByRoomId: (roomId): Promise<readonly ChatRoomParticipantRepositoryRow[]> =>
     listParticipantsByRoomId(client, roomId),
-  listMessages: (_query: ChatMessageListQuery): Promise<readonly ChatMessageRepositoryRow[]> =>
-    notImplemented("listMessages"),
+  listMessages: (query: ChatMessageListQuery): Promise<ChatMessageListPage> =>
+    listMessages(client, query),
   findUploadById: (_uploadId: string): Promise<ChatUploadRepositoryRow | null> =>
     notImplemented("findUploadById"),
 });

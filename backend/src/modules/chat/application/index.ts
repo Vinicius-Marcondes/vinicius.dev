@@ -5,9 +5,13 @@ import type {
 import type { ChatRepositoryPort } from "@/modules/chat/ports/outbound";
 import type {
   ChatUploadMimeType,
+  ChatRoomMessageOutput,
   JoinChatRoomSessionInput,
   JoinChatRoomSessionOutput,
   JoinChatRoomSessionPort,
+  ListChatRoomMessagesInput,
+  ListChatRoomMessagesOutput,
+  ListChatRoomMessagesPort,
   ListChatRoomParticipantsInput,
   ListChatRoomParticipantsOutput,
   ListChatRoomParticipantsPort,
@@ -60,6 +64,20 @@ export class InvalidChatParticipantAccessError extends Error {
   }
 }
 
+export class InvalidChatMessageAccessError extends Error {
+  constructor() {
+    super("chat message access requires an active room session bound to the room");
+    this.name = "InvalidChatMessageAccessError";
+  }
+}
+
+export class InvalidChatMessageCursorError extends Error {
+  constructor() {
+    super("chat message cursor is invalid");
+    this.name = "InvalidChatMessageCursorError";
+  }
+}
+
 const MIME_EXTENSION_BY_TYPE: Record<ChatUploadMimeType, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
@@ -88,6 +106,9 @@ const buildStorageKey = (roomId: string, uploadId: string, mimeType: ChatUploadM
 const collapseWhitespace = (value: string): string => value.trim().replace(/\s+/g, " ");
 
 const normalizeHandle = (value: string): string => collapseWhitespace(value).toLowerCase();
+
+const DEFAULT_CHAT_MESSAGES_PAGE_SIZE = 30;
+const MAX_CHAT_MESSAGES_PAGE_SIZE = 80;
 
 const defaultSessionToken = (): string => crypto.randomUUID();
 
@@ -128,6 +149,10 @@ export type ListChatRoomParticipantsDependencies = Readonly<{
   >;
 }>;
 
+export type ListChatRoomMessagesDependencies = Readonly<{
+  repository: Pick<ChatRepositoryPort, "findRoomBySlug" | "findSessionById" | "listMessages">;
+}>;
+
 export type ChatUploadMediaAccessDependencies = Readonly<{
   repository: Pick<ChatRepositoryPort, "findSessionById">;
   mediaRepository: Pick<MediaRepositoryPort, "findChatUploadMediaById">;
@@ -138,6 +163,80 @@ export type ChatUploadRetentionDependencies = Readonly<{
   clock?: () => Date;
   repository: Pick<ChatRepositoryPort, "moderateUploadRetention">;
 }>;
+
+const normalizeListMessagesLimit = (inputLimit: number | undefined): number => {
+  if (typeof inputLimit !== "number" || Number.isNaN(inputLimit)) {
+    return DEFAULT_CHAT_MESSAGES_PAGE_SIZE;
+  }
+
+  return Math.min(Math.max(Math.trunc(inputLimit), 1), MAX_CHAT_MESSAGES_PAGE_SIZE);
+};
+
+const encodeChatMessageCursor = (cursor: Readonly<{ id: string; sentAt: Date }>): string => {
+  return Buffer.from(
+    JSON.stringify({
+      id: cursor.id,
+      sentAt: cursor.sentAt.toISOString(),
+    }),
+    "utf8",
+  ).toString("base64url");
+};
+
+const decodeChatMessageCursor = (input: string): Readonly<{ id: string; sentAt: Date }> => {
+  try {
+    const parsed = JSON.parse(Buffer.from(input, "base64url").toString("utf8")) as {
+      id?: unknown;
+      sentAt?: unknown;
+    };
+
+    if (typeof parsed.id !== "string" || typeof parsed.sentAt !== "string") {
+      throw new InvalidChatMessageCursorError();
+    }
+
+    const sentAt = new Date(parsed.sentAt);
+
+    if (Number.isNaN(sentAt.getTime())) {
+      throw new InvalidChatMessageCursorError();
+    }
+
+    return {
+      id: parsed.id,
+      sentAt,
+    };
+  } catch (_error) {
+    throw new InvalidChatMessageCursorError();
+  }
+};
+
+const mapChatMessageOutput = (input: Readonly<{
+  attachment?: Readonly<{
+    byteSize: number;
+    fileName: string;
+    id: string;
+    kind: "image";
+    mimeType: ChatUploadMimeType;
+  }>;
+  author: string;
+  body: string;
+  id: string;
+  sentAt: Date;
+  tone: "cyan" | "pink" | "system" | null;
+}>): ChatRoomMessageOutput => ({
+  ...(input.attachment
+    ? {
+        attachment: input.attachment,
+      }
+    : {}),
+  ...(input.tone
+    ? {
+        tone: input.tone,
+      }
+    : {}),
+  author: input.author,
+  body: input.body,
+  id: input.id,
+  sentAt: input.sentAt.toISOString(),
+});
 
 export const createJoinChatRoomSessionUseCase = ({
   clock = () => new Date(),
@@ -248,6 +347,41 @@ export const createListChatRoomParticipantsUseCase = ({
 
     return {
       items,
+    };
+  },
+});
+
+export const createListChatRoomMessagesUseCase = ({
+  repository,
+}: ListChatRoomMessagesDependencies): ListChatRoomMessagesPort => ({
+  execute: async (
+    input: ListChatRoomMessagesInput,
+  ): Promise<ListChatRoomMessagesOutput> => {
+    const room = await repository.findRoomBySlug({
+      slug: input.slug.trim(),
+    });
+
+    if (!room) {
+      throw new InvalidChatMessageAccessError();
+    }
+
+    const session = await repository.findSessionById(input.roomSessionId);
+
+    if (!session || session.status !== "active" || session.roomId !== room.id) {
+      throw new InvalidChatMessageAccessError();
+    }
+
+    const page = await repository.listMessages({
+      cursor: input.cursor ? decodeChatMessageCursor(input.cursor) : undefined,
+      limit: normalizeListMessagesLimit(input.limit),
+      roomId: room.id,
+    });
+
+    return {
+      items: page.items.map((item) => mapChatMessageOutput(item)),
+      pageInfo: {
+        nextCursor: page.nextCursor ? encodeChatMessageCursor(page.nextCursor) : null,
+      },
     };
   },
 });
