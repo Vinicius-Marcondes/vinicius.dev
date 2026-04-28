@@ -46,11 +46,11 @@
 - The frontend migration wave cleared the previous browser Babel, CDN React, global `window.*`, missing TypeScript, and missing screen blockers.
 
 ## Next Task Queue
-1. Create the dedicated Wave 3 planning issue and Project item for this harness advancement task.
-2. Split Wave 3 Cluster 5 into one issue per task using `wave-3-task-clusters.md` definitions.
-3. Keep Wave 3 Cluster 6 and Cluster 7 in `Spec-ready` planning state until Cluster 5 and Cluster 6 dependency checkpoints are complete.
+1. Split Wave 3 Cluster 6 into one issue per task using `wave-3-task-clusters.md` definitions.
+2. Keep Wave 3 Cluster 7 in `Spec-ready` planning state until Cluster 6 dependency checkpoints are complete.
+3. Preserve one issue, one Project item, one branch, and one acceptance source per implementation task.
 4. Run frontend analyzer as non-mutating validation for backend-only PRs.
-5. Keep one issue, one Project item, one branch, and one acceptance source per implementation task.
+5. Keep Wave 3 Cluster 7 blocked until Cluster 6 implementation and verification closeout.
 
 ## Current Executable Cluster
 ### SPEC-025 Wave 3 Cluster Planning
@@ -61,15 +61,16 @@
 - Wave 3 Cluster 5 issue creation is unblocked after this harness update merges.
 
 ### Wave 3 Cluster 5 Admin/Auth Backend
-- Status: planned as next executable implementation cluster.
+- Status: complete.
 - Primary specs: `SPEC-006`, `SPEC-007`, `SPEC-008`, `SPEC-009`, `SPEC-011`, `SPEC-016`, `SPEC-018`.
 - Scope: admin login/MFA, admin session lifecycle, dashboard summary contracts, content curation APIs, status strip management, and admin verification hardening.
 - Non-scope: non-media chat lifecycle and moderation behavior, Docker/Caddy runtime implementation, and production deploy workflow execution.
 - Tasks: `ADMIN-001`, `ADMIN-002`, `ADMIN-003`, `ADMIN-004`, `ADMIN-005`, `ADMIN-006`, and `ADMIN-007`.
 - Required ordering: `ADMIN-001` first; `ADMIN-002` after `ADMIN-001`; `ADMIN-003` after `ADMIN-002`; `ADMIN-004`, `ADMIN-005`, and `ADMIN-006` after `ADMIN-003`; `ADMIN-007` after `ADMIN-004`, `ADMIN-005`, and `ADMIN-006`.
+- Integrated verification: `bun run typecheck`, `bun test`, and `bun run verify` passed after Cluster 5 implementation.
 
 ### Wave 3 Cluster 6 Chat Backend And Moderation
-- Status: planned; blocked on Wave 3 Cluster 5 completion.
+- Status: planned as next executable implementation cluster.
 - Primary specs: `SPEC-006`, `SPEC-007`, `SPEC-009`, `SPEC-011`, `SPEC-016`, `SPEC-018`.
 - Scope: room password gate, room join/session state, participant handle/presence state, text message archive and send flow, moderation commands, moderation audit query behavior, and chat verification hardening.
 - Non-scope: chat media upload/storage/access from Wave 2 Cluster 4, admin content curation from Wave 3 Cluster 5, and infra/deploy automation implementation.
