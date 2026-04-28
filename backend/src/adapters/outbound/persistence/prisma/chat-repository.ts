@@ -10,6 +10,7 @@ import type {
   ChatRoomSessionRepositoryRow,
   ChatUploadRepositoryRow,
   CreateChatHandleCommand,
+  CreateChatTextMessageCommand,
   CreateChatMessageWithUploadCommand,
   CreateChatMessageWithUploadResult,
   CreateChatRoomSessionCommand,
@@ -245,6 +246,38 @@ const createMessageWithUpload = async (
       upload: mapUploadRow(upload),
     };
   });
+};
+
+const createTextMessage = async (
+  client: PrismaDatabaseClient,
+  input: CreateChatTextMessageCommand,
+): Promise<ChatMessageRepositoryRow> => {
+  const message = await client.chatMessage.create({
+    data: {
+      authorHandleId: input.authorHandleId,
+      body: input.body,
+      roomId: input.roomId,
+      roomSessionId: input.roomSessionId,
+      sentAt: input.sentAt,
+      tone: input.tone,
+    },
+    select: {
+      authorHandleId: true,
+      body: true,
+      createdAt: true,
+      deletedAt: true,
+      hiddenAt: true,
+      id: true,
+      moderationState: true,
+      roomId: true,
+      roomSessionId: true,
+      sentAt: true,
+      tone: true,
+      updatedAt: true,
+    },
+  });
+
+  return mapMessageRow(message);
 };
 
 const createHandle = async (
@@ -621,6 +654,8 @@ const listMessages = async (
 
 export const createPrismaChatRepository = (client: PrismaDatabaseClient): ChatRepositoryPort => ({
   createHandle: (input): Promise<ChatHandleRepositoryRow> => createHandle(client, input),
+  createTextMessage: (input): Promise<ChatMessageRepositoryRow> =>
+    createTextMessage(client, input),
   createMessageWithUpload: (input): Promise<CreateChatMessageWithUploadResult> =>
     createMessageWithUpload(client, input),
   createSession: (input): Promise<ChatRoomSessionRepositoryRow> => createSession(client, input),
@@ -664,6 +699,24 @@ export const createPrismaChatRepository = (client: PrismaDatabaseClient): ChatRe
     });
 
     return room ? mapRoomRow(room) : null;
+  },
+  findHandleById: async (handleId): Promise<ChatHandleRepositoryRow | null> => {
+    const handle = await client.chatHandle.findUnique({
+      select: {
+        createdAt: true,
+        handle: true,
+        id: true,
+        normalizedHandle: true,
+        roomId: true,
+        status: true,
+        updatedAt: true,
+      },
+      where: {
+        id: handleId,
+      },
+    });
+
+    return handle ? mapHandleRow(handle) : null;
   },
   findHandleByRoomIdAndNormalizedHandle: async (
     roomId,

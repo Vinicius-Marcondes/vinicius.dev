@@ -21,6 +21,7 @@ import { InvalidThoughtCursorError } from "@/modules/content/application";
 import type {
   ChatUploadMimeType,
   ListChatRoomMessagesPort,
+  SendChatRoomTextMessagePort,
 } from "@/modules/chat/ports/inbound";
 import type { ReplaceAdminStatusStripEntriesInput } from "@/modules/admin/ports/inbound";
 import type { BootstrapContainer } from "@/bootstrap/container";
@@ -560,6 +561,9 @@ const createChatFamily = (container: BootstrapContainer) => {
   const listRoomMessagesUseCase = (container.chat as {
     listRoomMessages?: ListChatRoomMessagesPort;
   }).listRoomMessages;
+  const sendRoomTextMessageUseCase = (container.chat as {
+    sendRoomTextMessage?: SendChatRoomTextMessagePort;
+  }).sendRoomTextMessage;
 
   chatApp.post("/rooms/:slug/join", async (c) => {
     if (!container.chat.joinRoomSession) {
@@ -777,6 +781,102 @@ const createChatFamily = (container: BootstrapContainer) => {
             field: "cursor",
           },
           400,
+        );
+      }
+
+      throw error;
+    }
+  });
+
+  chatApp.post("/rooms/:slug/messages", async (c) => {
+    if (!sendRoomTextMessageUseCase) {
+      return c.json<NotImplementedResponse>(
+        {
+          family: "chat",
+          method: c.req.method,
+          route: c.req.path,
+          service: serviceName,
+          status: "not_implemented",
+        },
+        501,
+      );
+    }
+
+    const slug = c.req.param("slug")?.trim();
+
+    if (!slug) {
+      return c.json(
+        {
+          error: "invalid_path",
+          field: "slug",
+        },
+        400,
+      );
+    }
+
+    const roomSessionId = c.req.header("x-chat-room-session-id")?.trim();
+
+    if (!roomSessionId) {
+      return c.json(
+        {
+          error: "invalid_request",
+          field: "x-chat-room-session-id",
+        },
+        400,
+      );
+    }
+
+    const parsedBody = await readJsonObject(c.req.raw);
+
+    if ("error" in parsedBody) {
+      return c.json(parsedBody.error, 400);
+    }
+
+    const body = readRequiredJsonString(parsedBody.value, "body");
+
+    if ("error" in body) {
+      return c.json(body.error, 400);
+    }
+
+    const toneInput = parsedBody.value.tone;
+
+    if (
+      typeof toneInput !== "undefined" &&
+      toneInput !== "cyan" &&
+      toneInput !== "pink" &&
+      toneInput !== "system"
+    ) {
+      return c.json(
+        {
+          error: "invalid_request",
+          field: "tone",
+        },
+        400,
+      );
+    }
+
+    try {
+      const response = await sendRoomTextMessageUseCase.execute({
+        body: body.value,
+        roomSessionId,
+        slug,
+        tone: toneInput,
+      });
+
+      return c.json(
+        {
+          item: response,
+        },
+        201,
+      );
+    } catch (error) {
+      if (error instanceof InvalidChatMessageAccessError) {
+        return c.json(
+          {
+            error: "denied",
+            resource: "chat",
+          },
+          403,
         );
       }
 

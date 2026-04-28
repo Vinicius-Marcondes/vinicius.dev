@@ -81,6 +81,18 @@ export type ListChatRoomMessagesOutput = Readonly<{
 export interface ListChatRoomMessagesPort
   extends UseCase<ListChatRoomMessagesInput, ListChatRoomMessagesOutput> {}
 
+export type SendChatRoomTextMessageInput = Readonly<{
+  body: string;
+  roomSessionId: string;
+  slug: string;
+  tone?: "cyan" | "pink" | "system";
+}>;
+
+export type SendChatRoomTextMessageOutput = ChatRoomMessageOutput;
+
+export interface SendChatRoomTextMessagePort
+  extends UseCase<SendChatRoomTextMessageInput, SendChatRoomTextMessageOutput> {}
+
 export type UploadChatMessageImageInput = Readonly<{
   body: Uint8Array;
   displayFilename: string;

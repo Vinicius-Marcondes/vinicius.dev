@@ -52,6 +52,7 @@ import {
   createListChatRoomParticipantsUseCase,
   createModerateChatUploadRetentionUseCase,
   createOpenChatUploadMediaUseCase,
+  createSendChatRoomTextMessageUseCase,
   createUploadChatMessageWithImageUseCase,
 } from "@/modules/chat/application";
 import type {
@@ -60,6 +61,7 @@ import type {
   ListChatRoomParticipantsPort,
   ModerateChatUploadRetentionPort,
   OpenChatUploadMediaPort,
+  SendChatRoomTextMessagePort,
   UploadChatMessageWithImagePort,
 } from "@/modules/chat/ports/inbound";
 import {
@@ -109,6 +111,7 @@ export type BootstrapContainer = Readonly<{
     listRoomParticipants?: ListChatRoomParticipantsPort;
     moderateUploadRetention: ModerateChatUploadRetentionPort;
     openUploadMedia: OpenChatUploadMediaPort;
+    sendRoomTextMessage?: SendChatRoomTextMessagePort;
     uploadMessageWithImage: UploadChatMessageWithImagePort;
   }>;
   config: BootstrapConfig;
@@ -251,6 +254,9 @@ export const createContainer = (env: BootstrapEnv = Bun.env): BootstrapContainer
         mediaRepository: persistence.media,
         repository: persistence.chat,
         storage: storage.chatUploads,
+      }),
+      sendRoomTextMessage: createSendChatRoomTextMessageUseCase({
+        repository: persistence.chat,
       }),
       uploadMessageWithImage: createUploadChatMessageWithImageUseCase({
         repository: persistence.chat,

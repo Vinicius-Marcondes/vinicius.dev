@@ -90,6 +90,32 @@ describe("prisma chat repository", () => {
     });
   });
 
+  it("maps handle lookup by id", async () => {
+    const repository = createPrismaChatRepository({
+      chatHandle: {
+        findUnique: async () => ({
+          createdAt: new Date("2026-04-24T10:00:00.000Z"),
+          handle: "Vinicius",
+          id: "handle_1",
+          normalizedHandle: "vinicius",
+          roomId: "room_1",
+          status: "active" as const,
+          updatedAt: new Date("2026-04-24T10:05:00.000Z"),
+        }),
+      },
+    } as unknown as PrismaDatabaseClient);
+
+    await expect(repository.findHandleById("handle_1")).resolves.toEqual({
+      createdAt: new Date("2026-04-24T10:00:00.000Z"),
+      handle: "Vinicius",
+      id: "handle_1",
+      normalizedHandle: "vinicius",
+      roomId: "room_1",
+      status: "active",
+      updatedAt: new Date("2026-04-24T10:05:00.000Z"),
+    });
+  });
+
   it("maps room participants with online/idle status", async () => {
     let capturedWhere: Record<string, unknown> | null = null;
     const repository = createPrismaChatRepository({
@@ -355,6 +381,66 @@ describe("prisma chat repository", () => {
       roomId: "room_1",
       status: "active",
       updatedAt: new Date("2026-04-24T10:05:00.000Z"),
+    });
+  });
+
+  it("creates and maps a text chat message row", async () => {
+    let capturedData: Record<string, unknown> | null = null;
+    const repository = createPrismaChatRepository({
+      chatMessage: {
+        create: async ({ data }: { data: Record<string, unknown> }) => {
+          capturedData = data;
+
+          return {
+            authorHandleId: "handle_1",
+            body: "from the bunker",
+            createdAt: new Date("2026-04-24T10:00:00.000Z"),
+            deletedAt: null,
+            hiddenAt: null,
+            id: "message_2",
+            moderationState: "visible" as const,
+            roomId: "room_1",
+            roomSessionId: "session_1",
+            sentAt: new Date("2026-04-24T10:00:00.000Z"),
+            tone: "system" as const,
+            updatedAt: new Date("2026-04-24T10:00:00.000Z"),
+          };
+        },
+      },
+    } as unknown as PrismaDatabaseClient);
+
+    const sentAt = new Date("2026-04-24T10:00:00.000Z");
+    const result = await repository.createTextMessage({
+      authorHandleId: "handle_1",
+      body: "from the bunker",
+      roomId: "room_1",
+      roomSessionId: "session_1",
+      sentAt,
+      tone: "system",
+    });
+
+    expect(capturedData).not.toBeNull();
+    expect(capturedData!).toEqual({
+      authorHandleId: "handle_1",
+      body: "from the bunker",
+      roomId: "room_1",
+      roomSessionId: "session_1",
+      sentAt,
+      tone: "system",
+    });
+    expect(result).toEqual({
+      authorHandleId: "handle_1",
+      body: "from the bunker",
+      createdAt: new Date("2026-04-24T10:00:00.000Z"),
+      deletedAt: null,
+      hiddenAt: null,
+      id: "message_2",
+      moderationState: "visible",
+      roomId: "room_1",
+      roomSessionId: "session_1",
+      sentAt,
+      tone: "system",
+      updatedAt: new Date("2026-04-24T10:00:00.000Z"),
     });
   });
 

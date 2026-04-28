@@ -21,6 +21,9 @@ import type {
   OpenChatUploadMediaInput,
   OpenChatUploadMediaOutput,
   OpenChatUploadMediaPort,
+  SendChatRoomTextMessageInput,
+  SendChatRoomTextMessageOutput,
+  SendChatRoomTextMessagePort,
   UploadChatMessageWithImageInput,
   UploadChatMessageWithImageOutput,
   UploadChatMessageWithImagePort,
@@ -151,6 +154,14 @@ export type ListChatRoomParticipantsDependencies = Readonly<{
 
 export type ListChatRoomMessagesDependencies = Readonly<{
   repository: Pick<ChatRepositoryPort, "findRoomBySlug" | "findSessionById" | "listMessages">;
+}>;
+
+export type SendChatRoomTextMessageDependencies = Readonly<{
+  clock?: () => Date;
+  repository: Pick<
+    ChatRepositoryPort,
+    "createTextMessage" | "findHandleById" | "findRoomBySlug" | "findSessionById"
+  >;
 }>;
 
 export type ChatUploadMediaAccessDependencies = Readonly<{
@@ -383,6 +394,56 @@ export const createListChatRoomMessagesUseCase = ({
         nextCursor: page.nextCursor ? encodeChatMessageCursor(page.nextCursor) : null,
       },
     };
+  },
+});
+
+export const createSendChatRoomTextMessageUseCase = ({
+  clock = () => new Date(),
+  repository,
+}: SendChatRoomTextMessageDependencies): SendChatRoomTextMessagePort => ({
+  execute: async (
+    input: SendChatRoomTextMessageInput,
+  ): Promise<SendChatRoomTextMessageOutput> => {
+    const room = await repository.findRoomBySlug({
+      slug: input.slug.trim(),
+    });
+
+    if (!room) {
+      throw new InvalidChatMessageAccessError();
+    }
+
+    const session = await repository.findSessionById(input.roomSessionId);
+
+    if (!session || session.status !== "active" || session.roomId !== room.id) {
+      throw new InvalidChatMessageAccessError();
+    }
+
+    const authorHandle = await repository.findHandleById(session.handleId);
+
+    if (
+      !authorHandle ||
+      authorHandle.status !== "active" ||
+      authorHandle.roomId !== room.id
+    ) {
+      throw new InvalidChatMessageAccessError();
+    }
+
+    const message = await repository.createTextMessage({
+      authorHandleId: authorHandle.id,
+      body: collapseWhitespace(input.body),
+      roomId: room.id,
+      roomSessionId: session.id,
+      sentAt: clock(),
+      tone: input.tone ?? null,
+    });
+
+    return mapChatMessageOutput({
+      author: authorHandle.handle,
+      body: message.body,
+      id: message.id,
+      sentAt: message.sentAt,
+      tone: message.tone,
+    });
   },
 });
 

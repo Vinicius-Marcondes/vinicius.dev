@@ -126,6 +126,15 @@ export type CreateChatRoomSessionCommand = Readonly<{
   status: "active" | "revoked" | "expired";
 }>;
 
+export type CreateChatTextMessageCommand = Readonly<{
+  authorHandleId: string;
+  body: string;
+  roomId: string;
+  roomSessionId: string;
+  sentAt: Date;
+  tone: "cyan" | "pink" | "system" | null;
+}>;
+
 export type CreateChatMessageWithUploadResult = Readonly<{
   message: ChatMessageRepositoryRow;
   upload: ChatUploadRepositoryRow;
@@ -164,6 +173,7 @@ export type ChatMessageListPage = Readonly<{
 
 export interface ChatRepositoryPort {
   createHandle(input: CreateChatHandleCommand): Promise<ChatHandleRepositoryRow>;
+  createTextMessage(input: CreateChatTextMessageCommand): Promise<ChatMessageRepositoryRow>;
   createMessageWithUpload(
     input: CreateChatMessageWithUploadCommand,
   ): Promise<CreateChatMessageWithUploadResult>;
@@ -171,6 +181,7 @@ export interface ChatRepositoryPort {
   moderateUploadRetention(
     input: ModerateChatUploadRetentionCommand,
   ): Promise<ModerateChatUploadRetentionResult | null>;
+  findHandleById(handleId: string): Promise<ChatHandleRepositoryRow | null>;
   findSessionById(sessionId: string): Promise<ChatRoomSessionRepositoryRow | null>;
   findRoomBySlug(query: ChatRoomQuery): Promise<ChatRoomRepositoryRow | null>;
   findHandleByRoomIdAndNormalizedHandle(roomId: string, normalizedHandle: string): Promise<ChatHandleRepositoryRow | null>;
