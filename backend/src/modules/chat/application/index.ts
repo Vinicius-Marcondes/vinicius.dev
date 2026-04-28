@@ -8,6 +8,9 @@ import type {
   JoinChatRoomSessionInput,
   JoinChatRoomSessionOutput,
   JoinChatRoomSessionPort,
+  ListChatRoomParticipantsInput,
+  ListChatRoomParticipantsOutput,
+  ListChatRoomParticipantsPort,
   ModerateChatUploadRetentionInput,
   ModerateChatUploadRetentionOutput,
   ModerateChatUploadRetentionPort,
@@ -47,6 +50,13 @@ export class InvalidChatUploadAccessError extends Error {
   constructor() {
     super("chat upload access requires an active room session");
     this.name = "InvalidChatUploadAccessError";
+  }
+}
+
+export class InvalidChatParticipantAccessError extends Error {
+  constructor() {
+    super("chat participants access requires an active room session bound to the room");
+    this.name = "InvalidChatParticipantAccessError";
   }
 }
 
@@ -109,6 +119,13 @@ export type JoinChatRoomSessionDependencies = Readonly<{
     | "findRoomBySlug"
   >;
   verifyRoomPassword?: (input: Readonly<{ passwordHash: string; plainText: string }>) => Promise<boolean>;
+}>;
+
+export type ListChatRoomParticipantsDependencies = Readonly<{
+  repository: Pick<
+    ChatRepositoryPort,
+    "findRoomBySlug" | "findSessionById" | "listParticipantsByRoomId"
+  >;
 }>;
 
 export type ChatUploadMediaAccessDependencies = Readonly<{
@@ -203,6 +220,34 @@ export const createJoinChatRoomSessionUseCase = ({
         roomId: session.roomId,
         status: session.status,
       },
+    };
+  },
+});
+
+export const createListChatRoomParticipantsUseCase = ({
+  repository,
+}: ListChatRoomParticipantsDependencies): ListChatRoomParticipantsPort => ({
+  execute: async (
+    input: ListChatRoomParticipantsInput,
+  ): Promise<ListChatRoomParticipantsOutput> => {
+    const room = await repository.findRoomBySlug({
+      slug: input.slug.trim(),
+    });
+
+    if (!room) {
+      throw new InvalidChatParticipantAccessError();
+    }
+
+    const session = await repository.findSessionById(input.roomSessionId);
+
+    if (!session || session.status !== "active" || session.roomId !== room.id) {
+      throw new InvalidChatParticipantAccessError();
+    }
+
+    const items = await repository.listParticipantsByRoomId(room.id);
+
+    return {
+      items,
     };
   },
 });

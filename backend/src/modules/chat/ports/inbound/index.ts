@@ -30,6 +30,23 @@ export type JoinChatRoomSessionOutput = Readonly<{
 export interface JoinChatRoomSessionPort
   extends UseCase<JoinChatRoomSessionInput, JoinChatRoomSessionOutput> {}
 
+export type ListChatRoomParticipantsInput = Readonly<{
+  roomSessionId: string;
+  slug: string;
+}>;
+
+export type ChatRoomParticipantOutput = Readonly<{
+  handle: string;
+  status: "online" | "idle";
+}>;
+
+export type ListChatRoomParticipantsOutput = Readonly<{
+  items: readonly ChatRoomParticipantOutput[];
+}>;
+
+export interface ListChatRoomParticipantsPort
+  extends UseCase<ListChatRoomParticipantsInput, ListChatRoomParticipantsOutput> {}
+
 export type UploadChatMessageImageInput = Readonly<{
   body: Uint8Array;
   displayFilename: string;

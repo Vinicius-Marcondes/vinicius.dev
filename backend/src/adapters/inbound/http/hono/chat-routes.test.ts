@@ -4,11 +4,14 @@ import type { BootstrapContainer } from "@/bootstrap/container";
 import type {
   JoinChatRoomSessionInput,
   JoinChatRoomSessionOutput,
+  ListChatRoomParticipantsInput,
+  ListChatRoomParticipantsOutput,
   UploadChatMessageWithImageInput,
   UploadChatMessageWithImageOutput,
 } from "@/modules/chat/ports/inbound";
 import {
   BannedChatHandleError,
+  InvalidChatParticipantAccessError,
   InvalidChatRoomCredentialsError,
   InvalidChatUploadActorError,
 } from "@/modules/chat/application";
@@ -30,6 +33,15 @@ const defaultUploadResponse: UploadChatMessageWithImageOutput = {
   tone: "cyan",
 };
 
+const defaultParticipantsResponse: ListChatRoomParticipantsOutput = {
+  items: [
+    {
+      handle: "vinicius",
+      status: "online",
+    },
+  ],
+};
+
 const createTestContainer = ({
   executeJoin = async (): Promise<JoinChatRoomSessionOutput> => ({
     participant: {
@@ -49,11 +61,16 @@ const createTestContainer = ({
       status: "active",
     },
   }),
+  executeParticipants = async (): Promise<ListChatRoomParticipantsOutput> =>
+    defaultParticipantsResponse,
   executeUpload = async (): Promise<UploadChatMessageWithImageOutput> => defaultUploadResponse,
 }: Readonly<{
   executeJoin?: (
     input: JoinChatRoomSessionInput,
   ) => JoinChatRoomSessionOutput | Promise<JoinChatRoomSessionOutput>;
+  executeParticipants?: (
+    input: ListChatRoomParticipantsInput,
+  ) => ListChatRoomParticipantsOutput | Promise<ListChatRoomParticipantsOutput>;
   executeUpload?: (
     input: UploadChatMessageWithImageInput,
   ) => UploadChatMessageWithImageOutput | Promise<UploadChatMessageWithImageOutput>;
@@ -61,6 +78,9 @@ const createTestContainer = ({
   chat: {
     joinRoomSession: {
       execute: executeJoin,
+    },
+    listRoomParticipants: {
+      execute: executeParticipants,
     },
     moderateUploadRetention: {
       execute: async () => null,
@@ -340,6 +360,101 @@ describe("chat routes", () => {
     await expect(response.json()).resolves.toEqual({
       error: "denied",
       reason: "handle_banned",
+      resource: "chat",
+    });
+  });
+
+  it("maps a valid participants request into the participants use case", async () => {
+    let capturedInput: ListChatRoomParticipantsInput | undefined;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeParticipants: async (input) => {
+          capturedInput = input;
+
+          return {
+            items: [
+              {
+                handle: "vinicius",
+                status: "online",
+              },
+              {
+                handle: "guest",
+                status: "idle",
+              },
+            ],
+          };
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/rooms/night-shift/participants", {
+      headers: {
+        "x-chat-room-session-id": " session_1 ",
+      },
+      method: "GET",
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      items: [
+        {
+          handle: "vinicius",
+          status: "online",
+        },
+        {
+          handle: "guest",
+          status: "idle",
+        },
+      ],
+    });
+    expect(capturedInput).toEqual({
+      roomSessionId: "session_1",
+      slug: "night-shift",
+    });
+  });
+
+  it("rejects participants requests missing room session header", async () => {
+    let called = false;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeParticipants: async () => {
+          called = true;
+          throw new Error("should not run");
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/rooms/night-shift/participants", {
+      method: "GET",
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "invalid_request",
+      field: "x-chat-room-session-id",
+    });
+    expect(called).toBe(false);
+  });
+
+  it("returns denied when participants access is invalid for the room session", async () => {
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeParticipants: async () => {
+          throw new InvalidChatParticipantAccessError();
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/rooms/night-shift/participants", {
+      headers: {
+        "x-chat-room-session-id": "session_1",
+      },
+      method: "GET",
+    });
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      error: "denied",
       resource: "chat",
     });
   });
