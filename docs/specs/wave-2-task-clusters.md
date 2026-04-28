@@ -53,10 +53,8 @@ Complete. `BE-001`, `BE-002`, `BE-003`, `BE-004`, and `BE-005` were implemented,
 - Docker/Caddy deployment descriptors.
 - Production GitHub Actions workflow YAML.
 
-## Future Clusters
-- Cluster 5 admin/auth splits by login, MFA, session lifecycle, dashboard contracts, content curation, and status strip editing.
-- Cluster 6 chat splits by room gate, handle/session state, message archive, participant state, non-media message flow, moderation commands, and audit records.
-- Cluster 7 infra/CI/verification splits by Docker service layout, Caddy routing, env/volume policy, GitHub Actions validation, deploy workflow, and cross-layer tests.
+## Wave 3 Clusters
+See [wave-3-task-clusters.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/wave-3-task-clusters.md).
 
 ## Cluster 2: Persistence Foundation
 ### Goal
@@ -170,27 +168,5 @@ Complete. `BE-012`, `BE-013`, `BE-014`, `BE-015`, `BE-016`, and `BE-017` are imp
 - Docker/Caddy implementation files.
 - Production GitHub Actions workflow YAML.
 
-## Acceptance Checklist
-- [ ] Cluster order follows the approved Wave 2 dependency sequence.
-- [ ] Cluster 1 tasks each have one task ID, branch, issue, Project item, and acceptance source.
-- [ ] Cluster 1 does not include persistence, media, admin, chat, infra deployment, or production CI implementation.
-- [ ] Backend foundation tasks cite approved specs and branch rules.
-- [ ] Cluster 2 tasks each have one task ID, branch, issue, Project item, and acceptance source.
-- [ ] Cluster 2 keeps Prisma schema edits sequential to avoid merge conflicts.
-- [ ] Cluster 3 tasks each have one task ID, branch, issue, Project item, and acceptance source.
-- [ ] Cluster 3 keeps the Thoughts API ahead of the other public content endpoints.
-- [ ] RSS remains coupled to Thoughts and sitemap remains coupled to the finalized public content contracts.
-- [ ] Cluster 4 tasks each have one task ID, branch, issue, Project item, and acceptance source.
-- [ ] Cluster 4 starts with shared media storage foundation before photo or chat media behavior.
-- [ ] Cluster 4 allows photo delivery and chat upload implementation to run in parallel only after the shared storage foundation lands.
-- [ ] Cluster 4 keeps room-gated chat media access and retention behavior behind upload/storage readiness.
-- [ ] Cluster 4 moderation-aligned media retention work cites the admin moderation spec directly.
-- [ ] Future clusters remain blocked until their dependencies land.
+## Wave 3 clusters are defined in [wave-3-task-clusters.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/wave-3-task-clusters.md).
 
-## Git Branch Implications
-- Cluster definition changes use `spec/` branches.
-- Cluster 1 implementation uses `backend/` branches.
-- Cluster 2 implementation uses `data/` branches.
-- Cluster 3 implementation uses `backend/` branches.
-- Cluster 4 implementation uses `backend/` branches.
-- Future infra-only work uses `infra/` branches and future verification-only work may use `qa/` branches if the harness adopts that prefix; until then, use the closest approved prefix from `git-workflow.md`.

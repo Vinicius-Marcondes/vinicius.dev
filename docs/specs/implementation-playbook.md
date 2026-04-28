@@ -31,7 +31,7 @@ The harness, GitHub Project, and `develop` must stay aligned. If implementation 
 
 Current required approvals before real task cutting:
 - the current executable cluster in [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md)
-- the owning source specs named by that cluster in [wave-2-task-clusters.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/wave-2-task-clusters.md)
+- the owning source specs named by that cluster in [wave-3-task-clusters.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/wave-3-task-clusters.md)
 - [project-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/project-structure.md) for backend-facing work
 - [ci-cd.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/ci-cd.md) for validation and release-readiness tasks
 
@@ -90,17 +90,18 @@ Use:
 - Production releases come from tagged commits on `main`.
 
 ## Current Executable Cluster
-The current executable cluster is `Wave 2 Cluster 4: Media storage and delivery`.
+The current executable cluster is `Wave 3 Cluster 5: Admin/Auth backend`.
 
 Current follow-up actions:
-1. Run the cluster-level backend verification pass on `develop` for the merged Cluster 4 task set.
-2. Confirm the Wave 2 Cluster 4 execution artifacts stay synced across specs, issues, PRs, and the GitHub Project.
-3. Cut the next planning/status update before defining any new executable cluster.
+1. Keep this harness/planning update synced across `tracker.md`, `wave-3-task-clusters.md`, and GitHub execution artifacts.
+2. Create one GitHub Issue and one Project item per `ADMIN-001` through `ADMIN-007` task.
+3. Keep Wave 3 Cluster 6 and Cluster 7 in planned state until their explicit dependency checkpoints are complete.
 
 Parallelization rule for the current state:
-- do not cut a new cluster from this playbook until the harness is explicitly advanced
+- run `ADMIN-001`, `ADMIN-002`, and `ADMIN-003` sequentially as the auth/session/dashboard chain
+- allow `ADMIN-004`, `ADMIN-005`, and `ADMIN-006` to run in parallel only after `ADMIN-003` lands on `develop`
+- start `ADMIN-007` only after the curation and status-strip tasks are merged
 - backend-only PRs still run the frontend analyzer as a non-mutating validation check
-- Cluster 4 is complete; the next action is harness/planning advancement rather than another Cluster 4 implementation task
 
 ## Cluster-to-Task Rules
 ### Good task split
@@ -306,6 +307,6 @@ Before merging:
 ## Current Recommendation
 Start with:
 1. sync the harness to the latest merged cluster state
-2. create the current executable cluster as GitHub Issues from `wave-2-task-clusters.md`
+2. create the current executable cluster as GitHub Issues from `wave-3-task-clusters.md`
 3. assign one agent to the shared foundation task first
 4. parallelize only the tasks explicitly marked parallel-safe by the active cluster definition
