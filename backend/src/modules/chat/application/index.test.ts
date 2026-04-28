@@ -718,6 +718,54 @@ describe("chat text message send use case", () => {
       }),
     ).rejects.toBeInstanceOf(InvalidChatMessageAccessError);
   });
+
+  it("rejects text message send when the session handle is no longer active in the room", async () => {
+    const useCase = createSendChatRoomTextMessageUseCase({
+      repository: {
+        createTextMessage: async () => {
+          throw new Error("should not create message");
+        },
+        findHandleById: async () => ({
+          createdAt: new Date("2026-04-28T12:00:00.000Z"),
+          handle: "vinicius",
+          id: "handle_1",
+          normalizedHandle: "vinicius",
+          roomId: "room_1",
+          status: "banned",
+          updatedAt: new Date("2026-04-28T12:00:00.000Z"),
+        }),
+        findRoomBySlug: async () => ({
+          createdAt: new Date("2026-04-28T12:00:00.000Z"),
+          id: "room_1",
+          passwordHash: "hash",
+          passwordRotatedAt: null,
+          passwordVersion: 1,
+          slug: "night-shift",
+          updatedAt: new Date("2026-04-28T12:00:00.000Z"),
+        }),
+        findSessionById: async () => ({
+          createdAt: new Date("2026-04-28T12:00:00.000Z"),
+          expiresAt: null,
+          handleId: "handle_1",
+          id: "session_1",
+          joinedAt: new Date("2026-04-28T12:00:00.000Z"),
+          lastSeenAt: new Date("2026-04-28T12:00:00.000Z"),
+          leftAt: null,
+          roomId: "room_1",
+          status: "active",
+          updatedAt: new Date("2026-04-28T12:00:00.000Z"),
+        }),
+      },
+    });
+
+    await expect(
+      useCase.execute({
+        body: "message body",
+        roomSessionId: "session_1",
+        slug: "night-shift",
+      }),
+    ).rejects.toBeInstanceOf(InvalidChatMessageAccessError);
+  });
 });
 
 describe("chat message moderation use case", () => {
@@ -795,6 +843,63 @@ describe("chat message moderation use case", () => {
     });
   });
 
+  it("maps delete-message moderation state transitions", async () => {
+    const useCase = createModerateChatRoomMessageUseCase({
+      repository: {
+        moderateMessage: async () => ({
+          auditId: "audit_2",
+          message: {
+            authorHandleId: "handle_1",
+            body: "from the bunker",
+            createdAt: new Date("2026-04-28T12:06:00.000Z"),
+            deletedAt: new Date("2026-04-28T12:06:00.000Z"),
+            hiddenAt: new Date("2026-04-28T12:06:00.000Z"),
+            id: "message_1",
+            moderationState: "deleted",
+            roomId: "room_1",
+            roomSessionId: "session_1",
+            sentAt: new Date("2026-04-28T12:06:00.000Z"),
+            tone: null,
+            updatedAt: new Date("2026-04-28T12:06:00.000Z"),
+          },
+          upload: {
+            byteSize: 512,
+            createdAt: new Date("2026-04-28T12:06:00.000Z"),
+            deletedAt: new Date("2026-04-28T12:06:00.000Z"),
+            displayFilename: "drop.png",
+            hiddenAt: new Date("2026-04-28T12:06:00.000Z"),
+            id: "upload_1",
+            kind: "image",
+            messageId: "message_1",
+            mimeType: "image/png",
+            moderationState: "deleted",
+            roomId: "room_1",
+            storageKey: "room_1/upload_1.png",
+            storagePath: "room_1/upload_1.png",
+            updatedAt: new Date("2026-04-28T12:06:00.000Z"),
+            uploaderHandleId: "handle_1",
+            uploaderSessionId: "session_1",
+          },
+        }),
+      },
+    });
+
+    await expect(
+      useCase.execute({
+        action: "delete_message",
+        actorAdminUserId: "admin_1",
+        messageId: "message_1",
+      }),
+    ).resolves.toEqual({
+      action: "delete_message",
+      auditId: "audit_2",
+      messageId: "message_1",
+      messageModerationState: "deleted",
+      uploadId: "upload_1",
+      uploadModerationState: "deleted",
+    });
+  });
+
   it("returns null when target message does not exist", async () => {
     const useCase = createModerateChatRoomMessageUseCase({
       repository: {
@@ -862,6 +967,21 @@ describe("chat handle ban use case", () => {
       roomId: "room_1",
       status: "banned",
     });
+  });
+
+  it("returns null when the target handle does not exist", async () => {
+    const useCase = createBanChatRoomHandleUseCase({
+      repository: {
+        banHandle: async () => null,
+      },
+    });
+
+    await expect(
+      useCase.execute({
+        actorAdminUserId: "admin_1",
+        handleId: "handle_404",
+      }),
+    ).resolves.toBeNull();
   });
 });
 

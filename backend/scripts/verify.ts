@@ -40,6 +40,14 @@ async function runMediaVerification(): Promise<number> {
   );
 }
 
+async function runAdminChatVerification(): Promise<number> {
+  return runCommand(
+    ["bun", "test", "src/adapters/inbound/http/hono/admin-routes.test.ts"],
+    BACKEND_ROOT,
+    "Running admin chat route verification",
+  );
+}
+
 export async function main(): Promise<number> {
   const violations = await checkBoundaryViolations();
   if (violations.length > 0) {
@@ -60,6 +68,9 @@ export async function main(): Promise<number> {
 
   const mediaVerificationExitCode = await runMediaVerification();
   if (mediaVerificationExitCode !== 0) return mediaVerificationExitCode;
+
+  const adminChatVerificationExitCode = await runAdminChatVerification();
+  if (adminChatVerificationExitCode !== 0) return adminChatVerificationExitCode;
 
   const analyzerExitCode = await runFrontendAnalyzer();
   if (analyzerExitCode !== 0) return analyzerExitCode;
