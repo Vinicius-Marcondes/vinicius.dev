@@ -1,4 +1,18 @@
-:80 {
-	reverse_proxy /api/* backend:3000
-	reverse_proxy frontend:5173
+development.viniciuslab.dev, viniciuslab.dev, :80 {
+	handle /api/* {
+		reverse_proxy backend:3000
+	}
+
+	handle /media/photos/*/original {
+		reverse_proxy backend:3000
+	}
+
+	# Chat media must remain backend-gated and never public static.
+	handle /media/chat/* {
+		respond "Not Found" 404
+	}
+
+	handle {
+		reverse_proxy frontend:5173
+	}
 }
