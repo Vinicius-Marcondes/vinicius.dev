@@ -8,6 +8,8 @@ bun.lockb
 # Environment
 .env
 .env.*
+!.env.dev.example
+!.env.prod.example
 !.env.example
 
 # Build output
@@ -28,4 +30,3 @@ pnpm-debug.log*
 .DS_Store
 .idea/
 .vscode/
-
