@@ -41,23 +41,23 @@
 ## Cross-Cutting Risks
 - Public photo delivery is intentionally originals-only, which may create performance and bandwidth pressure.
 - Chat room image uploads are allowed for anyone with the room password, which increases moderation and storage risk.
-- CI/CD workflows are not defined yet, so merge validation and release automation are still policy-only at the harness level.
+- CI/CD workflows are now defined, but production deployment still depends on correct `production` environment secret provisioning and remote deploy command hardening.
 - The FE-010 analyzer `adapt-spec` findings have been reconciled into backend-facing specs and approved for Wave 2 task decomposition.
 - The frontend migration wave cleared the previous browser Babel, CDN React, global `window.*`, missing TypeScript, and missing screen blockers.
 
 ## Next Task Queue
-1. Start Wave 3 Cluster 7 with `INFRA-001` on its dedicated `infra/` branch.
-2. Preserve one issue, one Project item, one branch, and one acceptance source per implementation task.
-3. Run frontend analyzer as non-mutating validation for backend-only PRs.
-4. Follow the approved Cluster 7 dependency order for `INFRA-002`, `INFRA-003`, and the `QA-*` tasks after `INFRA-001` lands.
+1. Record Wave 3 Cluster 7 closeout completion in harness artifacts and keep merged PR traceability current.
+2. Validate production deploy secret wiring for `QA-006` (`PROD_SSH_*`, `PROD_DEPLOY_*`) before first release tag.
+3. Execute one controlled `workflow_dispatch` run of `production-deploy` against a non-critical tag/commit to verify deploy contract behavior.
+4. Prepare first production `v*` tag rollout once deploy preconditions and dry-run behavior are confirmed.
 
 ## Current Executable Cluster
 ### SPEC-025 Wave 3 Cluster Planning
-- Status: approved for Wave 3 tasking.
+- Status: complete.
 - Scope: define execution-ready Wave 3 clusters 5, 6, and 7 and keep harness artifacts aligned with GitHub execution state.
 - Branch: `spec/SPEC-025-wave-3-cluster-planning`.
 - GitHub issue: `#67`.
-- Wave 3 Cluster 5 issue creation is unblocked after this harness update merges.
+- Wave 3 cluster planning and execution alignment is complete after Cluster 7 closeout.
 
 ### Wave 3 Cluster 5 Admin/Auth Backend
 - Status: complete.
@@ -78,13 +78,14 @@
 - Merged PRs: `#79`, `#80`, `#81`, `#82`, `#83`, `#84`, and `#85`.
 
 ### Wave 3 Cluster 7 Infra CI/CD And Verification Hardening
-- Status: current executable implementation cluster.
+- Status: complete.
 - Primary specs: `SPEC-002`, `SPEC-005`, `SPEC-006`, `SPEC-007`, `SPEC-008`, `SPEC-009`, `SPEC-010`, `SPEC-011`, `SPEC-016`, `SPEC-018`.
 - Scope: Docker Compose topology, Caddy routing, env/volume policy, CI validation workflows, analyzer freshness enforcement, backend boundary checks, migration checks, tag-gated production deploy workflow, and cross-layer verification hardening.
 - Non-scope: new product feature contracts outside approved specs and frontend/admin product-surface redesign.
 - Tasks: `INFRA-001`, `INFRA-002`, `INFRA-003`, `QA-001`, `QA-002`, `QA-003`, `QA-004`, `QA-005`, `QA-006`, and `QA-007`.
 - Required ordering: `INFRA-001` first; `INFRA-002` after `INFRA-001`; `INFRA-003` after `INFRA-001`; `QA-001`, `QA-002`, and `QA-003` after `INFRA-003`; `QA-004` and `QA-005` after `QA-001` and `QA-002`; `QA-006` after `QA-002` and `INFRA-002`; `QA-007` after `INFRA-002`, `INFRA-003`, `QA-003`, `QA-004`, and `QA-005`.
-- GitHub issues: `#87`, `#88`, `#89`, `#90`, `#91`, `#92`, `#93`, `#94`, `#95`, and `#96` are created and staged in Project `#2` as `Spec-ready`.
+- Merged PRs: `#98`, `#99`, `#100`, `#101`, `#102`, `#103`, `#105`, `#104`, `#106`, and `#107`.
+- GitHub issues: `#87`, `#88`, `#89`, `#90`, `#91`, `#92`, `#93`, `#94`, `#95`, and `#96` are complete and marked `Done` in Project `#2`.
 
 ### SPEC-019 Backend Spec Reconciliation
 - Status: approved for Wave 2 tasking.
