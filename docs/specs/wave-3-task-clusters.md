@@ -23,7 +23,7 @@ Admin/auth backend, non-media chat backend and moderation, infra, CI/CD, and ver
 Implement admin authentication, session lifecycle, dashboard read models, content curation, and status strip management so admin surfaces can operate against approved backend contracts.
 
 ### Status
-Planned as the first Wave 3 executable cluster.
+Complete.
 
 ### Tasks
 | Task ID | Title | Layer | Base Branch | Branch Name | Merge Target | Source Specs | Acceptance Source |
@@ -43,6 +43,10 @@ Planned as the first Wave 3 executable cluster.
 - `ADMIN-004`, `ADMIN-005`, and `ADMIN-006` start only after `ADMIN-003` lands on `develop`; they may run in parallel because each owns a separate admin content surface.
 - `ADMIN-007` starts only after `ADMIN-004`, `ADMIN-005`, and `ADMIN-006` land on `develop`.
 - Cluster 6 remains blocked until Cluster 5 is merged and validated.
+
+### Completion Record
+- Merged PRs: `#70`.
+- Task issues for Cluster 5 scope are complete and set to `Done` in Project `#2`.
 
 ### Non-Scope
 - Chat room join lifecycle, participant state, or moderation commands.
@@ -104,7 +108,7 @@ Complete.
 Finalize deployment topology, route/runtime configuration, CI validation workflows, and cross-layer verification so the Wave 2 and Wave 3 backend stack is release-ready under approved infrastructure and CI/CD policy.
 
 ### Status
-Current executable Wave 3 cluster.
+Complete.
 
 ### Tasks
 | Task ID | Title | Layer | Base Branch | Branch Name | Merge Target | Source Specs | Acceptance Source |
@@ -128,6 +132,10 @@ Current executable Wave 3 cluster.
 - `QA-004` and `QA-005` start only after `QA-001` and `QA-002` land on `develop` because they extend the core validation workflow.
 - `QA-006` starts only after `QA-002` and `INFRA-002` land on `develop` because production deploy must consume approved branch validation and runtime routing contracts.
 - `QA-007` starts only after `INFRA-002`, `INFRA-003`, `QA-003`, `QA-004`, and `QA-005` land on `develop`.
+
+### Completion Record
+- Merged PRs: `#98`, `#99`, `#100`, `#101`, `#102`, `#103`, `#105`, `#104`, `#106`, and `#107`.
+- Task issues: `#87` through `#96` are complete and set to `Done` in Project `#2`.
 
 ### Non-Scope
 - New product features or API contract changes outside approved specs.
