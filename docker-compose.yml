@@ -3,11 +3,11 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-vinicius_dev}
-      POSTGRES_USER: ${POSTGRES_USER:-vinicius_dev}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vinicius_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-vinicius}
+      POSTGRES_USER: ${POSTGRES_USER:-vinicius}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in your env file}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vinicius_dev} -d ${POSTGRES_DB:-vinicius_dev}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vinicius} -d ${POSTGRES_DB:-vinicius}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,18 +21,17 @@ services:
     image: oven/bun:1.3.11-alpine
     restart: unless-stopped
     working_dir: /app/backend
-    command: sh -c "bun install --frozen-lockfile && bun run start"
+    command: sh -c "bun run start"
     environment:
-      NODE_ENV: ${BACKEND_NODE_ENV:-development}
+      NODE_ENV: ${BACKEND_NODE_ENV:-production}
       PORT: ${BACKEND_PORT:-3000}
-      DATABASE_URL: postgresql://${POSTGRES_USER:-vinicius_dev}:${POSTGRES_PASSWORD:-vinicius_dev}@postgres:5432/${POSTGRES_DB:-vinicius_dev}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-vinicius}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-vinicius}?schema=public
       MEDIA_PHOTOS_ROOT: /var/lib/vinicius.dev/media/photos
       MEDIA_CHAT_ROOT: /var/lib/vinicius.dev/media/chat
     depends_on:
       postgres:
         condition: service_healthy
     volumes:
-      - .:/app
       - backend_media_photos:/var/lib/vinicius.dev/media/photos
       - backend_media_chat:/var/lib/vinicius.dev/media/chat
     networks:
@@ -42,12 +41,10 @@ services:
     image: oven/bun:1.3.11-alpine
     restart: unless-stopped
     working_dir: /app/frontend
-    command: sh -c "bun install --frozen-lockfile && bun run dev --host 0.0.0.0 --port ${FRONTEND_PORT:-5173}"
+    command: sh -c "bun run dev --host 0.0.0.0 --port ${FRONTEND_PORT:-5173}"
     depends_on:
       backend:
         condition: service_started
-    volumes:
-      - .:/app
     networks:
       - app_net
 
