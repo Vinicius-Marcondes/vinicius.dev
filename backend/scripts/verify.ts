@@ -40,11 +40,63 @@ async function runMediaVerification(): Promise<number> {
   );
 }
 
-async function runAdminChatVerification(): Promise<number> {
+async function runPublicSurfaceVerification(): Promise<number> {
   return runCommand(
-    ["bun", "test", "src/adapters/inbound/http/hono/admin-routes.test.ts"],
+    [
+      "bun",
+      "test",
+      "src/bootstrap/server.test.ts",
+      "src/adapters/inbound/http/hono/thoughts-routes.test.ts",
+      "src/adapters/inbound/http/hono/projects-routes.test.ts",
+      "src/adapters/inbound/http/hono/photos-routes.test.ts",
+      "src/adapters/inbound/http/hono/status-strip-routes.test.ts",
+      "src/adapters/inbound/http/hono/rss-routes.test.ts",
+      "src/adapters/inbound/http/hono/sitemap-routes.test.ts",
+      "src/adapters/inbound/http/hono/photo-media-routes.test.ts",
+    ],
     BACKEND_ROOT,
-    "Running admin chat route verification",
+    "Running public routes/content verification",
+  );
+}
+
+async function runAdminAuthChatMediaVerification(): Promise<number> {
+  return runCommand(
+    [
+      "bun",
+      "test",
+      "src/adapters/inbound/http/hono/auth-routes.test.ts",
+      "src/adapters/inbound/http/hono/admin-routes.test.ts",
+      "src/adapters/inbound/http/hono/chat-routes.test.ts",
+      "src/adapters/inbound/http/hono/chat-media-routes.test.ts",
+      "src/adapters/inbound/http/hono/photo-media-routes.test.ts",
+    ],
+    BACKEND_ROOT,
+    "Running admin/auth/chat/media integration verification",
+  );
+}
+
+async function runDeployReadinessVerification(): Promise<number> {
+  return runCommand(
+    [
+      "bash",
+      "-lc",
+      [
+        "set -euo pipefail",
+        "test -f .github/workflows/production-deploy.yml",
+        "test -f .github/workflows/branch-validation.yml",
+        "test -f infra/caddy/Caddyfile",
+        "test -f docker-compose.yml",
+        "grep -F 'tags:' .github/workflows/production-deploy.yml",
+        "grep -F 'v*' .github/workflows/production-deploy.yml",
+        "grep -F 'branches:' .github/workflows/branch-validation.yml",
+        "grep -F 'develop' .github/workflows/branch-validation.yml",
+        "grep -F 'main' .github/workflows/branch-validation.yml",
+        "grep -F 'handle /api/*' infra/caddy/Caddyfile",
+        "grep -F 'handle /media/photos/*/original' infra/caddy/Caddyfile",
+      ].join(" && "),
+    ],
+    REPO_ROOT,
+    "Running deploy/readiness verification checks",
   );
 }
 
@@ -69,8 +121,14 @@ export async function main(): Promise<number> {
   const mediaVerificationExitCode = await runMediaVerification();
   if (mediaVerificationExitCode !== 0) return mediaVerificationExitCode;
 
-  const adminChatVerificationExitCode = await runAdminChatVerification();
-  if (adminChatVerificationExitCode !== 0) return adminChatVerificationExitCode;
+  const publicSurfaceVerificationExitCode = await runPublicSurfaceVerification();
+  if (publicSurfaceVerificationExitCode !== 0) return publicSurfaceVerificationExitCode;
+
+  const adminAuthChatMediaVerificationExitCode = await runAdminAuthChatMediaVerification();
+  if (adminAuthChatMediaVerificationExitCode !== 0) return adminAuthChatMediaVerificationExitCode;
+
+  const deployReadinessVerificationExitCode = await runDeployReadinessVerification();
+  if (deployReadinessVerificationExitCode !== 0) return deployReadinessVerificationExitCode;
 
   const analyzerExitCode = await runFrontendAnalyzer();
   if (analyzerExitCode !== 0) return analyzerExitCode;
