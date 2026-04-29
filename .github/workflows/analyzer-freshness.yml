@@ -1,0 +1,55 @@
+name: analyzer-freshness
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+concurrency:
+  group: analyzer-freshness-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend-analyzer-freshness:
+    name: frontend-analyzer-freshness
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Generate analyzer report to temp output (non-mutating)
+        run: bun scripts/frontend-analyzer.ts --output="$RUNNER_TEMP/frontend-analyzer-report.md"
+
+      - name: Verify tracked analyzer report freshness
+        run: |
+          set -euo pipefail
+          TRACKED_REPORT="docs/specs/frontend-analyzer-report.md"
+          GENERATED_REPORT="$RUNNER_TEMP/frontend-analyzer-report.md"
+          TRACKED_NORMALIZED="$RUNNER_TEMP/tracked-normalized.md"
+          GENERATED_NORMALIZED="$RUNNER_TEMP/generated-normalized.md"
+
+          if [ ! -f "$TRACKED_REPORT" ]; then
+            echo "Missing tracked analyzer report: $TRACKED_REPORT"
+            exit 1
+          fi
+
+          # Ignore volatile timestamp metadata while enforcing full semantic freshness.
+          sed '/^- Generated at:/d' "$TRACKED_REPORT" > "$TRACKED_NORMALIZED"
+          sed '/^- Generated at:/d' "$GENERATED_REPORT" > "$GENERATED_NORMALIZED"
+
+          if ! diff -u "$TRACKED_NORMALIZED" "$GENERATED_NORMALIZED"; then
+            echo ""
+            echo "Frontend analyzer report is stale."
+            echo "Run: bun scripts/frontend-analyzer.ts"
+            echo "Commit the updated $TRACKED_REPORT to satisfy analyzer freshness policy."
+            exit 1
+          fi
