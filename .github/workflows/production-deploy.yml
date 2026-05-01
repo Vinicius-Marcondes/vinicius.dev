@@ -30,7 +30,7 @@ jobs:
       deploy_sha: ${{ steps.resolve.outputs.deploy_sha }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -94,7 +94,7 @@ jobs:
       name: production
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Validate required production secrets are configured
         shell: bash
