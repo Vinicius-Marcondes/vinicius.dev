@@ -30,13 +30,13 @@
 - Admin auth now depends on correct cookie handling through the Vite `/api` proxy locally and the future reverse proxy in deployed environments.
 
 ## Next Task Queue
-1. Open `QA-008` PR from `infra/QA-008-analyzer-freshness-node24-maintenance` into `develop`.
-2. Complete reviewer validation for analyzer-freshness removal and Node.js 24 workflow compatibility updates.
-3. Merge via reviewed merge commit (no self-merge).
+1. Complete reviewer validation for `QA-008` follow-up PR [#117](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/117).
+2. Merge the Prisma client generation fix into `develop` via reviewed merge commit (no self-merge).
+3. Queue the next approved implementation task after `QA-008` closes.
 
 ## Current Executable Cluster
 ### Frontend Admin API Integration
-- Status: ready for execution.
+- Status: complete.
 - Primary spec: `SPEC-028`.
 - Supporting specs: `SPEC-005`, `SPEC-009`, `SPEC-011`, and `SPEC-017`.
 - Scope: Vite `/api` proxy setup, shared auth/admin request plumbing, admin credentials login, optional MFA verification, and protected dashboard summary loading.
@@ -44,9 +44,9 @@
 
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| In Progress | FE-011 | SPEC-028 | frontend | develop | `frontend/FE-011-admin-login-api-integration` | develop | `docs/specs/frontend-admin-auth-integration.md` | — | — |
-| In Review | SPEC-029 | SPEC-029 | spec | develop | `spec/SPEC-029-ci-workflow-maintenance` | develop | `docs/specs/ci-workflow-maintenance.md` | — | — |
-| In Review | QA-008 | SPEC-029 | infra | develop | `infra/QA-008-analyzer-freshness-node24-maintenance` | develop | `docs/specs/ci-workflow-maintenance.md` | [#116](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/116) | — |
+| Done | FE-011 | SPEC-028 | frontend | develop | `frontend/FE-011-admin-login-api-integration` | develop | `docs/specs/frontend-admin-auth-integration.md` | [#113](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/113), [#114](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/114) | — |
+| Done | SPEC-029 | SPEC-029 | spec | develop | `spec/SPEC-029-ci-workflow-maintenance` | develop | `docs/specs/ci-workflow-maintenance.md` | [#115](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/115) | — |
+| In Review | QA-008 | SPEC-029 | infra | develop | `infra/QA-008-analyzer-freshness-node24-maintenance` | develop | `docs/specs/ci-workflow-maintenance.md` | [#116](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/116) merged, [#117](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/117) open | — |
 
 Done criteria for `FE-011`:
 - `/api` proxy exists in `frontend/vite.config.ts`
@@ -56,7 +56,7 @@ Done criteria for `FE-011`:
 - manual verification with backend on port `3000` is recorded in the PR
 
 ### CI Workflow Maintenance Execution
-- Status: in review.
+- Status: in review for final follow-up merge.
 - Primary spec: `SPEC-029`.
 - Supporting specs: `ci-cd.md`, `verification.md`, and `git-workflow.md`.
 - Scope: implement `QA-008` to remove analyzer freshness automation and complete Node.js 24-compatible workflow action maintenance.
