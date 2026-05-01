@@ -3,9 +3,24 @@ import { InlineLabel, ScreenFrame, Stack } from '../../../../shared/ui'
 import type { AdminDashboardViewModel } from '../model/types'
 
 const staticQueues: AdminDashboardViewModel['queues'] = [
-  { channel: 'TH-17', title: 'Against Frictionless Publishing', action: 'publish / edit / unpin' },
-  { channel: 'PR-99', title: 'vinicius.dev', action: 'feature / archive / inspect links' },
-  { channel: 'PH-014', title: 'paulista at 02:14', action: 'caption / tag / feature' },
+  {
+    id: 'fallback-th-17',
+    channel: 'TH-17',
+    title: 'Against Frictionless Publishing',
+    action: 'publish / edit / unpin',
+  },
+  {
+    id: 'fallback-pr-99',
+    channel: 'PR-99',
+    title: 'vinicius.dev',
+    action: 'feature / archive / inspect links',
+  },
+  {
+    id: 'fallback-ph-014',
+    channel: 'PH-014',
+    title: 'paulista at 02:14',
+    action: 'caption / tag / feature',
+  },
 ]
 
 export function AdminDashboardPage() {
@@ -34,7 +49,7 @@ export function AdminDashboardPage() {
           <InlineLabel>content queue</InlineLabel>
           <div className="admin-table">
             {queues.map((item) => (
-              <div key={item.channel} className="admin-table__row">
+              <div key={item.id} className="admin-table__row">
                 <span>{item.channel}</span>
                 <strong>{item.title}</strong>
                 <span>{item.action}</span>

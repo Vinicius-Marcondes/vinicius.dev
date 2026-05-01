@@ -10,9 +10,18 @@ import type { MfaChallenge } from '../../../features/login-admin'
 import { ApiRequestError } from '../../../shared/api'
 import type { AdminLoginActionData } from './model/types'
 
-const readFormField = (formData: FormData, field: string) => {
+const readFormField = (
+  formData: FormData,
+  field: string,
+  options: Readonly<{ trim?: boolean }> = {},
+) => {
   const value = formData.get(field)
-  return typeof value === 'string' ? value.trim() : ''
+
+  if (typeof value !== 'string') {
+    return ''
+  }
+
+  return options.trim === false ? value : value.trim()
 }
 
 const readChallengeFromForm = (formData: FormData): MfaChallenge | null => {
@@ -62,7 +71,7 @@ export const adminLoginAction = async ({ request }: ActionFunctionArgs) => {
 
   if (intent === 'login') {
     const email = readFormField(formData, 'email')
-    const password = readFormField(formData, 'password')
+    const password = readFormField(formData, 'password', { trim: false })
 
     if (!email || !password) {
       return {
@@ -110,7 +119,7 @@ export const adminLoginAction = async ({ request }: ActionFunctionArgs) => {
       } satisfies AdminLoginActionData
     }
 
-    if (!code) {
+    if (!/^\d{6}$/.test(code)) {
       return {
         challenge,
         error: 'enter the six-digit verification code.',

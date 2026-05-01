@@ -34,7 +34,11 @@ const asJson = async (response: Response): Promise<unknown | undefined> => {
     return undefined
   }
 
-  return response.json()
+  try {
+    return await response.json()
+  } catch {
+    return undefined
+  }
 }
 
 const requestJson = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
@@ -54,6 +58,10 @@ const requestJson = async <T>(path: string, init: RequestInit = {}): Promise<T> 
 
   if (!response.ok) {
     throw new ApiRequestError(response.status, isApiErrorPayload(payload) ? payload : undefined)
+  }
+
+  if (typeof payload === 'undefined') {
+    throw new ApiRequestError(response.status)
   }
 
   return payload as T
