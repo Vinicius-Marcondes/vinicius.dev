@@ -59,6 +59,7 @@ No backend-facing spec may move to `Tasked` until [project-structure.md](/Users/
 - [design-system.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/design-system.md)
 - [frontend-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-structure.md)
 - [frontend-architecture.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-architecture.md)
+- [frontend-admin-auth-integration.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-admin-auth-integration.md)
 - [project-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/project-structure.md)
 - [backend-architecture.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/backend-architecture.md)
 - [data-model.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/data-model.md)
