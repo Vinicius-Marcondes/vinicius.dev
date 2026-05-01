@@ -34,6 +34,9 @@
 2. Keep `FE-011` limited to `docs/specs/frontend-admin-auth-integration.md` and its listed dependencies.
 3. Verify `FE-011` with `cd frontend && bun run lint`, `cd frontend && bun run build`, and manual login/dashboard checks against the backend on port `3000`.
 4. Defer public content API integration, logout UI, and broader admin CRUD wiring to later frontend tasks.
+5. Review `SPEC-029` on `spec/SPEC-029-ci-workflow-maintenance`.
+6. After `SPEC-029` is approved, execute `QA-008` from `develop` on `infra/QA-008-analyzer-freshness-node24-maintenance`.
+7. Keep `QA-008` limited to restoring the tracked analyzer report contract and updating workflow action usage for Node.js 24 compatibility.
 
 ## Current Executable Cluster
 ### Frontend Admin API Integration
@@ -46,6 +49,7 @@
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | In Progress | FE-011 | SPEC-028 | frontend | develop | `frontend/FE-011-admin-login-api-integration` | develop | `docs/specs/frontend-admin-auth-integration.md` | — | — |
+| In Progress | SPEC-029 | SPEC-029 | spec | develop | `spec/SPEC-029-ci-workflow-maintenance` | develop | `docs/specs/ci-workflow-maintenance.md` | — | — |
 
 Done criteria for `FE-011`:
 - `/api` proxy exists in `frontend/vite.config.ts`
@@ -54,10 +58,24 @@ Done criteria for `FE-011`:
 - frontend lint and build pass
 - manual verification with backend on port `3000` is recorded in the PR
 
+### CI Workflow Maintenance Planning
+- Status: in progress.
+- Primary spec: `SPEC-029`.
+- Supporting specs: `ci-cd.md`, `verification.md`, and `git-workflow.md`.
+- Scope: define the repair plan for analyzer freshness report tracking and Node.js 24-compatible workflow action maintenance.
+- Non-scope: actual workflow implementation changes, analyzer policy redesign, and deployment trigger changes.
+
+Done criteria for `SPEC-029`:
+- `docs/specs/ci-workflow-maintenance.md` exists with complete acceptance and task-splitting metadata
+- tracker records the spec branch and proposed `QA-008` implementation task shape
+- `docs/specs/README.md` lists the new spec in the canonical file set
+- spec status, dependencies, and review handoff are explicit
+
 ## Spec Table
 | Spec ID | Title | Layer | Status | Depends on | Blocks | Git workflow defined | Ready for task split | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | SPEC-028 | Frontend Admin Auth Integration | Frontend | Approved | `frontend-structure.md`, `frontend-architecture.md`, `admin-cms.md`, `backend-architecture.md`, `verification.md`, `git-workflow.md`, `acceptance-criteria.md` | `FE-011` | yes | yes | First live frontend-to-backend integration slice; keeps `/api` as the browser-facing base and replaces mocked admin login state with backend auth plus dashboard loading. |
+| SPEC-029 | CI Workflow Maintenance | Infra | Review | `ci-cd.md`, `verification.md`, `git-workflow.md`, `acceptance-criteria.md` | `QA-008` | yes | no | Restores the tracked analyzer report contract and plans Node.js 24 workflow action maintenance without changing deployment policy. |
 
 ## Tasking Rule
 A spec may only move to `Tasked` when:
