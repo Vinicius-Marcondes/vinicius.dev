@@ -10,9 +10,9 @@ Spec verification, implementation verification, release gates, and cross-layer r
 - Verification applies to both the spec harness and later implementation work.
 - No spec is ready for tasking without a clear acceptance source.
 - No implementation slice is complete without mapping back to approved specs and branch traceability.
-- `SPEC-017 Frontend Structure` is a hard gate for frontend-facing spec and task readiness.
-- `SPEC-016 Project Structure` is a hard gate for backend-facing spec and task readiness.
-- `SPEC-018 GitHub Actions CI/CD` is the hard gate for release automation and final release-readiness checks.
+- `frontend-structure.md` is a hard gate for frontend-facing spec and task readiness.
+- `project-structure.md` is a hard gate for backend-facing spec and task readiness.
+- `ci-cd.md` is the hard gate for release automation and final release-readiness checks.
 
 ## Interfaces and Responsibilities
 - Validate that all spec files exist and align with the tracker.
@@ -22,7 +22,7 @@ Spec verification, implementation verification, release gates, and cross-layer r
 - Validate that `ci-cd.md` is referenced by release automation and verification work.
 - Validate that Bun is explicit in frontend and backend specs.
 - Validate that Git workflow constraints are referenced by all task decomposition.
-- Validate that GitHub Issue and Project execution rules are present before implementation starts.
+- Validate that tracker-based execution rules are present before implementation starts.
 - Validate that frontend structure rules cover FSD layer discipline, route tree ownership, and public/admin shell separation.
 - Validate that CI/CD rules cover PR validation, branch validation, manual development deployment, and tag-based production deployment.
 - Validate FE-010 reconciliation rules for `/api`, public DTOs, upload/media assumptions, analyzer freshness, and static route fallback.
@@ -70,9 +70,9 @@ Spec verification, implementation verification, release gates, and cross-layer r
 - [ ] `git-workflow.md` is referenced by the harness and used by task decomposition.
 - [ ] `github-project-execution.md` is referenced by the harness and used by task decomposition.
 - [ ] Frontend intake is treated as a blocking gate for backend tasking.
-- [ ] Frontend-facing specs cannot be task-split without approved structural guidance from `SPEC-017`.
+- [ ] Frontend-facing specs cannot be task-split without approved structural guidance from `frontend-structure.md`.
 - [ ] Backend-facing specs cannot be task-split without frontend review state.
-- [ ] Backend-facing specs cannot be task-split without approved structural guidance from `SPEC-016`.
+- [ ] Backend-facing specs cannot be task-split without approved structural guidance from `project-structure.md`.
 - [ ] Bun is explicit in both frontend and backend specs.
 - [ ] Verification expectations include future frontend structural checks for FSD layers, page public APIs, `app/routes` ownership, shell separation, and the absence of `processes`.
 - [ ] Verification expectations include future architectural-boundary checks without selecting the tool yet.
@@ -86,7 +86,7 @@ Spec verification, implementation verification, release gates, and cross-layer r
 - [ ] Boundary scenarios cover core use cases without HTTP/Postgres and adapter tests for HTTP DTO mapping.
 - [ ] Legacy React architecture, missing TypeScript, and missing planned screens are treated as backend blockers until resolved.
 - [ ] Branch-per-task rules apply to specs, implementation, and hotfixes.
-- [ ] Issue-per-task and Project-item-per-task rules apply to implementation work.
+- [ ] Tracker-entry-per-task rules apply to implementation work.
 - [ ] Revert path depends on task/merge traceability rather than history rewriting.
 - [ ] Cross-layer scenarios cover public pages, admin auth, chat, uploads, deployment readiness, the six frontend route families, the three canonical backend flow examples, and the CI/CD trigger matrix.
 

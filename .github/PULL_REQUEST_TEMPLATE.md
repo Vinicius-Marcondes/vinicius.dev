@@ -1,6 +1,6 @@
 ## Summary
 - Task ID:
-- Source issue:
+- Source tracker entry:
 - Source spec:
 
 ## Branching

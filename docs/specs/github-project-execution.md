@@ -1,76 +1,71 @@
-# GitHub Project Execution
+# Execution Tracking
 
 ## Purpose
-Define how `vinicius.dev` tasks are created, tracked, and updated in GitHub once specs are approved.
+Define how `vinicius.dev` tasks are created, tracked, and updated inside the repository once specs are approved.
 
 ## Scope
-Applies to task decomposition, GitHub Issue creation, GitHub Project setup, Project field updates, and agent progress reporting.
+Applies to task decomposition, tracker entry setup, tracker status updates, PR linkage, and agent progress reporting.
 
 ## Locked Decisions
-- GitHub Issues are the canonical execution records for tasks in `Vinicius-Marcondes/vinicius.dev`.
-- A dedicated GitHub Project is the execution board for this repo.
-- Project draft items are not used for implementation work.
-- Every implementation task maps to one issue, one Project item, one task ID, one branch, and one acceptance source.
-- Agents must report progress in both the issue thread and the Project board.
-- Project automation is blocked until local `gh` auth has the `project` scope.
-- Frontend migration issues must be created before backend issues when the imported frontend is legacy-shaped or incomplete.
+- `docs/specs/tracker.md` is the canonical execution record for this repo.
+- GitHub Issues and GitHub Project items are not required for normal implementation work.
+- Every implementation task maps to one task ID, one tracker entry, one branch, and one acceptance source.
+- Agents must report progress by updating `tracker.md` and keeping the related PR state accurate.
+- The current executable cluster must be readable from the tracker without consulting an external board.
+- Frontend migration tasks must still be defined before backend tasks when the imported frontend is legacy-shaped or incomplete.
 
 ## Interfaces and Responsibilities
-### Required GitHub Project fields
-- `Status`: `Spec-ready`, `Todo`, `In Progress`, `In Review`, `Done`
+### Required tracker fields per executable task
+- `Status`: `Spec-ready`, `Todo`, `In Progress`, `Blocked`, `In Review`, `Done`
 - `Task ID`
 - `Spec ID`
 - `Layer`
 - `Base Branch`
 - `Branch Name`
 - `Merge Target`
-- `PR`
-- `Blocked Reason`
-- `Owner` (recommended)
+- `Acceptance Source`
+- `PR` (when opened)
+- `Blocked Reason` (when applicable)
 
-### Task-definition agent behavior
+### Task-definition behavior
 - Read `tracker.md`, `dependency-matrix.md`, `acceptance-criteria.md`, `git-workflow.md`, and all approved specs.
 - Refuse to create backend-facing tasks while frontend reconciliation is unresolved.
-- Create migration-first frontend issues before any backend issues when the analyzer reports legacy React, missing TypeScript, or missing planned screens.
-- Create one GitHub Issue per approved implementation task.
-- Add each issue to the dedicated GitHub Project.
-- Set required Project fields when the item is created.
-- Use `Spec-ready` only for issues that are fully specified and unblocked.
+- Create one tracker entry per approved implementation task.
+- Place each task under the relevant cluster or execution section in `tracker.md`.
+- Use `Spec-ready` only for tasks that are fully specified and unblocked.
+- Move tasks to `Todo` when they are ready to be picked up.
 
 ### Implementation-agent behavior
-- Read the linked source spec and GitHub Issue before starting work.
-- Use the issue Task ID in branch name, commit messages, and PR title.
-- Comment on the issue at task start.
-- Comment on the issue immediately when blocked, with blocker details.
-- Comment on the issue at completion or handoff.
-- Update Project status during execution.
+- Read the linked source spec and tracker entry before starting work.
+- Use the task ID in branch name, commit messages, and PR title.
+- Update the tracker entry at task start.
+- Update the tracker entry immediately when blocked, with blocker details.
+- Update the tracker entry when the PR is opened for review.
+- Update the tracker entry at completion or handoff.
 - Treat `In Review` as requiring the PR's expected CI validation status to be visible and up to date once workflows exist.
 - Frontend validator agents must read both the imported legacy frontend and the migrated frontend target when both exist.
 - Frontend migration agents must report against the migration gate, not only visual parity.
 
 ### Setup behavior
-- Create the dedicated GitHub Project for `vinicius.dev`.
-- Link the repository to the Project.
-- Record the Project number and URL in this spec once available.
-- Treat missing `project` scope as a hard blocker for live Project automation.
+- Keep `tracker.md` current as the single execution board.
+- Keep merged PR references and cluster closeout notes inside the tracker.
+- Keep task definitions in the repo rather than in external project fields.
 
 ## Data/Contracts Touched
-- GitHub Issue titles and bodies
-- GitHub Project field values
+- Tracker task metadata
 - Task IDs
-- branch names
+- Branch names
 - PR linkage
+- Blocker and completion notes
 
 ## Acceptance Checklist
-- [ ] Dedicated GitHub Project exists for `vinicius.dev`.
-- [ ] Project fields match the required list in this spec.
-- [ ] Project number and URL are documented below.
-- [ ] Task-definition flow creates issues instead of draft project items.
-- [ ] Task-definition flow creates frontend migration issues before backend issues when the analyzer still reports frontend blockers.
-- [ ] Implementation agents are required to comment at start, blocker, and completion or handoff.
-- [ ] Project status flow is defined as `Spec-ready -> Todo -> In Progress -> In Review -> Done`.
+- [ ] `tracker.md` is the canonical execution record for `vinicius.dev` tasks.
+- [ ] Task-definition flow creates tracker entries instead of relying on GitHub Issues or Project items.
+- [ ] Frontend migration tasks are still defined before backend tasks when the analyzer still reports frontend blockers.
+- [ ] Implementation agents are required to update the tracker at start, blocker, review, and completion or handoff.
+- [ ] Tracker status flow is defined as `Spec-ready -> Todo -> In Progress -> Blocked/In Review -> Done`.
 - [ ] `In Review` includes CI validation status awareness once GitHub Actions workflows exist.
-- [ ] Explicit non-goal: GitHub Project automation is not considered active until `gh` has `project` scope.
+- [ ] Explicit non-goal: no external Project automation is required for normal task execution.
 
 ## Dependencies
 - [README.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/README.md)
@@ -79,22 +74,19 @@ Applies to task decomposition, GitHub Issue creation, GitHub Project setup, Proj
 - [acceptance-criteria.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/acceptance-criteria.md)
 
 ## Open Questions
-- None at the workflow level.
+- Whether tracker task formatting should later be standardized further with a dedicated template section.
 
 ## Task-Splitting Notes
 - Do not split implementation tasks until this spec is `Approved`.
-- Use a setup task to create the Project and fields before creating normal implementation issues.
+- Use tracker-first task definitions instead of external issue/project setup.
 - Use migration-first tasks when the imported frontend is legacy React: archive legacy frontend, scaffold clean typed app, migrate landing/projects/photos, implement Thoughts/Chat/Admin, rerun analyzer.
-- Changes to Project fields or status semantics should happen in dedicated `spec/` branches.
+- Changes to tracker status semantics should happen in dedicated `spec/` branches.
 
 ## Git Branch Implications
-- The Project-setup task should use a `spec/` branch.
-- Task-definition changes that affect GitHub execution must not be bundled with unrelated feature work.
+- Execution-tracking changes should use `spec/` branches.
+- Task-definition changes that affect tracker semantics must not be bundled with unrelated feature work.
 
-## Live Project Record
-- Project owner: `Vinicius-Marcondes`
-- Project title: `vinicius.dev`
-- Project number: `2`
-- Project URL: `https://github.com/users/Vinicius-Marcondes/projects/2`
-- Repo linked: `yes`
-- Auth gate: `satisfied`
+## Live Tracker Record
+- Canonical tracker: [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md)
+- Execution source of truth: in-repo only
+- External board requirement: none
