@@ -46,7 +46,7 @@
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | In Progress | FE-011 | SPEC-028 | frontend | develop | `frontend/FE-011-admin-login-api-integration` | develop | `docs/specs/frontend-admin-auth-integration.md` | — | — |
 | In Review | SPEC-029 | SPEC-029 | spec | develop | `spec/SPEC-029-ci-workflow-maintenance` | develop | `docs/specs/ci-workflow-maintenance.md` | — | — |
-| In Review | QA-008 | SPEC-029 | infra | develop | `infra/QA-008-analyzer-freshness-node24-maintenance` | develop | `docs/specs/ci-workflow-maintenance.md` | — | — |
+| In Review | QA-008 | SPEC-029 | infra | develop | `infra/QA-008-analyzer-freshness-node24-maintenance` | develop | `docs/specs/ci-workflow-maintenance.md` | [#116](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/116) | — |
 
 Done criteria for `FE-011`:
 - `/api` proxy exists in `frontend/vite.config.ts`
