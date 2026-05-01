@@ -32,7 +32,4 @@ export const socialNavigation: readonly SocialItem[] = [
   { href: 'https://reddit.com', icon: 'RD', label: 'Reddit' },
 ] as const
 
-export const adminNavigation = [
-  { label: 'Dashboard', to: '/admin/dashboard' },
-  { label: 'Login', to: '/admin/login' },
-] as const
+export const adminNavigation = [{ label: 'Dashboard', to: '/admin/dashboard' }] as const

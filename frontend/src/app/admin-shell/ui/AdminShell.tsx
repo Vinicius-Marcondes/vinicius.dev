@@ -1,5 +1,5 @@
-import { Outlet } from 'react-router-dom'
-import { Container, InlineLabel, ScreenFrame, SignalLink } from '../../../shared/ui'
+import { Form, Outlet } from 'react-router-dom'
+import { ActionButton, Container, InlineLabel, ScreenFrame, SignalLink } from '../../../shared/ui'
 import { adminNavigation } from '../../../shared/config'
 
 export function AdminShell() {
@@ -24,6 +24,9 @@ export function AdminShell() {
                   {item.label}
                 </SignalLink>
               ))}
+              <Form method="post" action="/admin/logout">
+                <ActionButton type="submit">logout</ActionButton>
+              </Form>
             </nav>
           </div>
         </Container>
