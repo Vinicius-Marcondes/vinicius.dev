@@ -40,3 +40,5 @@ export const loginWithCredentials = (input: Readonly<{ email: string; password: 
 
 export const verifyMfaChallenge = (input: Readonly<{ challengeId: string; code: string }>) =>
   postJson<Readonly<{ challengeId: string; code: string }>, VerifyMfaResponse>('/auth/mfa/verify', input)
+
+export const logoutAdminSession = () => postJson<Record<string, never>, Readonly<{ status: 'revoked' }>>('/auth/logout', {})

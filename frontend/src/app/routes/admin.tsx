@@ -1,9 +1,10 @@
-import type { RouteObject } from 'react-router-dom'
+import { redirect, type RouteObject } from 'react-router-dom'
 import { AdminShell } from '../admin-shell'
 import {
   AdminLoginPage,
   adminLoginAction,
   adminLoginLoader,
+  adminLogoutAction,
 } from '../../pages/admin/login'
 import { AdminDashboardPage, adminDashboardLoader } from '../../pages/admin/dashboard'
 
@@ -13,8 +14,7 @@ export const adminRoutes: RouteObject = {
   children: [
     {
       index: true,
-      loader: adminDashboardLoader,
-      element: <AdminDashboardPage />,
+      loader: () => redirect('/admin/dashboard'),
     },
     {
       path: 'login',
@@ -26,6 +26,10 @@ export const adminRoutes: RouteObject = {
       path: 'dashboard',
       loader: adminDashboardLoader,
       element: <AdminDashboardPage />,
+    },
+    {
+      path: 'logout',
+      action: adminLogoutAction,
     },
   ],
 }

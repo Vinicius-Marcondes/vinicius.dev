@@ -1,6 +1,11 @@
 import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router-dom'
 import { getAdminDashboardSummary } from '../../../entities/admin-session'
-import { loginWithCredentials, parseAuthError, verifyMfaChallenge } from '../../../features/login-admin'
+import {
+  loginWithCredentials,
+  logoutAdminSession,
+  parseAuthError,
+  verifyMfaChallenge,
+} from '../../../features/login-admin'
 import type { MfaChallenge } from '../../../features/login-admin'
 import { ApiRequestError } from '../../../shared/api'
 import type { AdminLoginActionData } from './model/types'
@@ -39,6 +44,16 @@ export const adminLoginLoader = async ({ request }: LoaderFunctionArgs) => {
 
     throw error
   }
+}
+
+export const adminLogoutAction = async () => {
+  try {
+    await logoutAdminSession()
+  } catch {
+    // best effort logout: always return user to login screen
+  }
+
+  return redirect('/admin/login')
 }
 
 export const adminLoginAction = async ({ request }: ActionFunctionArgs) => {
