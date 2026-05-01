@@ -5,13 +5,12 @@ This directory is the canonical planning and execution harness for `vinicius.dev
 
 ## Scope
 This harness covers:
-- frontend intake and reconciliation when a Claude-generated frontend already exists
 - repo structure plus frontend and backend architectural policy
 - cross-layer product and technical specs
 - validation and release-automation policy
 - acceptance criteria and dependency tracking
 - mandatory Git branch and review rules
-- GitHub Issues and GitHub Project execution governance
+- tracker-based execution governance inside the repo
 
 This harness does not contain implementation code.
 
@@ -19,9 +18,9 @@ This harness does not contain implementation code.
 - Frontend stack: `React + Vite + Bun`
 - Backend stack: `Bun + Hono + Prisma + Postgres`
 - Deployment: Docker on a VPS behind `Caddy`
-- Public sections: landing page, Thoughts, Projects, Photos, Chat Room, Admin
+- Public sections: landing page, Thoughts, Projects, Photos, Chat Room
 - Canonical tracker lives in this repo under `docs/specs`
-- Canonical execution board is a dedicated GitHub Project for this repo
+- Task execution is tracked in `tracker.md`, not in external issue/project boards by default
 - `frontend-structure.md` is the top-priority structural policy for frontend-facing specs and tasks
 - `project-structure.md` is the top-priority structural policy for backend-facing specs and tasks
 - Development deployment is manual on the VPS at `development.viniciuslab.dev`
@@ -33,15 +32,13 @@ This harness does not contain implementation code.
 
 ## Agent Workflow
 1. Read [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md).
-2. Read [git-workflow.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/git-workflow.md).
-3. Check [frontend-intake.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-intake.md) and the latest [frontend-analyzer-report.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer-report.md).
-4. Read [frontend-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-structure.md) before frontend, admin UI, or verification work.
-5. Read [project-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/project-structure.md) before backend, data, media, infra, or verification work.
-6. Read [ci-cd.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/ci-cd.md) before release automation, deployment automation, or final verification work.
-7. Work only from specs that are in `Approved` or explicitly assigned for spec authoring/review.
-8. Map each task to one spec, one task ID, one GitHub Issue, one Project item, one branch, and one acceptance source.
-9. Refresh the analyzer report with `bun scripts/frontend-analyzer.ts` whenever frontend files are added or materially changed.
-10. For execution work, update both the linked GitHub Issue and the linked Project item.
+1. Read [git-workflow.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/git-workflow.md).
+1. Read [frontend-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-structure.md) before frontend, admin UI, or verification work.
+1. Read [project-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/project-structure.md) before backend, data, media, infra, or verification work.
+1. Read [ci-cd.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/ci-cd.md) before release automation, deployment automation, or final verification work.
+1. Work only from specs that are in `Approved` or explicitly assigned for spec authoring/review.
+1. Map each task to one spec, one task ID, one branch, one tracker entry, and one acceptance source.
+1. . For execution work, keep `tracker.md` aligned with branch, PR, and merge state.
 
 ## Spec Lifecycle
 - `Draft`: not ready for task splitting
@@ -55,13 +52,9 @@ No backend-facing spec may move to `Tasked` until [project-structure.md](/Users/
 ## Canonical Files
 - [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md)
 - [implementation-playbook.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/implementation-playbook.md)
-- [dependency-matrix.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/dependency-matrix.md)
 - [acceptance-criteria.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/acceptance-criteria.md)
 - [git-workflow.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/git-workflow.md)
 - [github-project-execution.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/github-project-execution.md)
-- [frontend-intake.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-intake.md)
-- [frontend-analyzer.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer.md)
-- [frontend-analyzer-report.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer-report.md)
 - [product-scope.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/product-scope.md)
 - [design-system.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/design-system.md)
 - [frontend-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-structure.md)
@@ -78,6 +71,6 @@ No backend-facing spec may move to `Tasked` until [project-structure.md](/Users/
 ## Task Authoring Rules
 - Use the spec template sections defined in [acceptance-criteria.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/acceptance-criteria.md).
 - Reference task IDs in branch names, commits, and PR titles.
-- Reference task IDs and source specs in GitHub Issues and Project fields.
+- Reference task IDs, source specs, and status updates in `tracker.md`.
 - Do not silently override locked product decisions when adapting specs to an existing frontend.
 - Update the tracker and analyzer report when spec assumptions change.
