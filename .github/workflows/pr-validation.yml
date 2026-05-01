@@ -34,5 +34,8 @@ jobs:
       - name: Install backend dependencies
         run: bun install --frozen-lockfile
 
+      - name: Generate Prisma client
+        run: bun run prisma:generate
+
       - name: Run backend verification
         run: bun run verify
