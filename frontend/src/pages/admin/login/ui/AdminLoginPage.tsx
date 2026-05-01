@@ -1,84 +1,65 @@
-import { useState } from 'react'
+import { Form, useActionData, useNavigation } from 'react-router-dom'
 import { ActionButton, InlineLabel, Stack } from '../../../../shared/ui'
+import type { AdminLoginActionData } from '../model/types'
 
 export function AdminLoginPage() {
-  const [email, setEmail] = useState('vinicius@example.com')
-  const [password, setPassword] = useState('')
-  const [code, setCode] = useState('')
-  const [step, setStep] = useState<'credentials' | 'mfa' | 'ready'>('credentials')
-  const [error, setError] = useState<string>()
-
-  const submitCredentials = () => {
-    if (!email.trim() || !password.trim()) {
-      setError('email and password are required for the mocked admin gate.')
-      return
-    }
-
-    setError(undefined)
-    setStep('mfa')
-  }
-
-  const submitMfa = () => {
-    if (code.trim().length < 6) {
-      setError('enter a six digit email code to finish the mocked MFA flow.')
-      return
-    }
-
-    setError(undefined)
-    setStep('ready')
-  }
+  const actionData = useActionData() as AdminLoginActionData | undefined
+  const navigation = useNavigation()
+  const step = actionData?.step ?? 'credentials'
+  const challenge = actionData?.step === 'mfa' ? actionData.challenge : undefined
+  const isSubmitting = navigation.state === 'submitting'
 
   return (
     <Stack gap={20}>
       <InlineLabel>admin login</InlineLabel>
       <h2 className="page-heading fx-crt-title">private control room</h2>
       <p className="page-copy">
-        Frontend-only auth surface for the future email/password plus optional email-code MFA flow.
-        No session is created in this migration wave.
+        Credentials are now verified by backend auth. MFA is required only when the server requests
+        an email challenge.
       </p>
       <div className="admin-login">
         <div className="admin-login__meter" aria-hidden="true">
           <span className={step === 'credentials' ? 'is-active' : ''}>credentials</span>
           <span className={step === 'mfa' ? 'is-active' : ''}>email code</span>
-          <span className={step === 'ready' ? 'is-active' : ''}>ready</span>
+          <span>ready</span>
         </div>
         {step === 'credentials' ? (
-          <form className="admin-login__form" onSubmit={(event) => event.preventDefault()}>
+          <Form className="admin-login__form" method="post" replace>
+            <input type="hidden" name="intent" value="login" />
             <label className="admin-field">
               <span>email</span>
-              <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" />
+              <input name="email" type="email" defaultValue="vinicius@example.com" autoComplete="email" />
             </label>
             <label className="admin-field">
               <span>password</span>
-              <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" />
+              <input name="password" type="password" autoComplete="current-password" />
             </label>
-            {error ? <p className="admin-login__error">{error}</p> : null}
-            <ActionButton onClick={submitCredentials}>request code</ActionButton>
-          </form>
+            {actionData?.error ? <p className="admin-login__error">{actionData.error}</p> : null}
+            <ActionButton type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'checking…' : 'continue'}
+            </ActionButton>
+          </Form>
         ) : null}
-        {step === 'mfa' ? (
-          <form className="admin-login__form" onSubmit={(event) => event.preventDefault()}>
+        {step === 'mfa' && challenge ? (
+          <Form className="admin-login__form" method="post" replace>
+            <input type="hidden" name="intent" value="verify_mfa" />
+            <input type="hidden" name="challengeId" value={challenge.id} />
+            <input type="hidden" name="challengeDelivery" value={challenge.delivery} />
+            <input type="hidden" name="challengeMaskedEmail" value={challenge.maskedEmail} />
+            <input type="hidden" name="challengeExpiresAt" value={challenge.expiresAt} />
+            <p className="page-copy">verification code sent to {challenge.maskedEmail}</p>
             <label className="admin-field">
               <span>email code</span>
-              <input
-                value={code}
-                onChange={(event) => setCode(event.target.value)}
-                inputMode="numeric"
-                placeholder="000000"
-              />
+              <input name="code" inputMode="numeric" placeholder="000000" autoComplete="one-time-code" />
             </label>
-            {error ? <p className="admin-login__error">{error}</p> : null}
+            {actionData?.error ? <p className="admin-login__error">{actionData.error}</p> : null}
             <div className="action-row">
-              <ActionButton onClick={submitMfa}>verify</ActionButton>
-              <ActionButton onClick={() => setStep('credentials')}>back</ActionButton>
+              <ActionButton type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'verifying…' : 'verify'}
+              </ActionButton>
+              <ActionButton to="/admin/login">restart</ActionButton>
             </div>
-          </form>
-        ) : null}
-        {step === 'ready' ? (
-          <div className="admin-login__ready">
-            <p>mock admin session ready. backend auth will replace this local state later.</p>
-            <ActionButton to="/admin/dashboard">open dashboard</ActionButton>
-          </div>
+          </Form>
         ) : null}
       </div>
     </Stack>

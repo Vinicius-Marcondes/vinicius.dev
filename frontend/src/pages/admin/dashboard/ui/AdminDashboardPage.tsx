@@ -1,41 +1,27 @@
+import { useLoaderData } from 'react-router-dom'
 import { InlineLabel, ScreenFrame, Stack } from '../../../../shared/ui'
+import type { AdminDashboardViewModel } from '../model/types'
 
-type AdminPanel = {
-  detail: string
-  label: string
-  value: string
-}
-
-type AdminQueueItem = {
-  action: string
-  channel: string
-  title: string
-}
-
-const panels: AdminPanel[] = [
-  { label: 'draft thoughts', value: '03', detail: 'two notes and one essay waiting for polish' },
-  { label: 'featured slots', value: '05', detail: 'home previews are manually pinned' },
-  { label: 'photo records', value: '24', detail: 'metadata only; originals live on the VPS later' },
-  { label: 'chat flags', value: '02', detail: 'mock moderation queue for backend contracts' },
-]
-
-const queues: AdminQueueItem[] = [
+const staticQueues: AdminDashboardViewModel['queues'] = [
   { channel: 'TH-17', title: 'Against Frictionless Publishing', action: 'publish / edit / unpin' },
   { channel: 'PR-99', title: 'vinicius.dev', action: 'feature / archive / inspect links' },
   { channel: 'PH-014', title: 'paulista at 02:14', action: 'caption / tag / feature' },
 ]
 
 export function AdminDashboardPage() {
+  const data = useLoaderData() as AdminDashboardViewModel
+  const queues = data.queues.length > 0 ? data.queues : staticQueues
+
   return (
     <Stack gap={20}>
       <InlineLabel>admin dashboard</InlineLabel>
       <h2 className="page-heading fx-crt-title">control deck</h2>
       <p className="page-copy">
-        Mock panels for the private CMS: content queues, manual curation, status-strip edits,
-        and chat moderation. These are frontend contracts only until backend tasks begin.
+        Live dashboard summary from backend auth session. Panels and queues stay mapped to the current
+        admin shell contracts.
       </p>
       <div className="dashboard-grid">
-        {panels.map((panel) => (
+        {data.panels.map((panel) => (
           <ScreenFrame key={panel.label} className="admin-stat">
             <span className="admin-stat__value">{panel.value}</span>
             <span className="admin-stat__label">{panel.label}</span>
