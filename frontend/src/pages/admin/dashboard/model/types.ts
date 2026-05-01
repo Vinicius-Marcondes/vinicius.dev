@@ -5,6 +5,7 @@ export type AdminDashboardPanel = Readonly<{
 }>
 
 export type AdminDashboardQueueItem = Readonly<{
+  id: string
   action: string
   channel: string
   title: string

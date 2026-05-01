@@ -27,6 +27,7 @@ export const mapDashboardSummary = (dto: AdminDashboardSummary): AdminDashboardV
     },
   ],
   queues: dto.queues.content.map((item) => ({
+    id: item.id,
     action: item.suggestedActions.join(' / '),
     channel: item.channel,
     title: item.title,

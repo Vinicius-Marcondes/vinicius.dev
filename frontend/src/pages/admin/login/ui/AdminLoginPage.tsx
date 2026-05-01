@@ -28,7 +28,7 @@ export function AdminLoginPage() {
             <input type="hidden" name="intent" value="login" />
             <label className="admin-field">
               <span>email</span>
-              <input name="email" type="email" defaultValue="vinicius@example.com" autoComplete="email" />
+              <input name="email" type="email" placeholder="you@example.com" autoComplete="email" />
             </label>
             <label className="admin-field">
               <span>password</span>
