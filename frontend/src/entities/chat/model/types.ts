@@ -54,3 +54,32 @@ export type ChatRoomAccess = Readonly<{
     slug: string
   }>
 }>
+
+export type ChatMessagesPage = Readonly<{
+  items: readonly ChatMessage[]
+  pageInfo: Readonly<{
+    nextCursor: string | null
+  }>
+}>
+
+export type ChatParticipantsSnapshot = Readonly<{
+  items: readonly ChatParticipant[]
+}>
+
+export type ChatSendMessageResult = Readonly<{
+  item: ChatMessage
+}>
+
+export type ChatLiveEvent =
+  | Readonly<{
+      item: ChatMessage
+      type: 'message.created'
+    }>
+  | Readonly<{
+      items: readonly ChatParticipant[]
+      type: 'participant.snapshot'
+    }>
+  | Readonly<{
+      reason: 'room_password_rotation'
+      type: 'session.revoked'
+    }>

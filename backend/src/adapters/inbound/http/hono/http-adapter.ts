@@ -1,6 +1,7 @@
 import { extname } from "node:path";
 
 import { Hono, type Context } from "hono";
+import { upgradeWebSocket } from "hono/bun";
 
 import {
   InvalidAuthCredentialsError,
@@ -22,6 +23,8 @@ import {
 import { InvalidThoughtCursorError } from "@/modules/content/application";
 import type {
   BanChatRoomHandlePort,
+  ChatRoomMessageOutput,
+  ChatRoomParticipantOutput,
   ChatUploadMimeType,
   GetChatRoomAccessPort,
   ListChatModerationAuditsPort,
@@ -56,6 +59,102 @@ type NotImplementedResponse = {
   route: string;
   service: string;
   status: "not_implemented";
+};
+
+type ChatLiveSocket = Readonly<{
+  close: (code?: number, reason?: string) => void;
+  send: (data: string) => void;
+}>;
+
+type ChatLiveEvent =
+  | Readonly<{
+      item: ChatRoomMessageOutput;
+      type: "message.created";
+    }>
+  | Readonly<{
+      items: readonly ChatRoomParticipantOutput[];
+      type: "participant.snapshot";
+    }>
+  | Readonly<{
+      reason: "room_password_rotation";
+      type: "session.revoked";
+    }>;
+
+type ChatLiveConnection = Readonly<{
+  roomSessionId: string;
+  roomSlug: string;
+  socket: ChatLiveSocket;
+}>;
+
+const createChatLiveManager = () => {
+  const connectionsByRoomSlug = new Map<string, Map<string, ChatLiveConnection>>();
+
+  const getRoomConnections = (roomSlug: string) => {
+    const existing = connectionsByRoomSlug.get(roomSlug);
+
+    if (existing) {
+      return existing;
+    }
+
+    const created = new Map<string, ChatLiveConnection>();
+    connectionsByRoomSlug.set(roomSlug, created);
+    return created;
+  };
+
+  const sendEvent = (socket: ChatLiveSocket, payload: ChatLiveEvent) => {
+    socket.send(JSON.stringify(payload));
+  };
+
+  return {
+    add(connection: ChatLiveConnection) {
+      getRoomConnections(connection.roomSlug).set(connection.roomSessionId, connection);
+    },
+    broadcast(roomSlug: string, payload: ChatLiveEvent) {
+      for (const connection of getRoomConnections(roomSlug).values()) {
+        sendEvent(connection.socket, payload);
+      }
+    },
+    remove(roomSlug: string, roomSessionId: string) {
+      const roomConnections = connectionsByRoomSlug.get(roomSlug);
+
+      if (!roomConnections) {
+        return;
+      }
+
+      roomConnections.delete(roomSessionId);
+
+      if (roomConnections.size === 0) {
+        connectionsByRoomSlug.delete(roomSlug);
+      }
+    },
+    revokeRoom(roomSlug: string) {
+      const roomConnections = connectionsByRoomSlug.get(roomSlug);
+
+      if (!roomConnections) {
+        return;
+      }
+
+      for (const connection of roomConnections.values()) {
+        sendEvent(connection.socket, {
+          reason: "room_password_rotation",
+          type: "session.revoked",
+        });
+        connection.socket.close(4001, "room_password_rotation");
+      }
+
+      connectionsByRoomSlug.delete(roomSlug);
+    },
+    sendToSession(roomSlug: string, roomSessionId: string, payload: ChatLiveEvent) {
+      const roomConnections = connectionsByRoomSlug.get(roomSlug);
+      const connection = roomConnections?.get(roomSessionId);
+
+      if (!connection) {
+        return;
+      }
+
+      sendEvent(connection.socket, payload);
+    },
+  };
 };
 
 const createNotImplementedFamily = (family: string) => {
@@ -592,7 +691,10 @@ const readOptionalJsonString = (
   };
 };
 
-const createChatFamily = (container: BootstrapContainer) => {
+const createChatFamily = (
+  container: BootstrapContainer,
+  live: ReturnType<typeof createChatLiveManager>,
+) => {
   const chatApp = new Hono();
   const resolveRoomSessionUseCase = (container.chat as {
     resolveRoomSession?: ResolveChatRoomSessionPort;
@@ -603,6 +705,29 @@ const createChatFamily = (container: BootstrapContainer) => {
   const sendRoomTextMessageUseCase = (container.chat as {
     sendRoomTextMessage?: SendChatRoomTextMessagePort;
   }).sendRoomTextMessage;
+
+  const broadcastParticipantSnapshot = async (
+    roomSlug: string,
+    roomSessionId: string,
+  ) => {
+    if (!container.chat.listRoomParticipants) {
+      return;
+    }
+
+    try {
+      const snapshot = await container.chat.listRoomParticipants.execute({
+        roomSessionId,
+        slug: roomSlug,
+      });
+
+      live.broadcast(roomSlug, {
+        items: snapshot.items,
+        type: "participant.snapshot",
+      });
+    } catch {
+      // best effort live update; HTTP contract already handled the primary response
+    }
+  };
 
   chatApp.post("/rooms/:slug/join", async (c) => {
     if (!container.chat.joinRoomSession) {
@@ -654,6 +779,8 @@ const createChatFamily = (container: BootstrapContainer) => {
         password: password.value,
         slug,
       });
+
+      void broadcastParticipantSnapshot(slug, response.session.id);
 
       return c.json(response);
     } catch (error) {
@@ -715,6 +842,68 @@ const createChatFamily = (container: BootstrapContainer) => {
       });
 
       return c.json(response);
+    } catch (error) {
+      if (error instanceof InvalidChatRoomSessionError) {
+        return c.json({ error: "denied", resource: "chat" }, 401);
+      }
+
+      if (error instanceof BannedChatHandleError) {
+        return c.json({ error: "denied", reason: "handle_banned", resource: "chat" }, 403);
+      }
+
+      throw error;
+    }
+  });
+
+  chatApp.get("/rooms/:slug/live", async (c) => {
+    const slug = c.req.param("slug")?.trim();
+
+    if (!slug) {
+      return c.json({ error: "invalid_path", field: "slug" }, 400);
+    }
+
+    const roomSessionId = c.req.query("sessionId")?.trim();
+
+    if (!roomSessionId) {
+      return c.json({ error: "invalid_query", field: "sessionId" }, 400);
+    }
+
+    if (!resolveRoomSessionUseCase || !container.chat.listRoomParticipants) {
+      return c.json<NotImplementedResponse>(
+        {
+          family: "chat",
+          method: c.req.method,
+          route: c.req.path,
+          service: serviceName,
+          status: "not_implemented",
+        },
+        501,
+      );
+    }
+
+    try {
+      const [resolvedSession, snapshot] = await Promise.all([
+        resolveRoomSessionUseCase.execute({ roomSessionId, slug }),
+        container.chat.listRoomParticipants.execute({ roomSessionId, slug }),
+      ]);
+
+      return upgradeWebSocket(c, {
+        onClose: () => {
+          live.remove(slug, roomSessionId);
+        },
+        onOpen: (_event, ws) => {
+          live.add({
+            roomSessionId,
+            roomSlug: slug,
+            socket: ws,
+          });
+          live.sendToSession(slug, roomSessionId, {
+            items: snapshot.items,
+            type: "participant.snapshot",
+          });
+          void broadcastParticipantSnapshot(slug, resolvedSession.session.id);
+        },
+      });
     } catch (error) {
       if (error instanceof InvalidChatRoomSessionError) {
         return c.json({ error: "denied", resource: "chat" }, 401);
@@ -946,6 +1135,11 @@ const createChatFamily = (container: BootstrapContainer) => {
         roomSessionId,
         slug,
         tone: toneInput,
+      });
+
+      live.broadcast(slug, {
+        item: response,
+        type: "message.created",
       });
 
       return c.json(
@@ -1541,7 +1735,10 @@ const parseBooleanQuery = (value: string | undefined): boolean | undefined => {
   return undefined;
 };
 
-const createAdminFamily = (container: BootstrapContainer) => {
+const createAdminFamily = (
+  container: BootstrapContainer,
+  live: ReturnType<typeof createChatLiveManager>,
+) => {
   const admin = container.admin;
   const auth = container.auth;
 
@@ -2250,6 +2447,8 @@ const createAdminFamily = (container: BootstrapContainer) => {
       return c.json({ error: "not_found", resource: "chat_room" }, 404);
     }
 
+    live.revokeRoom(slug);
+
     return c.json(result);
   });
 
@@ -2384,6 +2583,7 @@ const createSitemapFamily = () => {
 
 export const createHonoHttpAdapter = (container: BootstrapContainer) => {
   const app = new Hono();
+  const live = createChatLiveManager();
 
   app.get("/api", (c) =>
     c.json({
@@ -2400,9 +2600,9 @@ export const createHonoHttpAdapter = (container: BootstrapContainer) => {
   app.route("/api/rss", createRssFamily(container));
   app.route("/api/sitemap", createSitemapFamily());
   app.route("/api/status-strip", createStatusStripFamily(container));
-  app.route("/api/chat", createChatFamily(container));
+  app.route("/api/chat", createChatFamily(container, live));
   app.route("/api/auth", createAuthFamily(container));
-  app.route("/api/admin", createAdminFamily(container));
+  app.route("/api/admin", createAdminFamily(container, live));
 
   app.get(container.config.server.mediaPhotoOriginalPath, async (c) => {
     const id = c.req.param("id")?.trim();
