@@ -16,11 +16,16 @@ export type PrismaPersistenceAdapter = Readonly<{
   media: MediaRepositoryPort;
 }>;
 
+export type PrismaPersistenceAdapterOptions = Readonly<{
+  roomPasswordSecret: string;
+}>;
+
 export const createPrismaPersistenceAdapter = (
   client: PrismaDatabaseClient = createPrismaClient(),
+  options: PrismaPersistenceAdapterOptions = { roomPasswordSecret: "test-room-secret" },
 ): PrismaPersistenceAdapter => ({
   content: createPrismaContentRepository(client),
-  chat: createPrismaChatRepository(client),
+  chat: createPrismaChatRepository(client, options),
   admin: createPrismaAdminRepository(client),
   media: createPrismaMediaRepository(client),
 });

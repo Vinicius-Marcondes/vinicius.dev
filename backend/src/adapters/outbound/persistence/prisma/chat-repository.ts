@@ -1,3 +1,5 @@
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
+
 import type {
   BanChatRoomHandleCommand,
   BanChatRoomHandleResult,
@@ -10,6 +12,7 @@ import type {
   ChatMessageListPage,
   ChatMessageListQuery,
   ChatMessageRepositoryRow,
+  ChatRoomAccessRepositoryRow,
   ChatRoomParticipantRepositoryRow,
   ChatRepositoryPort,
   ChatRoomRepositoryRow,
@@ -30,6 +33,39 @@ import type {
 import { ChatUploadMimeType } from "../../../../../generated/prisma/client";
 
 import type { PrismaDatabaseClient } from "./prisma-client";
+
+const createReadablePasswordKey = (secret: string): Buffer =>
+  createHash("sha256").update(secret).digest();
+
+const encryptReadablePassword = (plainText: string, secret: string): string => {
+  const iv = randomBytes(12);
+  const key = createReadablePasswordKey(secret);
+  const cipher = createCipheriv("aes-256-gcm", key, iv);
+  const encrypted = Buffer.concat([cipher.update(plainText, "utf8"), cipher.final()]);
+  const tag = cipher.getAuthTag();
+
+  return `${iv.toString("base64url")}.${encrypted.toString("base64url")}.${tag.toString("base64url")}`;
+};
+
+const decryptReadablePassword = (ciphertext: string, secret: string): string => {
+  const [ivBase64, payloadBase64, tagBase64] = ciphertext.split(".");
+
+  if (!ivBase64 || !payloadBase64 || !tagBase64) {
+    throw new Error("Invalid encrypted room password payload");
+  }
+
+  const decipher = createDecipheriv(
+    "aes-256-gcm",
+    createReadablePasswordKey(secret),
+    Buffer.from(ivBase64, "base64url"),
+  );
+  decipher.setAuthTag(Buffer.from(tagBase64, "base64url"));
+
+  return Buffer.concat([
+    decipher.update(Buffer.from(payloadBase64, "base64url")),
+    decipher.final(),
+  ]).toString("utf8");
+};
 
 const notImplemented = <T>(method: string): Promise<T> => {
   return Promise.reject(new Error(`Prisma chat repository method not implemented: ${method}`));
@@ -132,6 +168,29 @@ const mapRoomRow = (row: {
   slug: row.slug,
   updatedAt: row.updatedAt,
 });
+
+const mapRoomAccessRow = (
+  row: {
+    currentPasswordCiphertext: string | null;
+    id: string;
+    passwordRotatedAt: Date | null;
+    passwordVersion: number;
+    slug: string;
+  },
+  roomPasswordSecret: string,
+): ChatRoomAccessRepositoryRow | null => {
+  if (!row.currentPasswordCiphertext) {
+    return null;
+  }
+
+  return {
+    currentPassword: decryptReadablePassword(row.currentPasswordCiphertext, roomPasswordSecret),
+    id: row.id,
+    passwordRotatedAt: row.passwordRotatedAt,
+    passwordVersion: row.passwordVersion,
+    slug: row.slug,
+  };
+};
 
 const mapHandleRow = (row: {
   createdAt: Date;
@@ -779,9 +838,10 @@ const banHandle = async (
 const rotateRoomPassword = async (
   client: PrismaDatabaseClient,
   input: RotateChatRoomPasswordCommand,
+  roomPasswordSecret: string,
 ): Promise<RotateChatRoomPasswordResult | null> => {
   return client.$transaction(async (tx) => {
-    const room = await tx.chatRoom.findUnique({
+    const existingRoom = await tx.chatRoom.findUnique({
       select: {
         createdAt: true,
         id: true,
@@ -796,12 +856,28 @@ const rotateRoomPassword = async (
       },
     });
 
-    if (!room) {
-      return null;
-    }
+    const room = existingRoom ?? await tx.chatRoom.create({
+      data: {
+        currentPasswordCiphertext: encryptReadablePassword(input.nextPassword, roomPasswordSecret),
+        passwordHash: input.nextPasswordHash,
+        passwordRotatedAt: input.occurredAt,
+        passwordVersion: 0,
+        slug: input.slug,
+      },
+      select: {
+        createdAt: true,
+        id: true,
+        passwordHash: true,
+        passwordRotatedAt: true,
+        passwordVersion: true,
+        slug: true,
+        updatedAt: true,
+      },
+    });
 
     const updatedRoom = await tx.chatRoom.update({
       data: {
+        currentPasswordCiphertext: encryptReadablePassword(input.nextPassword, roomPasswordSecret),
         passwordHash: input.nextPasswordHash,
         passwordRotatedAt: input.occurredAt,
         passwordVersion: room.passwordVersion + 1,
@@ -872,6 +948,7 @@ const rotateRoomPassword = async (
 
     return {
       auditId: audit.id,
+      currentPassword: input.nextPassword,
       revokedSessionCount: revokedSessions.count,
       room: mapRoomRow(updatedRoom),
       rotation: {
@@ -1023,6 +1100,7 @@ const listParticipantsByRoomId = async (
           leftAt: null,
           roomId,
           status: "active",
+          OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
         },
       },
     },
@@ -1154,7 +1232,14 @@ const listMessages = async (
   };
 };
 
-export const createPrismaChatRepository = (client: PrismaDatabaseClient): ChatRepositoryPort => ({
+export type PrismaChatRepositoryOptions = Readonly<{
+  roomPasswordSecret: string;
+}>;
+
+export const createPrismaChatRepository = (
+  client: PrismaDatabaseClient,
+  options: PrismaChatRepositoryOptions = { roomPasswordSecret: "test-room-secret" },
+): ChatRepositoryPort => ({
   createHandle: (input): Promise<ChatHandleRepositoryRow> => createHandle(client, input),
   createTextMessage: (input): Promise<ChatMessageRepositoryRow> =>
     createTextMessage(client, input),
@@ -1167,7 +1252,7 @@ export const createPrismaChatRepository = (client: PrismaDatabaseClient): ChatRe
   moderateUploadRetention: (input): Promise<ModerateChatUploadRetentionResult | null> =>
     moderateUploadRetention(client, input),
   rotateRoomPassword: (input): Promise<RotateChatRoomPasswordResult | null> =>
-    rotateRoomPassword(client, input),
+    rotateRoomPassword(client, input, options.roomPasswordSecret),
   findSessionById: async (sessionId): Promise<ChatRoomSessionRepositoryRow | null> => {
     const session = await client.chatRoomSession.findUnique({
       select: {
@@ -1188,6 +1273,26 @@ export const createPrismaChatRepository = (client: PrismaDatabaseClient): ChatRe
     });
 
     return session ? mapSessionRow(session) : null;
+  },
+  findRoomAccessBySlug: async (slug): Promise<ChatRoomAccessRepositoryRow | null> => {
+    const room = await client.chatRoom.findUnique({
+      select: {
+        currentPasswordCiphertext: true,
+        id: true,
+        passwordRotatedAt: true,
+        passwordVersion: true,
+        slug: true,
+      },
+      where: {
+        slug,
+      },
+    });
+
+    if (!room) {
+      return null;
+    }
+
+    return mapRoomAccessRow(room, options.roomPasswordSecret);
   },
   findRoomBySlug: async (query): Promise<ChatRoomRepositoryRow | null> => {
     const room = await client.chatRoom.findUnique({

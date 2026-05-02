@@ -48,6 +48,7 @@ import type {
 } from "@/modules/auth/ports/inbound";
 import {
   createBanChatRoomHandleUseCase,
+  createGetChatRoomAccessUseCase,
   createJoinChatRoomSessionUseCase,
   createListChatModerationAuditsUseCase,
   createListChatRoomMessagesUseCase,
@@ -55,12 +56,14 @@ import {
   createModerateChatRoomMessageUseCase,
   createModerateChatUploadRetentionUseCase,
   createOpenChatUploadMediaUseCase,
+  createResolveChatRoomSessionUseCase,
   createRotateChatRoomPasswordUseCase,
   createSendChatRoomTextMessageUseCase,
   createUploadChatMessageWithImageUseCase,
 } from "@/modules/chat/application";
 import type {
   BanChatRoomHandlePort,
+  GetChatRoomAccessPort,
   JoinChatRoomSessionPort,
   ListChatModerationAuditsPort,
   ListChatRoomMessagesPort,
@@ -68,6 +71,7 @@ import type {
   ModerateChatRoomMessagePort,
   ModerateChatUploadRetentionPort,
   OpenChatUploadMediaPort,
+  ResolveChatRoomSessionPort,
   RotateChatRoomPasswordPort,
   SendChatRoomTextMessagePort,
   UploadChatMessageWithImagePort,
@@ -115,6 +119,7 @@ export type BootstrapContainer = Readonly<{
   }>;
   chat: Readonly<{
     banRoomHandle?: BanChatRoomHandlePort;
+    getRoomAccess?: GetChatRoomAccessPort;
     joinRoomSession?: JoinChatRoomSessionPort;
     listModerationAudits?: ListChatModerationAuditsPort;
     listRoomMessages?: ListChatRoomMessagesPort;
@@ -122,6 +127,7 @@ export type BootstrapContainer = Readonly<{
     moderateRoomMessage?: ModerateChatRoomMessagePort;
     moderateUploadRetention: ModerateChatUploadRetentionPort;
     openUploadMedia: OpenChatUploadMediaPort;
+    resolveRoomSession?: ResolveChatRoomSessionPort;
     rotateRoomPassword?: RotateChatRoomPasswordPort;
     sendRoomTextMessage?: SendChatRoomTextMessagePort;
     uploadMessageWithImage: UploadChatMessageWithImagePort;
@@ -154,7 +160,9 @@ const parseAuthMfaEnabled = (value: string | undefined): boolean => {
 
 export const createContainer = (env: BootstrapEnv = Bun.env): BootstrapContainer => {
   const config = loadBootstrapConfig(env);
-  const persistence = createPrismaPersistenceAdapter();
+  const persistence = createPrismaPersistenceAdapter(undefined, {
+    roomPasswordSecret: config.auth.roomPasswordSecret,
+  });
   const storage = createFilesystemMediaStorageAdapter({
     chatRoot: config.media.chatRoot,
     photosRoot: config.media.photosRoot,
@@ -244,10 +252,15 @@ export const createContainer = (env: BootstrapEnv = Bun.env): BootstrapContainer
       banRoomHandle: createBanChatRoomHandleUseCase({
         repository: persistence.chat,
       }),
+      getRoomAccess: createGetChatRoomAccessUseCase({
+        repository: persistence.chat,
+        sessionTtlHours: 24,
+      }),
       joinRoomSession: createJoinChatRoomSessionUseCase({
         createSessionToken: () => chatSessionTokenGenerator.create(),
         hashSessionToken: (token) => chatSessionTokenHasher.hash(token),
         repository: persistence.chat,
+        sessionMaxAgeSeconds: 60 * 60 * 24,
         verifyRoomPassword: ({ passwordHash, plainText }) =>
           chatPasswordHasher.verify({
             passwordHash,
@@ -276,11 +289,15 @@ export const createContainer = (env: BootstrapEnv = Bun.env): BootstrapContainer
         repository: persistence.chat,
         storage: storage.chatUploads,
       }),
+      resolveRoomSession: createResolveChatRoomSessionUseCase({
+        repository: persistence.chat,
+      }),
       sendRoomTextMessage: createSendChatRoomTextMessageUseCase({
         repository: persistence.chat,
       }),
       rotateRoomPassword: createRotateChatRoomPasswordUseCase({
         repository: persistence.chat,
+        sessionTtlHours: 24,
       }),
       uploadMessageWithImage: createUploadChatMessageWithImageUseCase({
         repository: persistence.chat,

@@ -5,6 +5,8 @@ import type {
   JoinChatRoomSessionInput,
   JoinChatRoomSessionOutput,
   ListChatRoomMessagesInput,
+  ResolveChatRoomSessionInput,
+  ResolveChatRoomSessionOutput,
   ListChatRoomMessagesOutput,
   ListChatRoomParticipantsInput,
   ListChatRoomParticipantsOutput,
@@ -19,6 +21,7 @@ import {
   InvalidChatMessageCursorError,
   InvalidChatParticipantAccessError,
   InvalidChatRoomCredentialsError,
+  InvalidChatRoomSessionError,
   InvalidChatUploadActorError,
 } from "@/modules/chat/application";
 
@@ -83,6 +86,26 @@ const createTestContainer = ({
       slug: "night-shift",
     },
     session: {
+      expiresAt: "2026-04-25T12:00:00.000Z",
+      handleId: "handle_1",
+      id: "session_1",
+      joinedAt: "2026-04-24T12:00:00.000Z",
+      roomId: "room_1",
+      status: "active",
+    },
+  }),
+  executeResolve = async (): Promise<ResolveChatRoomSessionOutput> => ({
+    participant: {
+      handle: "vinicius",
+      id: "handle_1",
+      status: "online",
+    },
+    room: {
+      id: "room_1",
+      slug: "night-shift",
+    },
+    session: {
+      expiresAt: "2026-04-25T12:00:00.000Z",
       handleId: "handle_1",
       id: "session_1",
       joinedAt: "2026-04-24T12:00:00.000Z",
@@ -101,6 +124,9 @@ const createTestContainer = ({
   executeJoin?: (
     input: JoinChatRoomSessionInput,
   ) => JoinChatRoomSessionOutput | Promise<JoinChatRoomSessionOutput>;
+  executeResolve?: (
+    input: ResolveChatRoomSessionInput,
+  ) => ResolveChatRoomSessionOutput | Promise<ResolveChatRoomSessionOutput>;
   executeParticipants?: (
     input: ListChatRoomParticipantsInput,
   ) => ListChatRoomParticipantsOutput | Promise<ListChatRoomParticipantsOutput>;
@@ -117,6 +143,9 @@ const createTestContainer = ({
   chat: {
     joinRoomSession: {
       execute: executeJoin,
+    },
+    resolveRoomSession: {
+      execute: executeResolve,
     },
     listRoomParticipants: {
       execute: executeParticipants,
@@ -288,6 +317,7 @@ describe("chat routes", () => {
               slug: "night-shift",
             },
             session: {
+              expiresAt: "2026-04-25T12:00:00.000Z",
               handleId: "handle_1",
               id: "session_1",
               joinedAt: "2026-04-24T12:00:00.000Z",
@@ -322,6 +352,7 @@ describe("chat routes", () => {
         slug: "night-shift",
       },
       session: {
+        expiresAt: "2026-04-25T12:00:00.000Z",
         handleId: "handle_1",
         id: "session_1",
         joinedAt: "2026-04-24T12:00:00.000Z",
@@ -446,6 +477,90 @@ describe("chat routes", () => {
     await expect(response.json()).resolves.toEqual({
       error: "denied",
       reason: "handle_banned",
+      resource: "chat",
+    });
+  });
+
+  it("maps a valid room session validation request into the resolve-session use case", async () => {
+    let capturedInput: ResolveChatRoomSessionInput | undefined;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeResolve: async (input) => {
+          capturedInput = input;
+
+          return {
+            participant: {
+              handle: "vinicius",
+              id: "handle_1",
+              status: "online",
+            },
+            room: {
+              id: "room_1",
+              slug: "night-shift",
+            },
+            session: {
+              expiresAt: "2026-04-25T12:00:00.000Z",
+              handleId: "handle_1",
+              id: "session_1",
+              joinedAt: "2026-04-24T12:00:00.000Z",
+              roomId: "room_1",
+              status: "active",
+            },
+          };
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/rooms/night-shift/session", {
+      headers: {
+        "x-chat-room-session-id": " session_1 ",
+      },
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      participant: {
+        handle: "vinicius",
+        id: "handle_1",
+        status: "online",
+      },
+      room: {
+        id: "room_1",
+        slug: "night-shift",
+      },
+      session: {
+        expiresAt: "2026-04-25T12:00:00.000Z",
+        handleId: "handle_1",
+        id: "session_1",
+        joinedAt: "2026-04-24T12:00:00.000Z",
+        roomId: "room_1",
+        status: "active",
+      },
+    });
+    expect(capturedInput).toEqual({
+      roomSessionId: "session_1",
+      slug: "night-shift",
+    });
+  });
+
+  it("returns denied when room session validation fails", async () => {
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeResolve: async () => {
+          throw new InvalidChatRoomSessionError();
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/rooms/night-shift/session", {
+      headers: {
+        "x-chat-room-session-id": "session_1",
+      },
+    });
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({
+      error: "denied",
       resource: "chat",
     });
   });

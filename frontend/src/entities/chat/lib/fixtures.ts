@@ -26,7 +26,13 @@ export const chatMessages: ChatMessage[] = [
     author: 'ghost-operator',
     body: 'copy. image uploads should feel like dropping a polaroid into the terminal.',
     sentAt: '22:46',
-    attachment: { fileName: 'scanline-polaroid.png', kind: 'image' },
+    attachment: {
+      byteSize: 1024,
+      fileName: 'scanline-polaroid.png',
+      id: 'upload-mock-1',
+      kind: 'image',
+      mimeType: 'image/png',
+    },
     tone: 'cyan',
   },
 ]

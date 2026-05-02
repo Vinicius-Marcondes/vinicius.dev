@@ -49,7 +49,7 @@ describe("chat room join use case", () => {
 
           return {
             createdAt: now,
-            expiresAt: null,
+            expiresAt: input.expiresAt,
             handleId: input.handleId,
             id: "session_1",
             joinedAt: input.joinedAt,
@@ -104,6 +104,7 @@ describe("chat room join use case", () => {
         slug: "night-shift",
       },
       session: {
+        expiresAt: "2026-04-29T10:00:00.000Z",
         handleId: "handle_1",
         id: "session_1",
         joinedAt: "2026-04-28T10:00:00.000Z",
@@ -986,11 +987,12 @@ describe("chat handle ban use case", () => {
 });
 
 describe("chat room password rotation use case", () => {
-  it("rotates password hash and returns rotation metadata", async () => {
+  it("generates the next password, rotates the hash, and returns rotation metadata", async () => {
     const occurredAt = new Date("2026-04-28T12:08:00.000Z");
     const capturedCalls: Array<Record<string, unknown>> = [];
     const useCase = createRotateChatRoomPasswordUseCase({
       clock: () => occurredAt,
+      generateRoomPassword: () => "new-secret",
       hashRoomPassword: async (plainText) => `hash:${plainText}`,
       repository: {
         rotateRoomPassword: async (input) => {
@@ -998,6 +1000,7 @@ describe("chat room password rotation use case", () => {
 
           return {
             auditId: "audit_3",
+            currentPassword: input.nextPassword,
             revokedSessionCount: 3,
             room: {
               createdAt: occurredAt,
@@ -1015,11 +1018,11 @@ describe("chat room password rotation use case", () => {
           };
         },
       },
+      sessionTtlHours: 24,
     });
 
     const output = await useCase.execute({
       actorAdminUserId: " admin_1 ",
-      nextPassword: "new-secret",
       reason: "  leaked in public channel  ",
       slug: " night-shift ",
     });
@@ -1027,6 +1030,7 @@ describe("chat room password rotation use case", () => {
     expect(capturedCalls).toEqual([
       {
         actorAdminUserId: "admin_1",
+        nextPassword: "new-secret",
         nextPasswordHash: "hash:new-secret",
         occurredAt,
         reason: "leaked in public channel",
@@ -1035,11 +1039,13 @@ describe("chat room password rotation use case", () => {
     ]);
     expect(output).toEqual({
       auditId: "audit_3",
+      generatedPassword: "new-secret",
       revokedSessionCount: 3,
       room: {
         id: "room_1",
         passwordRotatedAt: "2026-04-28T12:08:00.000Z",
         passwordVersion: 4,
+        sessionTtlHours: 24,
         slug: "night-shift",
       },
       rotation: {
@@ -1051,16 +1057,17 @@ describe("chat room password rotation use case", () => {
 
   it("returns null when room slug does not exist", async () => {
     const useCase = createRotateChatRoomPasswordUseCase({
+      generateRoomPassword: () => "new-secret",
       hashRoomPassword: async (plainText) => `hash:${plainText}`,
       repository: {
         rotateRoomPassword: async () => null,
       },
+      sessionTtlHours: 24,
     });
 
     await expect(
       useCase.execute({
         actorAdminUserId: "admin_1",
-        nextPassword: "new-secret",
         slug: "unknown-room",
       }),
     ).resolves.toBeNull();
