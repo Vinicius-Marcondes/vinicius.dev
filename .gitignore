@@ -29,6 +29,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Local overrides
+/docker-compose.override.yml
+
 # OS/editor files
 .DS_Store
 .idea/
