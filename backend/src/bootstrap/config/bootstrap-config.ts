@@ -6,8 +6,8 @@ export const MEDIA_PHOTO_ORIGINAL_PATH = "/media/photos/:id/original" as const;
 
 const DEFAULT_PORT = 3000;
 const DEFAULT_NODE_ENV = "development";
-const DEFAULT_MEDIA_PHOTOS_ROOT = "/var/lib/vinicius.dev/media/photos";
-const DEFAULT_MEDIA_CHAT_ROOT = "/var/lib/vinicius.dev/media/chat";
+const DEFAULT_MEDIA_PHOTOS_ROOT = resolve(process.cwd(), "media/photos");
+const DEFAULT_MEDIA_CHAT_ROOT = resolve(process.cwd(), "media/chat");
 const DEFAULT_MEDIA_PUBLIC_URL_BASE = "/media";
 const DEFAULT_CHAT_UPLOAD_MAX_BYTES = 5 * 1024 * 1024;
 const DEFAULT_CHAT_UPLOAD_ALLOWED_MIME_TYPES = [

@@ -19,6 +19,9 @@ build/
 .turbo/
 coverage/
 
+# Local media
+backend/media/
+
 # Logs
 *.log
 npm-debug.log*

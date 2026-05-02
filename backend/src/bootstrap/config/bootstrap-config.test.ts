@@ -1,5 +1,5 @@
 import { mkdtemp, rm, symlink } from "node:fs/promises";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 import { afterEach, describe, expect, it } from "bun:test";
 
@@ -34,7 +34,7 @@ describe("bootstrap config", () => {
         allowedOrigins: [],
       },
       media: {
-        chatRoot: "/var/lib/vinicius.dev/media/chat",
+        chatRoot: resolve(process.cwd(), "media/chat"),
         chatUploadAllowedMimeTypes: [
           "image/jpeg",
           "image/png",
@@ -42,7 +42,7 @@ describe("bootstrap config", () => {
         ],
         chatUploadMaxBytes: 5 * 1024 * 1024,
         chatUploadMaxFilesPerMessage: 1,
-        photosRoot: "/var/lib/vinicius.dev/media/photos",
+        photosRoot: resolve(process.cwd(), "media/photos"),
         publicUrlBase: "/media",
       },
       server: {
