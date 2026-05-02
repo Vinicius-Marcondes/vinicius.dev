@@ -81,7 +81,7 @@ Done criteria for `QA-008`:
 
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| In Review | SPEC-030 | SPEC-030 | spec | develop | `spec/SPEC-030-chat-room-live-integration` | develop | `docs/specs/chat-room-live-integration.md` | — | Awaiting review and merge before `CHAT-008`, `CHAT-009`, and `CHAT-010` can be registered. |
+| In Review | SPEC-030 | SPEC-030 | spec | develop | `spec/SPEC-030-chat-room-live-integration` | develop | `docs/specs/chat-room-live-integration.md` | [#119](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/119) | Awaiting review and merge before `CHAT-008`, `CHAT-009`, and `CHAT-010` can be registered. |
 
 ## Spec Table
 | Spec ID | Title | Layer | Status | Depends on | Blocks | Git workflow defined | Ready for task split | Notes |
