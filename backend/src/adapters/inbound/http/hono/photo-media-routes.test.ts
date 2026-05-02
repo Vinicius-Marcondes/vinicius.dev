@@ -73,7 +73,7 @@ const createTestContainer = (options: TestContainerOptions = {}): BootstrapConta
             kind: "image",
             mimeType: "image/webp",
           },
-          authorHandleId: "handle_1",
+          author: "vinicius",
           body: "uploaded an image without a caption",
           id: "message_1",
           sentAt: "2026-04-24T00:00:00.000Z",

@@ -15,7 +15,9 @@ export { joinChatRoom, parseChatRoomError, resolveChatRoomSession } from './api/
 export { getChatRoomAccess, rotateChatRoomPassword } from './api/room-access'
 export {
   createChatLiveSocket,
+  getChatAttachmentObjectUrl,
   listChatMessages,
   listChatParticipants,
   sendChatMessage,
+  uploadChatImageMessage,
 } from './api/room-runtime'

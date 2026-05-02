@@ -1098,6 +1098,15 @@ describe("chat upload message with image use case", () => {
           status: "active",
           updatedAt: sentAt,
         }),
+        findHandleById: async () => ({
+          createdAt: sentAt,
+          handle: "vinicius",
+          id: "handle_1",
+          normalizedHandle: "vinicius",
+          roomId: "room 123",
+          status: "active",
+          updatedAt: sentAt,
+        }),
         createMessageWithUpload: async (input) => {
           repositoryCalls.push(input as unknown as Record<string, unknown>);
 
@@ -1177,7 +1186,7 @@ describe("chat upload message with image use case", () => {
         kind: "image",
         mimeType: "image/png",
       },
-      authorHandleId: "handle_1",
+      author: "vinicius",
       body: "post from bunker",
       id: "message_1",
       sentAt: "2026-04-24T12:34:56.000Z",
@@ -1201,6 +1210,15 @@ describe("chat upload message with image use case", () => {
           joinedAt: new Date("2026-04-24T00:00:00.000Z"),
           lastSeenAt: null,
           leftAt: null,
+          roomId: "room-1",
+          status: "active",
+          updatedAt: new Date("2026-04-24T00:00:00.000Z"),
+        }),
+        findHandleById: async () => ({
+          createdAt: new Date("2026-04-24T00:00:00.000Z"),
+          handle: "vinicius",
+          id: "handle_1",
+          normalizedHandle: "vinicius",
           roomId: "room-1",
           status: "active",
           updatedAt: new Date("2026-04-24T00:00:00.000Z"),
@@ -1243,6 +1261,15 @@ describe("chat upload message with image use case", () => {
         createMessageWithUpload: async () => {
           throw new Error("should not persist");
         },
+        findHandleById: async () => ({
+          createdAt: new Date("2026-04-24T00:00:00.000Z"),
+          handle: "vinicius",
+          id: "handle_1",
+          normalizedHandle: "vinicius",
+          roomId: "room_1",
+          status: "active",
+          updatedAt: new Date("2026-04-24T00:00:00.000Z"),
+        }),
         findSessionById: async () => ({
           createdAt: new Date("2026-04-24T00:00:00.000Z"),
           expiresAt: null,

@@ -237,7 +237,7 @@ export type UploadChatMessageWithImageInput = Readonly<{
 
 export type UploadChatMessageWithImageOutput = Readonly<{
   attachment: ChatMessageAttachmentOutput;
-  authorHandleId: string;
+  author: string;
   body: string;
   id: string;
   sentAt: string;

@@ -4,10 +4,14 @@ import { ActionButton } from '../../../../shared/ui'
 type ChatComposerProps = {
   draft: string
   imageName?: string
+  imagePreviewUrl?: string | null
   isSubmitting?: boolean
+  notice?: string
   onDraftChange: (draft: string) => void
-  onImageChange: (fileName?: string) => void
+  onImageChange: (file: File | null) => void
+  onImageClear?: () => void
   onSubmit: () => void
+  uploadProgress?: number | null
   uploadsEnabled?: boolean
 }
 
@@ -16,10 +20,14 @@ const quickEmoji = [':) ', '<3 ', '!!! ']
 export function ChatComposer({
   draft,
   imageName,
+  imagePreviewUrl,
   isSubmitting = false,
+  notice,
   onDraftChange,
   onImageChange,
+  onImageClear,
   onSubmit,
+  uploadProgress,
   uploadsEnabled = true,
 }: ChatComposerProps) {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -28,7 +36,8 @@ export function ChatComposer({
   }
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onImageChange(event.target.files?.[0]?.name)
+    onImageChange(event.target.files?.[0] ?? null)
+    event.target.value = ''
   }
 
   return (
@@ -42,6 +51,26 @@ export function ChatComposer({
           rows={3}
         />
       </label>
+      {imagePreviewUrl ? (
+        <div className="chat-composer__preview">
+          <img src={imagePreviewUrl} alt={imageName ?? 'selected upload preview'} className="chat-composer__preview-image" />
+          <div className="chat-composer__preview-meta">
+            <span>{imageName ?? 'selected image'}</span>
+            <button type="button" className="chat-composer__clear glitch-hover" onClick={onImageClear}>
+              remove
+            </button>
+          </div>
+        </div>
+      ) : null}
+      {typeof uploadProgress === 'number' ? (
+        <div className="chat-composer__progress" aria-live="polite">
+          <div className="chat-composer__progress-bar">
+            <span style={{ width: `${uploadProgress}%` }} />
+          </div>
+          <span>{uploadProgress}% uploaded</span>
+        </div>
+      ) : null}
+      {notice ? <p className="chat-composer__notice">{notice}</p> : null}
       <div className="chat-composer__tools">
         <div className="chat-composer__quick">
           {quickEmoji.map((emoji) => (
@@ -57,12 +86,14 @@ export function ChatComposer({
         </div>
         {uploadsEnabled ? (
           <label className="chat-composer__upload glitch-hover">
-            <input type="file" accept="image/*" onChange={handleImageChange} />
+            <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} />
             image
           </label>
         ) : null}
-        {imageName ? <span className="chat-composer__image">{imageName}</span> : null}
-        <ActionButton type="submit" disabled={isSubmitting}>{isSubmitting ? 'sending…' : 'send'}</ActionButton>
+        {imageName && !imagePreviewUrl ? <span className="chat-composer__image">{imageName}</span> : null}
+        <ActionButton type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'sending…' : 'send'}
+        </ActionButton>
       </div>
     </form>
   )
