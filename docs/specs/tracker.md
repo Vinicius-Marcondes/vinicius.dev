@@ -8,6 +8,7 @@
 | Admin CMS spec approved | yes | `admin-cms.md` already locks admin route compatibility and auth/MFA expectations. |
 | Backend auth/admin HTTP contracts available | yes | Backend already serves `/api/auth/*` and `/api/admin/dashboard/summary`. |
 | Frontend admin auth integration spec approved | yes | `SPEC-028` is approved below and ready to drive `FE-011`. |
+| Chat room live integration spec approved | no | `SPEC-030` is authored on `spec/SPEC-030-chat-room-live-integration` and awaiting review before task registration. |
 
 ## Global Decisions
 - Use Bun for both frontend and backend toolchains.
@@ -20,6 +21,8 @@
 - Chat uploads allow `image/jpeg`, `image/png`, and `image/webp`, max `5 MB`, one image per message.
 - Chat uploaded images are room-gated, not public.
 - Deleted chat messages and media metadata are soft-hidden with audit records; physical file cleanup can be deferred.
+- Public chat room sessions persist for up to `24` hours and then require re-entry with the room password.
+- Realtime public chat delivery uses a room-scoped native WebSocket after HTTP join/history bootstrap.
 - Thoughts RSS and sitemap are included.
 - Frontend task execution is tracker-first: one task, one branch, one acceptance source, and one tracker entry.
 
@@ -32,7 +35,8 @@
 ## Next Task Queue
 1. Complete reviewer validation for `QA-008` follow-up PR [#117](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/117).
 2. Merge the Prisma client generation fix into `develop` via reviewed merge commit (no self-merge).
-3. Queue the next approved implementation task after `QA-008` closes.
+3. Review and merge `SPEC-030` into `develop` via reviewed merge commit.
+4. Register `CHAT-008`, `CHAT-009`, and `CHAT-010` in `tracker.md` after `SPEC-030` is approved and merged.
 
 ## Current Executable Cluster
 ### Frontend Admin API Integration
@@ -68,11 +72,23 @@ Done criteria for `QA-008`:
 - workflow files move from `actions/checkout@v4` to a Node.js 24-compatible checkout release
 - workflow trigger scope, permissions, concurrency, and deployment policy remain unchanged unless a minimal fix is required
 
+### Chat Room Live Integration Spec Authoring
+- Status: in review.
+- Primary spec: `SPEC-030`.
+- Supporting specs: `frontend-structure.md`, `frontend-architecture.md`, `frontend-admin-auth-integration.md`, `backend-architecture.md`, `data-model.md`, `media-storage.md`, `admin-cms.md`, and `verification.md`.
+- Scope: define backend-generated chat room password visibility/rotation on the admin dashboard, `24` hour persisted room sessions, HTTP join/session validation, realtime messages and participants, infinite-scroll history, and protected image upload/viewer support.
+- Non-scope: implementation changes before reviewed approval.
+
+| Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| In Review | SPEC-030 | SPEC-030 | spec | develop | `spec/SPEC-030-chat-room-live-integration` | develop | `docs/specs/chat-room-live-integration.md` | [#119](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/119) | Awaiting review and merge before `CHAT-008`, `CHAT-009`, and `CHAT-010` can be registered. |
+
 ## Spec Table
 | Spec ID | Title | Layer | Status | Depends on | Blocks | Git workflow defined | Ready for task split | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | SPEC-028 | Frontend Admin Auth Integration | Frontend | Approved | `frontend-structure.md`, `frontend-architecture.md`, `admin-cms.md`, `backend-architecture.md`, `verification.md`, `git-workflow.md`, `acceptance-criteria.md` | `FE-011` | yes | yes | First live frontend-to-backend integration slice; keeps `/api` as the browser-facing base and replaces mocked admin login state with backend auth plus dashboard loading. |
 | SPEC-029 | CI Workflow Maintenance | Infra | Approved | `ci-cd.md`, `verification.md`, `git-workflow.md`, `acceptance-criteria.md` | `QA-008` | yes | yes | Removes analyzer freshness automation and maintains Node.js 24 workflow compatibility without changing deployment policy. |
+| SPEC-030 | Chat Room Live Integration | Cross-layer | Review | `frontend-structure.md`, `frontend-architecture.md`, `frontend-admin-auth-integration.md`, `project-structure.md`, `backend-architecture.md`, `data-model.md`, `media-storage.md`, `admin-cms.md`, `verification.md`, `git-workflow.md`, `acceptance-criteria.md` | `CHAT-008`, `CHAT-009`, `CHAT-010` | yes | no | Replaces the mock chat room with backend join/session contracts, realtime delivery, and protected upload/viewer behavior while adding backend-generated room password management to the admin dashboard. |
 
 ## Tasking Rule
 A spec may only move to `Tasked` when:
