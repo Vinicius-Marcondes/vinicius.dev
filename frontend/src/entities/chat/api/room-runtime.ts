@@ -1,4 +1,4 @@
-import { getJson, postJson } from '../../../shared/api'
+import { apiBaseUrl, getJson, postJson } from '../../../shared/api'
 import type {
   ChatLiveEvent,
   ChatMessagesPage,
@@ -53,6 +53,8 @@ export const sendChatMessage = (
     },
   )
 
+const trimTrailingSlash = (value: string) => value.replace(/\/$/, '')
+
 export const createChatLiveSocket = (
   slug: string,
   roomSessionId: string,
@@ -63,8 +65,11 @@ export const createChatLiveSocket = (
     onOpen?: (event: Event) => void
   }>,
 ) => {
-  const url = new URL(`/api/chat/rooms/${slug}/live`, window.location.origin)
-  url.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  const url = new URL(
+    `${trimTrailingSlash(apiBaseUrl)}/chat/rooms/${slug}/live`,
+    window.location.origin,
+  )
+  url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
   url.searchParams.set('sessionId', roomSessionId)
 
   const socket = new WebSocket(url)
