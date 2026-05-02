@@ -4,9 +4,11 @@ import { ActionButton } from '../../../../shared/ui'
 type ChatComposerProps = {
   draft: string
   imageName?: string
+  isSubmitting?: boolean
   onDraftChange: (draft: string) => void
   onImageChange: (fileName?: string) => void
   onSubmit: () => void
+  uploadsEnabled?: boolean
 }
 
 const quickEmoji = [':) ', '<3 ', '!!! ']
@@ -14,9 +16,11 @@ const quickEmoji = [':) ', '<3 ', '!!! ']
 export function ChatComposer({
   draft,
   imageName,
+  isSubmitting = false,
   onDraftChange,
   onImageChange,
   onSubmit,
+  uploadsEnabled = true,
 }: ChatComposerProps) {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -51,12 +55,14 @@ export function ChatComposer({
             </button>
           ))}
         </div>
-        <label className="chat-composer__upload glitch-hover">
-          <input type="file" accept="image/*" onChange={handleImageChange} />
-          image
-        </label>
+        {uploadsEnabled ? (
+          <label className="chat-composer__upload glitch-hover">
+            <input type="file" accept="image/*" onChange={handleImageChange} />
+            image
+          </label>
+        ) : null}
         {imageName ? <span className="chat-composer__image">{imageName}</span> : null}
-        <ActionButton type="submit">send</ActionButton>
+        <ActionButton type="submit" disabled={isSubmitting}>{isSubmitting ? 'sending…' : 'send'}</ActionButton>
       </div>
     </form>
   )

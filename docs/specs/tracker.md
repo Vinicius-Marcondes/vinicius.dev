@@ -35,9 +35,8 @@
 ## Next Task Queue
 1. Complete reviewer validation for `QA-008` follow-up PR [#117](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/117).
 2. Merge the Prisma client generation fix into `develop` via reviewed merge commit (no self-merge).
-3. Start `CHAT-008` on `admin/CHAT-008-chat-password-rotation-and-room-gate`.
-4. Queue `CHAT-009` after `CHAT-008` lands.
-5. Queue `CHAT-010` after `CHAT-009` lands.
+3. Start `CHAT-009` on `frontend/CHAT-009-chat-realtime-messages`.
+4. Queue `CHAT-010` after `CHAT-009` lands.
 
 ## Current Executable Cluster
 ### Frontend Admin API Integration
@@ -82,8 +81,8 @@ Done criteria for `QA-008`:
 
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| In Review | CHAT-008 | SPEC-030 | admin | develop | `admin/CHAT-008-chat-password-rotation-and-room-gate` | develop | `docs/specs/chat-room-live-integration.md` | [#120](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/120) | — |
-| Spec-ready | CHAT-009 | SPEC-030 | frontend | develop | `frontend/CHAT-009-chat-realtime-messages` | develop | `docs/specs/chat-room-live-integration.md` | — | Depends on `CHAT-008`. |
+| Done | CHAT-008 | SPEC-030 | admin | develop | `admin/CHAT-008-chat-password-rotation-and-room-gate` | develop | `docs/specs/chat-room-live-integration.md` | [#120](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/120) | — |
+| In Review | CHAT-009 | SPEC-030 | frontend | develop | `frontend/CHAT-009-chat-realtime-messages` | develop | `docs/specs/chat-room-live-integration.md` | [#121](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/121) | — |
 | Spec-ready | CHAT-010 | SPEC-030 | frontend | develop | `frontend/CHAT-010-chat-image-uploads-and-viewer` | develop | `docs/specs/chat-room-live-integration.md` | — | Depends on `CHAT-009`. |
 
 Done criteria for `CHAT-008`:

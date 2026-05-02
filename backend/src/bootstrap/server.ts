@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { websocket } from "hono/bun";
 
 import { createHonoHttpAdapter } from "../adapters/inbound/http/hono/http-adapter";
 import { createContainer, type BootstrapContainer } from "./container";
@@ -23,8 +24,9 @@ if (import.meta.main) {
   const app = createServer(container);
 
   Bun.serve({
-    fetch: app.fetch,
+    fetch: (request, server) => app.fetch(request, server),
     port: container.config.server.port,
+    websocket,
   });
 
   console.info(`vinicius.dev backend listening on :${container.config.server.port}`);

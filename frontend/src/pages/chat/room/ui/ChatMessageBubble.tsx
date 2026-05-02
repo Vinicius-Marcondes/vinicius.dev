@@ -1,6 +1,21 @@
 import type { ChatMessage } from '../../../../entities/chat'
 import { cx } from '../../../../shared/lib'
 
+const formatMessageTimestamp = (value: string) => {
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    month: 'short',
+  }).format(date)
+}
+
 type ChatMessageBubbleProps = {
   isOwn?: boolean
   message: ChatMessage
@@ -17,7 +32,7 @@ export function ChatMessageBubble({ isOwn = false, message }: ChatMessageBubbleP
     >
       <header className="chat-message__meta">
         <span>{message.author}</span>
-        <span>{message.sentAt}</span>
+        <span>{formatMessageTimestamp(message.sentAt)}</span>
       </header>
       <p className="chat-message__body">{message.body}</p>
       {message.attachment ? (
