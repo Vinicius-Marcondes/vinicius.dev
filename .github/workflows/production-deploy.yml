@@ -42,7 +42,7 @@ jobs:
 
           if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
             DEPLOY_TAG="${GITHUB_REF#refs/tags/}"
-            DEPLOY_SHA="${GITHUB_SHA}"
+            DEPLOY_SHA="${GITHUB_SHA}" 
           else
             DEPLOY_TAG="${{ github.event.inputs.tag }}"
             git fetch --force --tags origin

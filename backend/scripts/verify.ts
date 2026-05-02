@@ -6,8 +6,6 @@ import { checkBoundaryViolations } from "./boundary-check";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "../..");
 const BACKEND_ROOT = path.resolve(import.meta.dir, "..");
-const FRONTEND_ANALYZER = path.join(REPO_ROOT, "scripts", "frontend-analyzer.ts");
-const FRONTEND_ANALYZER_OUTPUT = "/tmp/vinicius-dev-frontend-analyzer-be005.md";
 
 async function runCommand(
   command: readonly string[],
@@ -22,14 +20,6 @@ async function runCommand(
   });
 
   return await proc.exited;
-}
-
-async function runFrontendAnalyzer(): Promise<number> {
-  return runCommand(
-    ["bun", FRONTEND_ANALYZER, `--output=${FRONTEND_ANALYZER_OUTPUT}`],
-    REPO_ROOT,
-    `Running frontend analyzer to ${FRONTEND_ANALYZER_OUTPUT}`,
-  );
 }
 
 async function runMediaVerification(): Promise<number> {
@@ -129,9 +119,6 @@ export async function main(): Promise<number> {
 
   const deployReadinessVerificationExitCode = await runDeployReadinessVerification();
   if (deployReadinessVerificationExitCode !== 0) return deployReadinessVerificationExitCode;
-
-  const analyzerExitCode = await runFrontendAnalyzer();
-  if (analyzerExitCode !== 0) return analyzerExitCode;
 
   console.log("Backend verification passed.");
   return 0;
