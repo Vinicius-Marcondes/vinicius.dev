@@ -83,7 +83,7 @@ Done criteria for `QA-008`:
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Done | CHAT-008 | SPEC-030 | admin | develop | `admin/CHAT-008-chat-password-rotation-and-room-gate` | develop | `docs/specs/chat-room-live-integration.md` | [#120](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/120) | — |
 | Done | CHAT-009 | SPEC-030 | frontend | develop | `frontend/CHAT-009-chat-realtime-messages` | develop | `docs/specs/chat-room-live-integration.md` | [#121](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/121) | — |
-| In Progress | CHAT-010 | SPEC-030 | frontend | develop | `frontend/CHAT-010-chat-image-uploads-and-viewer` | develop | `docs/specs/chat-room-live-integration.md` | — | — |
+| In Review | CHAT-010 | SPEC-030 | frontend | develop | `frontend/CHAT-010-chat-image-uploads-and-viewer` | develop | `docs/specs/chat-room-live-integration.md` | [#122](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/122) | — |
 
 Done criteria for `CHAT-008`:
 - backend-generated password rotation exists for `night-shift`
