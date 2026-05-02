@@ -19,7 +19,7 @@ Bun + Hono + TypeScript backend scaffold for Wave 2.
 
 `bun run prisma:check` runs Prisma format, validate, generate, and conditionally migration status. Migration status is skipped with a clear message when `DATABASE_URL` is not set.
 
-`bun run verify` runs the backend boundary check, persistence verification, and the frontend analyzer in non-mutating mode, writing the analyzer output to `/tmp/vinicius-dev-frontend-analyzer-be005.md`.
+`bun run verify` runs the backend boundary check, persistence verification, media verification, selected route/integration tests, and deploy-readiness checks.
 
 ## Persistence
 Copy `.env.example` to `.env` for local development and set `DATABASE_URL` to a PostgreSQL database. DATA-001 only establishes Prisma/Postgres tooling; product models are added by later persistence tasks.

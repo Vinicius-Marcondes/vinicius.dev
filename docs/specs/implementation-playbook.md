@@ -26,7 +26,6 @@ The harness and `develop` must stay aligned. If implementation lands ahead of th
 
 ### Phase 1: Gate review
 - Read [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md).
-- Read the latest [frontend-analyzer-report.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer-report.md).
 - Approve the specs that block the next layer of work.
 
 ### Phase 2: Task clustering
@@ -180,18 +179,11 @@ Responsibilities:
 - confirm the tracker and cluster docs still describe the active phase correctly when the task closes a cluster
 - confirm `In Review` and `Done` transitions in the tracker
 
-## Commands and Helpers
-### Analyzer
-```bash
-bun scripts/frontend-analyzer.ts
-```
-
 ## Manual Operator Checklist
 Before starting any development session:
 - confirm `develop` exists
 - open the tracker
 - identify the current highest-priority approved cluster
-- confirm the analyzer report is current
 
 Before assigning an agent:
 - confirm the task exists in `tracker.md`
