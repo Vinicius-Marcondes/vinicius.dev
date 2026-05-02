@@ -163,13 +163,14 @@ model AdminMfaChallenge {
 }
 
 model ChatRoom {
-  id                String    @id @default(cuid())
-  slug              String    @unique
-  passwordHash      String    @db.Text
-  passwordVersion   Int       @default(1)
-  passwordRotatedAt DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id                        String    @id @default(cuid())
+  slug                      String    @unique
+  passwordHash              String    @db.Text
+  currentPasswordCiphertext String?   @db.Text
+  passwordVersion           Int       @default(1)
+  passwordRotatedAt         DateTime?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
 
   handles           ChatHandle[]
   sessions          ChatRoomSession[]

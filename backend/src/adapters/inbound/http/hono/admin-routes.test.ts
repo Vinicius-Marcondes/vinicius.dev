@@ -87,6 +87,29 @@ const createTestContainer = (
     executeBanHandle?: (
       input: BanChatRoomHandleInput,
     ) => BanChatRoomHandleOutput | Promise<BanChatRoomHandleOutput> | null | Promise<null>;
+    executeGetRoomAccess?: (input: Readonly<{ slug: string }>) =>
+      | Readonly<{
+          currentPassword: string
+          room: Readonly<{
+            id: string
+            passwordRotatedAt: string | null
+            passwordVersion: number
+            sessionTtlHours: number
+            slug: string
+          }>
+        }>
+      | Promise<Readonly<{
+          currentPassword: string
+          room: Readonly<{
+            id: string
+            passwordRotatedAt: string | null
+            passwordVersion: number
+            sessionTtlHours: number
+            slug: string
+          }>
+        }>>
+      | null
+      | Promise<null>;
     executeListModerationAudits?: (
       input: ListChatModerationAuditsInput,
     ) =>
@@ -254,6 +277,20 @@ const createTestContainer = (
   chat: {
     banRoomHandle: {
       execute: options.executeBanHandle ?? (async () => null),
+    },
+    getRoomAccess: {
+      execute:
+        options.executeGetRoomAccess ??
+        (async () => ({
+          currentPassword: 'night-runner-42',
+          room: {
+            id: 'room_1',
+            passwordRotatedAt: '2026-04-28T12:08:00.000Z',
+            passwordVersion: 4,
+            sessionTtlHours: 24,
+            slug: 'night-shift',
+          },
+        })),
     },
     listModerationAudits: {
       execute:
@@ -469,6 +506,27 @@ describe("admin routes", () => {
       resource: "auth",
     });
   });
+
+  it("returns chat room access details for an authenticated session", async () => {
+    const app = createHonoHttpAdapter(createTestContainer())
+    const response = await app.request('/api/admin/chat/rooms/night-shift/access', {
+      headers: {
+        cookie: 'vinicius.dev-session=session-token-1',
+      },
+    })
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({
+      currentPassword: 'night-runner-42',
+      room: {
+        id: 'room_1',
+        passwordRotatedAt: '2026-04-28T12:08:00.000Z',
+        passwordVersion: 4,
+        sessionTtlHours: 24,
+        slug: 'night-shift',
+      },
+    })
+  })
 
   it("maps moderation audit listing query params into the use case", async () => {
     let capturedInput: ListChatModerationAuditsInput | undefined;
@@ -863,11 +921,13 @@ describe("admin routes", () => {
 
           return {
             auditId: "audit_3",
+            generatedPassword: "new-secret",
             revokedSessionCount: 3,
             room: {
               id: "room_1",
               passwordRotatedAt: "2026-04-28T12:08:00.000Z",
               passwordVersion: 4,
+              sessionTtlHours: 24,
               slug: "night-shift",
             },
             rotation: {
@@ -881,7 +941,6 @@ describe("admin routes", () => {
 
     const response = await app.request("/api/admin/chat/rooms/night-shift/password-rotation", {
       body: JSON.stringify({
-        nextPassword: "  new-secret  ",
         reason: "  leaked credentials  ",
       }),
       headers: {
@@ -894,11 +953,13 @@ describe("admin routes", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       auditId: "audit_3",
+      generatedPassword: "new-secret",
       revokedSessionCount: 3,
       room: {
         id: "room_1",
         passwordRotatedAt: "2026-04-28T12:08:00.000Z",
         passwordVersion: 4,
+        sessionTtlHours: 24,
         slug: "night-shift",
       },
       rotation: {
@@ -908,54 +969,9 @@ describe("admin routes", () => {
     });
     expect(capturedInput).toEqual({
       actorAdminUserId: "admin_1",
-      nextPassword: "new-secret",
       reason: "leaked credentials",
       slug: "night-shift",
     });
-  });
-
-  it("rejects room password rotation requests missing nextPassword", async () => {
-    let called = false;
-    const app = createHonoHttpAdapter(
-      createTestContainer({
-        executeRotateRoomPassword: async () => {
-          called = true;
-
-          return {
-            auditId: "audit_3",
-            revokedSessionCount: 0,
-            room: {
-              id: "room_1",
-              passwordRotatedAt: "2026-04-28T12:08:00.000Z",
-              passwordVersion: 4,
-              slug: "night-shift",
-            },
-            rotation: {
-              id: "rotation_1",
-              rotatedAt: "2026-04-28T12:08:00.000Z",
-            },
-          };
-        },
-      }),
-    );
-
-    const response = await app.request("/api/admin/chat/rooms/night-shift/password-rotation", {
-      body: JSON.stringify({
-        reason: "leaked credentials",
-      }),
-      headers: {
-        "content-type": "application/json",
-        cookie: "vinicius.dev-session=session-token-1",
-      },
-      method: "POST",
-    });
-
-    expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({
-      error: "invalid_request",
-      field: "nextPassword",
-    });
-    expect(called).toBe(false);
   });
 
   it("returns not_found when room password rotation target does not exist", async () => {
@@ -966,9 +982,7 @@ describe("admin routes", () => {
     );
 
     const response = await app.request("/api/admin/chat/rooms/unknown/password-rotation", {
-      body: JSON.stringify({
-        nextPassword: "new-secret",
-      }),
+      body: JSON.stringify({}),
       headers: {
         "content-type": "application/json",
         cookie: "vinicius.dev-session=session-token-1",

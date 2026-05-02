@@ -1,2 +1,11 @@
-export type { ChatAttachment, ChatMessage, ChatParticipant } from './model/types'
-export { chatMessages, chatParticipants } from './lib/fixtures'
+export type {
+  ChatAttachment,
+  ChatMessage,
+  ChatParticipant,
+  ChatRoomAccess,
+  ChatRoomIdentity,
+  ChatRoomJoinResult,
+  ChatRoomSession,
+} from './model/types'
+export { joinChatRoom, parseChatRoomError, resolveChatRoomSession } from './api/room-session'
+export { getChatRoomAccess, rotateChatRoomPassword } from './api/room-access'

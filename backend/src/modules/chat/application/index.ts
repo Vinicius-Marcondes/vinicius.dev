@@ -9,6 +9,9 @@ import type {
   BanChatRoomHandlePort,
   ChatUploadMimeType,
   ChatRoomMessageOutput,
+  GetChatRoomAccessInput,
+  GetChatRoomAccessOutput,
+  GetChatRoomAccessPort,
   JoinChatRoomSessionInput,
   JoinChatRoomSessionOutput,
   JoinChatRoomSessionPort,
@@ -30,6 +33,9 @@ import type {
   OpenChatUploadMediaInput,
   OpenChatUploadMediaOutput,
   OpenChatUploadMediaPort,
+  ResolveChatRoomSessionInput,
+  ResolveChatRoomSessionOutput,
+  ResolveChatRoomSessionPort,
   RotateChatRoomPasswordInput,
   RotateChatRoomPasswordOutput,
   RotateChatRoomPasswordPort,
@@ -97,6 +103,13 @@ export class InvalidChatMessageCursorError extends Error {
   }
 }
 
+export class InvalidChatRoomSessionError extends Error {
+  constructor() {
+    super("chat room session is invalid or expired");
+    this.name = "InvalidChatRoomSessionError";
+  }
+}
+
 export class InvalidChatModerationAuditCursorError extends Error {
   constructor() {
     super("chat moderation audit cursor is invalid");
@@ -140,6 +153,8 @@ const MAX_CHAT_MODERATION_AUDITS_PAGE_SIZE = 80;
 
 const defaultSessionToken = (): string => crypto.randomUUID();
 
+const DEFAULT_CHAT_ROOM_SESSION_MAX_AGE_SECONDS = 60 * 60 * 24;
+
 const hashToken = async (token: string): Promise<string> => {
   const bytes = new TextEncoder().encode(token);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
@@ -171,10 +186,20 @@ export type JoinChatRoomSessionDependencies = Readonly<{
     | "findHandleByRoomIdAndNormalizedHandle"
     | "findRoomBySlug"
   >;
+  sessionMaxAgeSeconds?: number;
   verifyRoomPassword?: (input: Readonly<{ passwordHash: string; plainText: string }>) => Promise<boolean>;
 }>;
 
+export type ResolveChatRoomSessionDependencies = Readonly<{
+  clock?: () => Date;
+  repository: Pick<
+    ChatRepositoryPort,
+    "findHandleById" | "findRoomBySlug" | "findSessionById"
+  >;
+}>;
+
 export type ListChatRoomParticipantsDependencies = Readonly<{
+  clock?: () => Date;
   repository: Pick<
     ChatRepositoryPort,
     "findRoomBySlug" | "findSessionById" | "listParticipantsByRoomId"
@@ -182,6 +207,7 @@ export type ListChatRoomParticipantsDependencies = Readonly<{
 }>;
 
 export type ListChatRoomMessagesDependencies = Readonly<{
+  clock?: () => Date;
   repository: Pick<ChatRepositoryPort, "findRoomBySlug" | "findSessionById" | "listMessages">;
 }>;
 
@@ -195,6 +221,11 @@ export type SendChatRoomTextMessageDependencies = Readonly<{
     ChatRepositoryPort,
     "createTextMessage" | "findHandleById" | "findRoomBySlug" | "findSessionById"
   >;
+}>;
+
+export type GetChatRoomAccessDependencies = Readonly<{
+  sessionTtlHours: number;
+  repository: Pick<ChatRepositoryPort, "findRoomAccessBySlug">;
 }>;
 
 export type ChatUploadMediaAccessDependencies = Readonly<{
@@ -220,8 +251,10 @@ export type BanChatRoomHandleDependencies = Readonly<{
 
 export type RotateChatRoomPasswordDependencies = Readonly<{
   clock?: () => Date;
+  generateRoomPassword?: () => string;
   hashRoomPassword?: (plainText: string) => Promise<string>;
   repository: Pick<ChatRepositoryPort, "rotateRoomPassword">;
+  sessionTtlHours: number;
 }>;
 
 const normalizeListMessagesLimit = (inputLimit: number | undefined): number => {
@@ -389,11 +422,66 @@ const mapChatModerationAuditOutput = (input: Readonly<{
   targetUploadId: input.targetUploadId,
 });
 
+const resolveSessionExpiry = (joinedAt: Date, sessionMaxAgeSeconds: number): Date => {
+  return new Date(joinedAt.getTime() + sessionMaxAgeSeconds * 1000);
+};
+
+const isRoomSessionActive = (
+  session: Readonly<{
+    expiresAt: Date | null;
+    leftAt: Date | null;
+    roomId: string;
+    status: "active" | "revoked" | "expired";
+  }>,
+  now: Date,
+  expectedRoomId: string,
+): boolean => {
+  if (session.status !== "active" || session.leftAt || session.roomId !== expectedRoomId) {
+    return false;
+  }
+
+  if (!session.expiresAt) {
+    return true;
+  }
+
+  return session.expiresAt.getTime() > now.getTime();
+};
+
+const mapResolvedChatRoomSession = (input: Readonly<{
+  handleId: string;
+  handleValue: string;
+  roomId: string;
+  roomSessionId: string;
+  roomSlug: string;
+  sessionExpiresAt: Date | null;
+  sessionJoinedAt: Date;
+  sessionStatus: "active" | "revoked" | "expired";
+}>): ResolveChatRoomSessionOutput => ({
+  participant: {
+    handle: input.handleValue,
+    id: input.handleId,
+    status: "online",
+  },
+  room: {
+    id: input.roomId,
+    slug: input.roomSlug,
+  },
+  session: {
+    expiresAt: input.sessionExpiresAt?.toISOString() ?? null,
+    handleId: input.handleId,
+    id: input.roomSessionId,
+    joinedAt: input.sessionJoinedAt.toISOString(),
+    roomId: input.roomId,
+    status: input.sessionStatus,
+  },
+});
+
 export const createJoinChatRoomSessionUseCase = ({
   clock = () => new Date(),
   createSessionToken = defaultSessionToken,
   hashSessionToken = hashToken,
   repository,
+  sessionMaxAgeSeconds = DEFAULT_CHAT_ROOM_SESSION_MAX_AGE_SECONDS,
   verifyRoomPassword = async ({ passwordHash, plainText }) => {
     try {
       return await Bun.password.verify(plainText, passwordHash);
@@ -443,7 +531,7 @@ export const createJoinChatRoomSessionUseCase = ({
 
     const joinedAt = clock();
     const session = await repository.createSession({
-      expiresAt: null,
+      expiresAt: resolveSessionExpiry(joinedAt, sessionMaxAgeSeconds),
       handleId: participant.id,
       joinedAt,
       lastSeenAt: joinedAt,
@@ -453,28 +541,65 @@ export const createJoinChatRoomSessionUseCase = ({
       status: "active",
     });
 
-    return {
-      participant: {
-        handle: participant.handle,
-        id: participant.id,
-        status: "online",
-      },
-      room: {
-        id: room.id,
-        slug: room.slug,
-      },
-      session: {
-        handleId: session.handleId,
-        id: session.id,
-        joinedAt: session.joinedAt.toISOString(),
-        roomId: session.roomId,
-        status: session.status,
-      },
-    };
+    return mapResolvedChatRoomSession({
+      handleId: participant.id,
+      handleValue: participant.handle,
+      roomId: room.id,
+      roomSessionId: session.id,
+      roomSlug: room.slug,
+      sessionExpiresAt: session.expiresAt,
+      sessionJoinedAt: session.joinedAt,
+      sessionStatus: session.status,
+    });
+  },
+});
+
+export const createResolveChatRoomSessionUseCase = ({
+  clock = () => new Date(),
+  repository,
+}: ResolveChatRoomSessionDependencies): ResolveChatRoomSessionPort => ({
+  execute: async (
+    input: ResolveChatRoomSessionInput,
+  ): Promise<ResolveChatRoomSessionOutput> => {
+    const room = await repository.findRoomBySlug({
+      slug: input.slug.trim(),
+    });
+
+    if (!room) {
+      throw new InvalidChatRoomSessionError();
+    }
+
+    const session = await repository.findSessionById(input.roomSessionId);
+
+    if (!session || !isRoomSessionActive(session, clock(), room.id)) {
+      throw new InvalidChatRoomSessionError();
+    }
+
+    const handle = await repository.findHandleById(session.handleId);
+
+    if (!handle || handle.roomId !== room.id) {
+      throw new InvalidChatRoomSessionError();
+    }
+
+    if (handle.status === "banned") {
+      throw new BannedChatHandleError();
+    }
+
+    return mapResolvedChatRoomSession({
+      handleId: handle.id,
+      handleValue: handle.handle,
+      roomId: room.id,
+      roomSessionId: session.id,
+      roomSlug: room.slug,
+      sessionExpiresAt: session.expiresAt,
+      sessionJoinedAt: session.joinedAt,
+      sessionStatus: session.status,
+    });
   },
 });
 
 export const createListChatRoomParticipantsUseCase = ({
+  clock = () => new Date(),
   repository,
 }: ListChatRoomParticipantsDependencies): ListChatRoomParticipantsPort => ({
   execute: async (
@@ -490,7 +615,7 @@ export const createListChatRoomParticipantsUseCase = ({
 
     const session = await repository.findSessionById(input.roomSessionId);
 
-    if (!session || session.status !== "active" || session.roomId !== room.id) {
+    if (!session || !isRoomSessionActive(session, clock(), room.id)) {
       throw new InvalidChatParticipantAccessError();
     }
 
@@ -503,6 +628,7 @@ export const createListChatRoomParticipantsUseCase = ({
 });
 
 export const createListChatRoomMessagesUseCase = ({
+  clock = () => new Date(),
   repository,
 }: ListChatRoomMessagesDependencies): ListChatRoomMessagesPort => ({
   execute: async (
@@ -518,7 +644,7 @@ export const createListChatRoomMessagesUseCase = ({
 
     const session = await repository.findSessionById(input.roomSessionId);
 
-    if (!session || session.status !== "active" || session.roomId !== room.id) {
+    if (!session || !isRoomSessionActive(session, clock(), room.id)) {
       throw new InvalidChatMessageAccessError();
     }
 
@@ -579,7 +705,7 @@ export const createSendChatRoomTextMessageUseCase = ({
 
     const session = await repository.findSessionById(input.roomSessionId);
 
-    if (!session || session.status !== "active" || session.roomId !== room.id) {
+    if (!session || !isRoomSessionActive(session, clock(), room.id)) {
       throw new InvalidChatMessageAccessError();
     }
 
@@ -681,17 +807,56 @@ export const createBanChatRoomHandleUseCase = ({
   },
 });
 
+export const createGetChatRoomAccessUseCase = ({
+  repository,
+  sessionTtlHours,
+}: GetChatRoomAccessDependencies): GetChatRoomAccessPort => ({
+  execute: async (
+    input: GetChatRoomAccessInput,
+  ): Promise<GetChatRoomAccessOutput | null> => {
+    const room = await repository.findRoomAccessBySlug(input.slug.trim());
+
+    if (!room) {
+      return null;
+    }
+
+    return {
+      currentPassword: room.currentPassword,
+      room: {
+        id: room.id,
+        passwordRotatedAt: room.passwordRotatedAt?.toISOString() ?? null,
+        passwordVersion: room.passwordVersion,
+        sessionTtlHours,
+        slug: room.slug,
+      },
+    };
+  },
+});
+
+const createReadableRoomPassword = (): string => {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  const segments = [4, 4, 4].map((segmentLength) =>
+    Array.from({ length: segmentLength }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join(""),
+  );
+
+  return segments.join("-");
+};
+
 export const createRotateChatRoomPasswordUseCase = ({
   clock = () => new Date(),
+  generateRoomPassword = createReadableRoomPassword,
   hashRoomPassword = hashPassword,
   repository,
+  sessionTtlHours,
 }: RotateChatRoomPasswordDependencies): RotateChatRoomPasswordPort => ({
   execute: async (
     input: RotateChatRoomPasswordInput,
   ): Promise<RotateChatRoomPasswordOutput | null> => {
+    const nextPassword = generateRoomPassword();
     const result = await repository.rotateRoomPassword({
       actorAdminUserId: input.actorAdminUserId.trim(),
-      nextPasswordHash: await hashRoomPassword(input.nextPassword),
+      nextPassword,
+      nextPasswordHash: await hashRoomPassword(nextPassword),
       occurredAt: clock(),
       reason: input.reason?.trim() || undefined,
       slug: input.slug.trim(),
@@ -703,11 +868,13 @@ export const createRotateChatRoomPasswordUseCase = ({
 
     return {
       auditId: result.auditId,
+      generatedPassword: result.currentPassword,
       revokedSessionCount: result.revokedSessionCount,
       room: {
         id: result.room.id,
         passwordRotatedAt: result.room.passwordRotatedAt?.toISOString() ?? null,
         passwordVersion: result.room.passwordVersion,
+        sessionTtlHours,
         slug: result.room.slug,
       },
       rotation: {
@@ -731,8 +898,7 @@ export const createUploadChatMessageWithImageUseCase = ({
 
     if (
       !session ||
-      session.status !== "active" ||
-      session.roomId !== input.roomId ||
+      !isRoomSessionActive(session, clock(), input.roomId) ||
       session.handleId !== input.authorHandleId
     ) {
       throw new InvalidChatUploadActorError();
@@ -797,17 +963,13 @@ export const createOpenChatUploadMediaUseCase = ({
   ): Promise<OpenChatUploadMediaOutput | null> => {
     const session = await repository.findSessionById(input.roomSessionId);
 
-    if (!session || session.status !== "active") {
+    if (!session) {
       throw new InvalidChatUploadAccessError();
     }
 
     const upload = await mediaRepository.findChatUploadMediaById(input.uploadId);
 
-    if (
-      !upload ||
-      upload.roomId !== session.roomId ||
-      upload.moderationState !== "visible"
-    ) {
+    if (!upload || !isRoomSessionActive(session, new Date(), upload.roomId) || upload.moderationState !== "visible") {
       return null;
     }
 

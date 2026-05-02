@@ -19,6 +19,7 @@ export type JoinChatRoomSessionOutput = Readonly<{
     slug: string;
   }>;
   session: Readonly<{
+    expiresAt: string | null;
     handleId: string;
     id: string;
     joinedAt: string;
@@ -29,6 +30,16 @@ export type JoinChatRoomSessionOutput = Readonly<{
 
 export interface JoinChatRoomSessionPort
   extends UseCase<JoinChatRoomSessionInput, JoinChatRoomSessionOutput> {}
+
+export type ResolveChatRoomSessionInput = Readonly<{
+  roomSessionId: string;
+  slug: string;
+}>;
+
+export type ResolveChatRoomSessionOutput = JoinChatRoomSessionOutput;
+
+export interface ResolveChatRoomSessionPort
+  extends UseCase<ResolveChatRoomSessionInput, ResolveChatRoomSessionOutput> {}
 
 export type ListChatRoomParticipantsInput = Readonly<{
   roomSessionId: string;
@@ -165,20 +176,39 @@ export type BanChatRoomHandleOutput = Readonly<{
 export interface BanChatRoomHandlePort
   extends UseCase<BanChatRoomHandleInput, BanChatRoomHandleOutput | null> {}
 
+export type GetChatRoomAccessInput = Readonly<{
+  slug: string;
+}>;
+
+export type GetChatRoomAccessOutput = Readonly<{
+  currentPassword: string;
+  room: Readonly<{
+    id: string;
+    passwordRotatedAt: string | null;
+    passwordVersion: number;
+    sessionTtlHours: number;
+    slug: string;
+  }>;
+}>;
+
+export interface GetChatRoomAccessPort
+  extends UseCase<GetChatRoomAccessInput, GetChatRoomAccessOutput | null> {}
+
 export type RotateChatRoomPasswordInput = Readonly<{
   actorAdminUserId: string;
-  nextPassword: string;
   reason?: string;
   slug: string;
 }>;
 
 export type RotateChatRoomPasswordOutput = Readonly<{
   auditId: string;
+  generatedPassword: string;
   revokedSessionCount: number;
   room: Readonly<{
     id: string;
     passwordVersion: number;
     passwordRotatedAt: string | null;
+    sessionTtlHours: number;
     slug: string;
   }>;
   rotation: Readonly<{

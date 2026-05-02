@@ -1467,6 +1467,7 @@ describe("prisma chat repository", () => {
 
     const result = await repository.rotateRoomPassword({
       actorAdminUserId: "admin_1",
+      nextPassword: "new-secret",
       nextPasswordHash: "hash:new",
       occurredAt,
       reason: "credential leak",
@@ -1497,6 +1498,7 @@ describe("prisma chat repository", () => {
     });
     expect(result).toEqual({
       auditId: "audit_5",
+      currentPassword: "new-secret",
       revokedSessionCount: 4,
       room: {
         createdAt: new Date("2026-04-24T10:00:00.000Z"),
@@ -1514,18 +1516,57 @@ describe("prisma chat repository", () => {
     });
   });
 
-  it("returns null when rotating password for a room slug that does not exist", async () => {
+  it("provisions the room when rotating password for a room slug that does not yet exist", async () => {
+    const occurredAt = new Date("2026-04-28T12:10:00.000Z");
     const repository = createPrismaChatRepository({
       $transaction: async <T>(
         runInTransaction: (tx: {
+          chatModerationAuditRecord: {
+            create: (args: { data: Record<string, unknown>; select: { id: true } }) => Promise<{ id: string }>;
+          };
           chatRoom: {
+            create: (args: { data: Record<string, unknown>; select: Record<string, true> }) => Promise<Record<string, unknown>>;
             findUnique: (args: { where: { slug: string } }) => Promise<Record<string, unknown> | null>;
+            update: (args: { data: Record<string, unknown>; select: Record<string, true>; where: { id: string } }) => Promise<Record<string, unknown>>;
+          };
+          chatRoomPasswordRotation: {
+            create: (args: { data: Record<string, unknown>; select: { id: true; rotatedAt: true } }) => Promise<{ id: string; rotatedAt: Date }>;
+          };
+          chatRoomSession: {
+            updateMany: (args: { data: Record<string, unknown>; where: Record<string, unknown> }) => Promise<{ count: number }>;
           };
         }) => Promise<T>,
       ) =>
         runInTransaction({
+          chatModerationAuditRecord: {
+            create: async () => ({ id: "audit_1" }),
+          },
           chatRoom: {
+            create: async () => ({
+              createdAt: occurredAt,
+              id: "room_9",
+              passwordHash: "hash:new",
+              passwordRotatedAt: occurredAt,
+              passwordVersion: 0,
+              slug: "unknown-room",
+              updatedAt: occurredAt,
+            }),
             findUnique: async () => null,
+            update: async () => ({
+              createdAt: occurredAt,
+              id: "room_9",
+              passwordHash: "hash:new",
+              passwordRotatedAt: occurredAt,
+              passwordVersion: 1,
+              slug: "unknown-room",
+              updatedAt: occurredAt,
+            }),
+          },
+          chatRoomPasswordRotation: {
+            create: async () => ({ id: "rotation_1", rotatedAt: occurredAt }),
+          },
+          chatRoomSession: {
+            updateMany: async () => ({ count: 0 }),
           },
         }),
     } as unknown as PrismaDatabaseClient);
@@ -1533,10 +1574,20 @@ describe("prisma chat repository", () => {
     await expect(
       repository.rotateRoomPassword({
         actorAdminUserId: "admin_1",
+        nextPassword: "new-secret",
         nextPasswordHash: "hash:new",
-        occurredAt: new Date("2026-04-28T12:10:00.000Z"),
+        occurredAt,
         slug: "unknown-room",
       }),
-    ).resolves.toBeNull();
+    ).resolves.toMatchObject({
+      auditId: "audit_1",
+      currentPassword: "new-secret",
+      revokedSessionCount: 0,
+      room: {
+        id: "room_9",
+        passwordVersion: 1,
+        slug: "unknown-room",
+      },
+    });
   });
 });

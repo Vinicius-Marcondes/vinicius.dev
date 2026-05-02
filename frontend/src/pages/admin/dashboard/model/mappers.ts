@@ -1,9 +1,13 @@
 import type { AdminDashboardSummary } from '../../../../entities/admin-session'
+import type { ChatRoomAccess } from '../../../../entities/chat'
 import type { AdminDashboardViewModel } from './types'
 
 const padCounter = (value: number) => String(value).padStart(2, '0')
 
-export const mapDashboardSummary = (dto: AdminDashboardSummary): AdminDashboardViewModel => ({
+export const mapDashboardSummary = (
+  dto: AdminDashboardSummary,
+  roomAccess: ChatRoomAccess | null,
+): AdminDashboardViewModel => ({
   panels: [
     {
       detail: 'two notes and one essay waiting for polish',
@@ -32,4 +36,13 @@ export const mapDashboardSummary = (dto: AdminDashboardSummary): AdminDashboardV
     channel: item.channel,
     title: item.title,
   })),
+  roomAccess: roomAccess
+    ? {
+        currentPassword: roomAccess.currentPassword,
+        passwordRotatedAt: roomAccess.room.passwordRotatedAt,
+        passwordVersion: roomAccess.room.passwordVersion,
+        sessionTtlHours: roomAccess.room.sessionTtlHours,
+        slug: roomAccess.room.slug,
+      }
+    : null,
 })

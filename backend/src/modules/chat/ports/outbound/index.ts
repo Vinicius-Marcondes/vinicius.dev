@@ -8,6 +8,14 @@ export type ChatRoomRepositoryRow = Readonly<{
   updatedAt: Date;
 }>;
 
+export type ChatRoomAccessRepositoryRow = Readonly<{
+  currentPassword: string;
+  id: string;
+  passwordRotatedAt: Date | null;
+  passwordVersion: number;
+  slug: string;
+}>;
+
 export type ChatHandleRepositoryRow = Readonly<{
   id: string;
   roomId: string;
@@ -229,6 +237,7 @@ export type BanChatRoomHandleResult = Readonly<{
 
 export type RotateChatRoomPasswordCommand = Readonly<{
   actorAdminUserId: string;
+  nextPassword: string;
   nextPasswordHash: string;
   occurredAt: Date;
   reason?: string;
@@ -237,6 +246,7 @@ export type RotateChatRoomPasswordCommand = Readonly<{
 
 export type RotateChatRoomPasswordResult = Readonly<{
   auditId: string;
+  currentPassword: string;
   revokedSessionCount: number;
   room: ChatRoomRepositoryRow;
   rotation: Readonly<{
@@ -279,6 +289,7 @@ export interface ChatRepositoryPort {
   ): Promise<RotateChatRoomPasswordResult | null>;
   findHandleById(handleId: string): Promise<ChatHandleRepositoryRow | null>;
   findSessionById(sessionId: string): Promise<ChatRoomSessionRepositoryRow | null>;
+  findRoomAccessBySlug(slug: string): Promise<ChatRoomAccessRepositoryRow | null>;
   findRoomBySlug(query: ChatRoomQuery): Promise<ChatRoomRepositoryRow | null>;
   findHandleByRoomIdAndNormalizedHandle(roomId: string, normalizedHandle: string): Promise<ChatHandleRepositoryRow | null>;
   listParticipantsByRoomId(roomId: string): Promise<readonly ChatRoomParticipantRepositoryRow[]>;

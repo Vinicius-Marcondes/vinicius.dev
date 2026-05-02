@@ -15,6 +15,7 @@ import {
   InvalidChatMessageCursorError,
   InvalidChatParticipantAccessError,
   InvalidChatRoomCredentialsError,
+  InvalidChatRoomSessionError,
   InvalidChatUploadAccessError,
   InvalidChatUploadActorError,
 } from "@/modules/chat/application";
@@ -22,9 +23,11 @@ import { InvalidThoughtCursorError } from "@/modules/content/application";
 import type {
   BanChatRoomHandlePort,
   ChatUploadMimeType,
+  GetChatRoomAccessPort,
   ListChatModerationAuditsPort,
   ListChatRoomMessagesPort,
   ModerateChatRoomMessagePort,
+  ResolveChatRoomSessionPort,
   RotateChatRoomPasswordPort,
   SendChatRoomTextMessagePort,
 } from "@/modules/chat/ports/inbound";
@@ -591,6 +594,9 @@ const readOptionalJsonString = (
 
 const createChatFamily = (container: BootstrapContainer) => {
   const chatApp = new Hono();
+  const resolveRoomSessionUseCase = (container.chat as {
+    resolveRoomSession?: ResolveChatRoomSessionPort;
+  }).resolveRoomSession;
   const listRoomMessagesUseCase = (container.chat as {
     listRoomMessages?: ListChatRoomMessagesPort;
   }).listRoomMessages;
@@ -670,6 +676,52 @@ const createChatFamily = (container: BootstrapContainer) => {
           },
           403,
         );
+      }
+
+      throw error;
+    }
+  });
+
+  chatApp.get("/rooms/:slug/session", async (c) => {
+    if (!resolveRoomSessionUseCase) {
+      return c.json<NotImplementedResponse>(
+        {
+          family: "chat",
+          method: c.req.method,
+          route: c.req.path,
+          service: serviceName,
+          status: "not_implemented",
+        },
+        501,
+      );
+    }
+
+    const slug = c.req.param("slug")?.trim();
+
+    if (!slug) {
+      return c.json({ error: "invalid_path", field: "slug" }, 400);
+    }
+
+    const roomSessionId = c.req.header("x-chat-room-session-id")?.trim();
+
+    if (!roomSessionId) {
+      return c.json({ error: "invalid_request", field: "x-chat-room-session-id" }, 400);
+    }
+
+    try {
+      const response = await resolveRoomSessionUseCase.execute({
+        roomSessionId,
+        slug,
+      });
+
+      return c.json(response);
+    } catch (error) {
+      if (error instanceof InvalidChatRoomSessionError) {
+        return c.json({ error: "denied", resource: "chat" }, 401);
+      }
+
+      if (error instanceof BannedChatHandleError) {
+        return c.json({ error: "denied", reason: "handle_banned", resource: "chat" }, 403);
       }
 
       throw error;
@@ -1507,6 +1559,9 @@ const createAdminFamily = (container: BootstrapContainer) => {
   const banRoomHandleUseCase = (container.chat as {
     banRoomHandle?: BanChatRoomHandlePort;
   }).banRoomHandle;
+  const getRoomAccessUseCase = (container.chat as {
+    getRoomAccess?: GetChatRoomAccessPort;
+  }).getRoomAccess;
   const rotateRoomPasswordUseCase = (container.chat as {
     rotateRoomPassword?: RotateChatRoomPasswordPort;
   }).rotateRoomPassword;
@@ -2112,6 +2167,41 @@ const createAdminFamily = (container: BootstrapContainer) => {
     return c.json(result);
   });
 
+  adminApp.get("/chat/rooms/:slug/access", async (c) => {
+    const session = await resolveSession(c);
+
+    if ("error" in session) {
+      return session.error;
+    }
+
+    if (!getRoomAccessUseCase) {
+      return c.json<NotImplementedResponse>(
+        {
+          family: "admin",
+          method: c.req.method,
+          route: c.req.path,
+          service: serviceName,
+          status: "not_implemented",
+        },
+        501,
+      );
+    }
+
+    const slug = c.req.param("slug")?.trim();
+
+    if (!slug) {
+      return c.json({ error: "invalid_path", field: "slug" }, 400);
+    }
+
+    const result = await getRoomAccessUseCase.execute({ slug });
+
+    if (!result) {
+      return c.json({ error: "not_found", resource: "chat_room" }, 404);
+    }
+
+    return c.json(result);
+  });
+
   adminApp.post("/chat/rooms/:slug/password-rotation", async (c) => {
     const session = await resolveSession(c);
 
@@ -2144,12 +2234,6 @@ const createAdminFamily = (container: BootstrapContainer) => {
       return c.json(parsedBody.error, 400);
     }
 
-    const nextPassword = readRequiredJsonString(parsedBody.value, "nextPassword");
-
-    if ("error" in nextPassword) {
-      return c.json(nextPassword.error, 400);
-    }
-
     const reason = readOptionalJsonString(parsedBody.value, "reason");
 
     if ("error" in reason) {
@@ -2158,7 +2242,6 @@ const createAdminFamily = (container: BootstrapContainer) => {
 
     const result = await rotateRoomPasswordUseCase.execute({
       actorAdminUserId: session.adminUserId,
-      nextPassword: nextPassword.value,
       reason: reason.value,
       slug,
     });

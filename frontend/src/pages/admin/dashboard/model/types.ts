@@ -11,8 +11,19 @@ export type AdminDashboardQueueItem = Readonly<{
   title: string
 }>
 
+export type AdminDashboardRoomAccess = Readonly<{
+  currentPassword: string
+  passwordRotatedAt: string | null
+  passwordVersion: number
+  revokedSessionCount?: number
+  rotationMessage?: string
+  sessionTtlHours: number
+  slug: string
+}>
+
 export type AdminDashboardViewModel = Readonly<{
   panels: readonly AdminDashboardPanel[]
   queues: readonly AdminDashboardQueueItem[]
+  roomAccess: AdminDashboardRoomAccess | null
 }>
 
