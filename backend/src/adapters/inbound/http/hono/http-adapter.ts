@@ -81,6 +81,7 @@ type ChatLiveEvent =
     }>;
 
 type ChatLiveConnection = Readonly<{
+  roomId: string;
   roomSessionId: string;
   roomSlug: string;
   socket: ChatLiveSocket;
@@ -88,6 +89,7 @@ type ChatLiveConnection = Readonly<{
 
 const createChatLiveManager = () => {
   const connectionsByRoomSlug = new Map<string, Map<string, ChatLiveConnection>>();
+  const roomSlugByRoomId = new Map<string, string>();
 
   const getRoomConnections = (roomSlug: string) => {
     const existing = connectionsByRoomSlug.get(roomSlug);
@@ -107,6 +109,7 @@ const createChatLiveManager = () => {
 
   return {
     add(connection: ChatLiveConnection) {
+      roomSlugByRoomId.set(connection.roomId, connection.roomSlug);
       getRoomConnections(connection.roomSlug).set(connection.roomSessionId, connection);
     },
     broadcast(roomSlug: string, payload: ChatLiveEvent) {
@@ -125,6 +128,12 @@ const createChatLiveManager = () => {
 
       if (roomConnections.size === 0) {
         connectionsByRoomSlug.delete(roomSlug);
+
+        for (const [roomId, mappedRoomSlug] of roomSlugByRoomId.entries()) {
+          if (mappedRoomSlug === roomSlug) {
+            roomSlugByRoomId.delete(roomId);
+          }
+        }
       }
     },
     revokeRoom(roomSlug: string) {
@@ -143,6 +152,12 @@ const createChatLiveManager = () => {
       }
 
       connectionsByRoomSlug.delete(roomSlug);
+
+      for (const [roomId, mappedRoomSlug] of roomSlugByRoomId.entries()) {
+        if (mappedRoomSlug === roomSlug) {
+          roomSlugByRoomId.delete(roomId);
+        }
+      }
     },
     sendToSession(roomSlug: string, roomSessionId: string, payload: ChatLiveEvent) {
       const roomConnections = connectionsByRoomSlug.get(roomSlug);
@@ -153,6 +168,15 @@ const createChatLiveManager = () => {
       }
 
       sendEvent(connection.socket, payload);
+    },
+    broadcastByRoomId(roomId: string, payload: ChatLiveEvent) {
+      const roomSlug = roomSlugByRoomId.get(roomId);
+
+      if (!roomSlug) {
+        return;
+      }
+
+      this.broadcast(roomSlug, payload);
     },
   };
 };
@@ -893,6 +917,7 @@ const createChatFamily = (
         },
         onOpen: (_event, ws) => {
           live.add({
+            roomId: resolvedSession.room.id,
             roomSessionId,
             roomSlug: slug,
             socket: ws,
@@ -1371,6 +1396,18 @@ const createChatFamily = (
 
       throw error;
     }
+
+    live.broadcastByRoomId(roomId.value, {
+      item: {
+        attachment: result.attachment,
+        author: result.author,
+        body: result.body,
+        id: result.id,
+        sentAt: result.sentAt,
+        tone: result.tone ?? undefined,
+      },
+      type: "message.created",
+    });
 
     return c.json(
       {

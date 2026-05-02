@@ -23,7 +23,7 @@ const createTestContainer = ({
       kind: "image" as const,
       mimeType: "image/webp" as const,
     },
-    authorHandleId: "handle_1",
+    author: "vinicius",
     body: "uploaded an image without a caption",
     id: "message_1",
     sentAt: "2026-04-24T00:00:00.000Z",

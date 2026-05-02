@@ -17,11 +17,20 @@ const formatMessageTimestamp = (value: string) => {
 }
 
 type ChatMessageBubbleProps = {
+  attachmentStatus?: 'error' | 'loading' | 'ready'
+  attachmentUrl?: string
   isOwn?: boolean
   message: ChatMessage
+  onAttachmentOpen?: () => void
 }
 
-export function ChatMessageBubble({ isOwn = false, message }: ChatMessageBubbleProps) {
+export function ChatMessageBubble({
+  attachmentStatus,
+  attachmentUrl,
+  isOwn = false,
+  message,
+  onAttachmentOpen,
+}: ChatMessageBubbleProps) {
   return (
     <article
       className={cx(
@@ -34,11 +43,26 @@ export function ChatMessageBubble({ isOwn = false, message }: ChatMessageBubbleP
         <span>{message.author}</span>
         <span>{formatMessageTimestamp(message.sentAt)}</span>
       </header>
-      <p className="chat-message__body">{message.body}</p>
+      {message.body ? <p className="chat-message__body">{message.body}</p> : null}
       {message.attachment ? (
         <div className="chat-message__attachment">
-          <span className="chat-message__attachment-frame" aria-hidden="true" />
-          <span>{message.attachment.fileName}</span>
+          {attachmentUrl ? (
+            <button type="button" className="chat-message__image-button" onClick={onAttachmentOpen}>
+              <img src={attachmentUrl} alt={message.attachment.fileName} className="chat-message__image" />
+            </button>
+          ) : (
+            <span className="chat-message__attachment-frame" aria-hidden="true" />
+          )}
+          <div className="chat-message__attachment-meta">
+            <span>{message.attachment.fileName}</span>
+            <small>
+              {attachmentStatus === 'loading'
+                ? 'decrypting image…'
+                : attachmentStatus === 'error'
+                  ? 'image unavailable'
+                  : 'tap to expand'}
+            </small>
+          </div>
         </div>
       ) : null}
     </article>

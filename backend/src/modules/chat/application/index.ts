@@ -171,7 +171,7 @@ const hashPassword = async (plainText: string): Promise<string> => {
 export type ChatApplicationDependencies = Readonly<{
   clock?: () => Date;
   createId?: () => string;
-  repository: Pick<ChatRepositoryPort, "createMessageWithUpload" | "findSessionById">;
+  repository: Pick<ChatRepositoryPort, "createMessageWithUpload" | "findHandleById" | "findSessionById">;
   storage: ChatUploadStoragePort;
 }>;
 
@@ -904,6 +904,16 @@ export const createUploadChatMessageWithImageUseCase = ({
       throw new InvalidChatUploadActorError();
     }
 
+    const authorHandle = await repository.findHandleById(session.handleId);
+
+    if (
+      !authorHandle ||
+      authorHandle.status !== "active" ||
+      authorHandle.roomId !== input.roomId
+    ) {
+      throw new InvalidChatUploadActorError();
+    }
+
     const messageId = createId();
     const uploadId = createId();
     const sentAt = clock();
@@ -940,7 +950,7 @@ export const createUploadChatMessageWithImageUseCase = ({
           kind: "image",
           mimeType: created.upload.mimeType,
         },
-        authorHandleId: created.message.authorHandleId,
+        author: authorHandle.handle,
         body: created.message.body,
         id: created.message.id,
         sentAt: created.message.sentAt.toISOString(),
