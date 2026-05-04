@@ -35,7 +35,7 @@
 ## Next Task Queue
 1. Complete reviewer validation for `QA-008` follow-up PR [#117](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/117).
 2. Complete reviewer validation for `CHAT-010` PR [#122](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/122).
-3. Review `SPEC-031` in `docs/specs/security-hardening-production-readiness.md`.
+3. Review `SPEC-031` PR [#123](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/123).
 4. After `SPEC-031` approval, register `SEC-001` through `SEC-009` in the tracker and queue the critical tasks first.
 
 ## Current Executable Cluster
@@ -107,7 +107,7 @@ Done criteria for `CHAT-010`:
 - upload validation remains aligned with MIME, size, and one-file-per-message rules
 
 ### Security Hardening Planning
-- Status: in progress for `SPEC-031` spec authoring.
+- Status: in review for `SPEC-031` spec authoring.
 - Primary spec: `SPEC-031`.
 - Supporting specs: `frontend-structure.md`, `frontend-architecture.md`, `project-structure.md`, `backend-architecture.md`, `chat-room-live-integration.md`, `infra-deployment.md`, `verification.md`, and `git-workflow.md`.
 - Scope: turn the 2026-05-03 security review into an approved remediation spec, define task decomposition, and register the next implementation queue without starting implementation.
@@ -115,7 +115,7 @@ Done criteria for `CHAT-010`:
 
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| In Progress | SPEC-031 | SPEC-031 | spec | develop | `spec/SPEC-031-security-hardening-production-readiness` | develop | `docs/specs/security-hardening-production-readiness.md` | — | — |
+| In Review | SPEC-031 | SPEC-031 | spec | develop | `spec/SPEC-031-security-hardening-production-readiness` | develop | `docs/specs/security-hardening-production-readiness.md` | [#123](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/123) | — |
 
 Done criteria for `SPEC-031`:
 - `docs/specs/security-hardening-production-readiness.md` exists and follows the harness section template
