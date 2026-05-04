@@ -115,13 +115,13 @@ Done criteria for `CHAT-010`:
 - SEC-001 status log:
   - Start: branch `infra/SEC-001-production-secret-enforcement` moved to `In Progress`.
   - Blocker: none.
-  - PR/Open review: pending PR creation on completion of local verification.
-  - Completion: production secret enforcement, compose env contract, and operator env docs updated locally.
+  - PR/Open review: PR [#124](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/124) opened against `develop`.
+  - Completion: production secret enforcement, compose env contract, and operator env docs updated; awaiting review/merge.
 
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Done | SPEC-031 | SPEC-031 | spec | develop | `spec/SPEC-031-security-hardening-production-readiness` | develop | `docs/specs/security-hardening-production-readiness.md` | [#123](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/123) merged | — |
-| In Progress | SEC-001 | SPEC-031 | infra | develop | `infra/SEC-001-production-secret-enforcement` | develop | `docs/specs/security-hardening-production-readiness.md` | — | — |
+| In Review | SEC-001 | SPEC-031 | infra | develop | `infra/SEC-001-production-secret-enforcement` | develop | `docs/specs/security-hardening-production-readiness.md` | [#124](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/124) | — |
 | Todo | SEC-002 | SPEC-031 | backend | develop | `backend/SEC-002-cors-and-rate-limits` | develop | `docs/specs/security-hardening-production-readiness.md` | — | — |
 | Todo | SEC-003 | SPEC-031 | backend | develop | `backend/SEC-003-mfa-lockout-and-delivery` | develop | `docs/specs/security-hardening-production-readiness.md` | — | — |
 | Blocked | SEC-004 | SPEC-031 | backend | develop | `backend/SEC-004-chat-request-validation-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Phase 2 sequencing: queued after first-wave critical tasks (`SEC-001` to `SEC-003`). |
