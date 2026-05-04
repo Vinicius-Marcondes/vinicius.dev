@@ -35,8 +35,8 @@
 ## Next Task Queue
 1. Complete reviewer validation for `QA-008` follow-up PR [#117](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/117).
 2. Complete reviewer validation for `CHAT-010` PR [#122](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/122).
-3. Review `SPEC-031` PR [#123](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/123).
-4. After `SPEC-031` approval, register `SEC-001` through `SEC-009` in the tracker and queue the critical tasks first.
+3. Start `SEC-001` on `infra/SEC-001-production-secret-enforcement` from `develop`.
+4. Queue `SEC-002` and `SEC-003` as the remaining first-wave critical hardening tasks after `SEC-001` enters review.
 
 ## Current Executable Cluster
 ### Frontend Admin API Integration
@@ -106,23 +106,37 @@ Done criteria for `CHAT-010`:
 - clicking a chat image opens a fullscreen viewer
 - upload validation remains aligned with MIME, size, and one-file-per-message rules
 
-### Security Hardening Planning
-- Status: in review for `SPEC-031` spec authoring.
+### Security Hardening Execution
+- Status: tasked; first-wave critical tasks are queued.
 - Primary spec: `SPEC-031`.
-- Supporting specs: `frontend-structure.md`, `frontend-architecture.md`, `project-structure.md`, `backend-architecture.md`, `chat-room-live-integration.md`, `infra-deployment.md`, `verification.md`, and `git-workflow.md`.
-- Scope: turn the 2026-05-03 security review into an approved remediation spec, define task decomposition, and register the next implementation queue without starting implementation.
-- Non-scope: shipping the security fixes themselves before the planning slice is reviewed.
+- Supporting specs: `frontend-structure.md`, `frontend-architecture.md`, `project-structure.md`, `backend-architecture.md`, `chat-room-live-integration.md`, `frontend-admin-auth-integration.md`, `media-storage.md`, `admin-cms.md`, `infra-deployment.md`, `verification.md`, and `git-workflow.md`.
+- Scope: execute the approved remediation wave from the 2026-05-03 security review with one task branch per finding cluster.
+- Non-scope: bundling unrelated product, CMS, or design changes into the security remediation branches.
+- SEC-001 status log:
+  - Start: branch `infra/SEC-001-production-secret-enforcement` moved to `In Progress`.
+  - Blocker: none.
+  - PR/Open review: PR [#124](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/124) opened against `develop`.
+  - Completion: production secret enforcement, compose env contract, and operator env docs updated; awaiting review/merge.
 
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| In Review | SPEC-031 | SPEC-031 | spec | develop | `spec/SPEC-031-security-hardening-production-readiness` | develop | `docs/specs/security-hardening-production-readiness.md` | [#123](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/123) | — |
+| Done | SPEC-031 | SPEC-031 | spec | develop | `spec/SPEC-031-security-hardening-production-readiness` | develop | `docs/specs/security-hardening-production-readiness.md` | [#123](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/123) merged | — |
+| In Review | SEC-001 | SPEC-031 | infra | develop | `infra/SEC-001-production-secret-enforcement` | develop | `docs/specs/security-hardening-production-readiness.md` | [#124](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/124) | — |
+| Todo | SEC-002 | SPEC-031 | backend | develop | `backend/SEC-002-cors-and-rate-limits` | develop | `docs/specs/security-hardening-production-readiness.md` | — | — |
+| Todo | SEC-003 | SPEC-031 | backend | develop | `backend/SEC-003-mfa-lockout-and-delivery` | develop | `docs/specs/security-hardening-production-readiness.md` | — | — |
+| Blocked | SEC-004 | SPEC-031 | backend | develop | `backend/SEC-004-chat-request-validation-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Phase 2 sequencing: queued after first-wave critical tasks (`SEC-001` to `SEC-003`). |
+| Blocked | SEC-005 | SPEC-031 | backend | develop | `backend/SEC-005-upload-media-signature-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Phase 2 sequencing: queued after first-wave critical tasks (`SEC-001` to `SEC-003`). |
+| Blocked | SEC-006 | SPEC-031 | backend | develop | `backend/SEC-006-websocket-auth-transport-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Depends on `SEC-002`; phase-ordered after first-wave critical tasks. |
+| Blocked | SEC-007 | SPEC-031 | frontend | develop | `frontend/SEC-007-chat-session-storage-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Depends on `SEC-006` handshake contract before frontend storage migration. |
+| Blocked | SEC-008 | SPEC-031 | backend | develop | `backend/SEC-008-chat-crypto-and-audit-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Phase 2 sequencing: queued after first-wave critical tasks (`SEC-001` to `SEC-003`). |
+| Blocked | SEC-009 | SPEC-031 | infra | develop | `infra/SEC-009-edge-headers-and-production-compose` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Depends on `SEC-001` and is reserved for Phase 3 hardening. |
 
 Done criteria for `SPEC-031`:
 - `docs/specs/security-hardening-production-readiness.md` exists and follows the harness section template
 - all actionable findings from `docs/security-review-2026-05-03.md` are mapped into explicit remediation tasks or explicitly closed as non-actionable
 - task IDs, branch names, dependencies, and verification methods are defined for the remediation wave
-- `docs/specs/tracker.md` and `docs/specs/README.md` are updated to register the new spec and queue it for review
-- implementation tasks are not marked executable until the spec is approved
+- `docs/specs/tracker.md` and `docs/specs/README.md` are updated to register the spec and implementation task queue
+- implementation tasks are registered in the tracker with branch metadata, acceptance source, and execution order
 
 ## Spec Table
 | Spec ID | Title | Layer | Status | Depends on | Blocks | Git workflow defined | Ready for task split | Notes |
@@ -130,7 +144,7 @@ Done criteria for `SPEC-031`:
 | SPEC-028 | Frontend Admin Auth Integration | Frontend | Approved | `frontend-structure.md`, `frontend-architecture.md`, `admin-cms.md`, `backend-architecture.md`, `verification.md`, `git-workflow.md`, `acceptance-criteria.md` | `FE-011` | yes | yes | First live frontend-to-backend integration slice; keeps `/api` as the browser-facing base and replaces mocked admin login state with backend auth plus dashboard loading. |
 | SPEC-029 | CI Workflow Maintenance | Infra | Approved | `ci-cd.md`, `verification.md`, `git-workflow.md`, `acceptance-criteria.md` | `QA-008` | yes | yes | Removes analyzer freshness automation and maintains Node.js 24 workflow compatibility without changing deployment policy. |
 | SPEC-030 | Chat Room Live Integration | Cross-layer | Tasked | `frontend-structure.md`, `frontend-architecture.md`, `frontend-admin-auth-integration.md`, `project-structure.md`, `backend-architecture.md`, `data-model.md`, `media-storage.md`, `admin-cms.md`, `verification.md`, `git-workflow.md`, `acceptance-criteria.md` | `CHAT-008`, `CHAT-009`, `CHAT-010` | yes | yes | Replaces the mock chat room with backend join/session contracts, realtime delivery, and protected upload/viewer behavior while adding backend-generated room password management to the admin dashboard. |
-| SPEC-031 | Security Hardening and Production Readiness | Cross-layer | Review | `frontend-structure.md`, `frontend-architecture.md`, `project-structure.md`, `backend-architecture.md`, `chat-room-live-integration.md`, `frontend-admin-auth-integration.md`, `media-storage.md`, `admin-cms.md`, `infra-deployment.md`, `verification.md`, `git-workflow.md`, `acceptance-criteria.md` | `SEC-001`, `SEC-002`, `SEC-003`, `SEC-004`, `SEC-005`, `SEC-006`, `SEC-007`, `SEC-008`, `SEC-009` | yes | no | Plans remediation for the 2026-05-03 security/bug review, prioritizing production secret enforcement, backend CORS/rate limits, MFA hardening, chat/media/session hardening, and edge/runtime fixes. |
+| SPEC-031 | Security Hardening and Production Readiness | Cross-layer | Tasked | `frontend-structure.md`, `frontend-architecture.md`, `project-structure.md`, `backend-architecture.md`, `chat-room-live-integration.md`, `frontend-admin-auth-integration.md`, `media-storage.md`, `admin-cms.md`, `infra-deployment.md`, `verification.md`, `git-workflow.md`, `acceptance-criteria.md` | `SEC-001`, `SEC-002`, `SEC-003`, `SEC-004`, `SEC-005`, `SEC-006`, `SEC-007`, `SEC-008`, `SEC-009` | yes | yes | Approved remediation spec from the 2026-05-03 security/bug review; implementation queue is registered with first-wave critical tasks unblocked first. |
 
 ## Tasking Rule
 A spec may only move to `Tasked` when:

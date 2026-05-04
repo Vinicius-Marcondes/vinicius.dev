@@ -26,6 +26,8 @@ services:
       NODE_ENV: ${BACKEND_NODE_ENV:-production}
       PORT: ${BACKEND_PORT:-3000}
       DATABASE_URL: postgresql://${POSTGRES_USER:-vinicius}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-vinicius}?schema=public
+      AUTH_SESSION_SECRET: ${AUTH_SESSION_SECRET:?set AUTH_SESSION_SECRET in your env file}
+      AUTH_ROOM_PASSWORD_SECRET: ${AUTH_ROOM_PASSWORD_SECRET:?set AUTH_ROOM_PASSWORD_SECRET in your env file}
       MEDIA_PHOTOS_ROOT: /var/lib/vinicius.dev/media/photos
       MEDIA_CHAT_ROOT: /var/lib/vinicius.dev/media/chat
     depends_on:

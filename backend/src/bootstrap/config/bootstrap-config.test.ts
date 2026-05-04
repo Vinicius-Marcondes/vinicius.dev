@@ -95,6 +95,40 @@ describe("bootstrap config", () => {
     expect(config.media.publicUrlBase).toBe("https://media.example.com");
   });
 
+  it("rejects default session secret in production", () => {
+    expect(() =>
+      loadBootstrapConfig({
+        NODE_ENV: "production",
+        AUTH_ROOM_PASSWORD_SECRET: "room-secret",
+      }),
+    ).toThrow("AUTH_SESSION_SECRET must be set in production");
+
+    expect(() =>
+      loadBootstrapConfig({
+        NODE_ENV: "production",
+        AUTH_SESSION_SECRET: "development-session-secret",
+        AUTH_ROOM_PASSWORD_SECRET: "room-secret",
+      }),
+    ).toThrow("AUTH_SESSION_SECRET must be set in production");
+  });
+
+  it("rejects default room password secret in production", () => {
+    expect(() =>
+      loadBootstrapConfig({
+        NODE_ENV: "production",
+        AUTH_SESSION_SECRET: "session-secret",
+      }),
+    ).toThrow("AUTH_ROOM_PASSWORD_SECRET must be set in production");
+
+    expect(() =>
+      loadBootstrapConfig({
+        NODE_ENV: "production",
+        AUTH_SESSION_SECRET: "session-secret",
+        AUTH_ROOM_PASSWORD_SECRET: "development-room-password-secret",
+      }),
+    ).toThrow("AUTH_ROOM_PASSWORD_SECRET must be set in production");
+  });
+
   it("rejects overlapping media roots", () => {
     expect(() =>
       loadBootstrapConfig({
