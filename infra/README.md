@@ -35,3 +35,4 @@ docker compose --env-file .env.prod -f docker-compose.yml up -d
 
 - Never commit real secrets.
 - Keep committed files as placeholders/samples only (`change-me-*`).
+- Production `.env` files must set `AUTH_SESSION_SECRET` and `AUTH_ROOM_PASSWORD_SECRET` to unique high-entropy values.

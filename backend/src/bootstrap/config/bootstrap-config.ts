@@ -199,38 +199,56 @@ export const loadBootstrapConfig = (
     throw new Error("MEDIA_PHOTOS_ROOT and MEDIA_CHAT_ROOT must be different");
   }
 
+  const server = {
+    apiBasePath: API_BASE_PATH,
+    mediaPhotoOriginalPath: MEDIA_PHOTO_ORIGINAL_PATH,
+    nodeEnv: parseNodeEnv(env.NODE_ENV),
+    port: parsePort(env.PORT),
+  };
+
+  const auth = {
+    mfaCodeMaxAgeSeconds: parseInteger(
+      env.AUTH_MFA_CODE_MAX_AGE_SECONDS,
+      DEFAULT_MFA_CODE_MAX_AGE_SECONDS,
+      "AUTH_MFA_CODE_MAX_AGE_SECONDS",
+    ),
+    roomPasswordSecret: parseString(
+      env.AUTH_ROOM_PASSWORD_SECRET,
+      DEFAULT_ROOM_PASSWORD_SECRET,
+    ),
+    sessionCookieName: parseString(
+      env.AUTH_SESSION_COOKIE_NAME,
+      DEFAULT_SESSION_COOKIE_NAME,
+    ),
+    sessionMaxAgeSeconds: parseInteger(
+      env.AUTH_SESSION_MAX_AGE_SECONDS,
+      DEFAULT_SESSION_MAX_AGE_SECONDS,
+      "AUTH_SESSION_MAX_AGE_SECONDS",
+    ),
+    sessionSecret: parseString(env.AUTH_SESSION_SECRET, DEFAULT_SESSION_SECRET),
+  };
+
+  if (
+    server.nodeEnv === "production" &&
+    auth.sessionSecret === DEFAULT_SESSION_SECRET
+  ) {
+    throw new Error("AUTH_SESSION_SECRET must be set in production");
+  }
+
+  if (
+    server.nodeEnv === "production" &&
+    auth.roomPasswordSecret === DEFAULT_ROOM_PASSWORD_SECRET
+  ) {
+    throw new Error("AUTH_ROOM_PASSWORD_SECRET must be set in production");
+  }
+
   return {
-    auth: {
-      mfaCodeMaxAgeSeconds: parseInteger(
-        env.AUTH_MFA_CODE_MAX_AGE_SECONDS,
-        DEFAULT_MFA_CODE_MAX_AGE_SECONDS,
-        "AUTH_MFA_CODE_MAX_AGE_SECONDS",
-      ),
-      roomPasswordSecret: parseString(
-        env.AUTH_ROOM_PASSWORD_SECRET,
-        DEFAULT_ROOM_PASSWORD_SECRET,
-      ),
-      sessionCookieName: parseString(
-        env.AUTH_SESSION_COOKIE_NAME,
-        DEFAULT_SESSION_COOKIE_NAME,
-      ),
-      sessionMaxAgeSeconds: parseInteger(
-        env.AUTH_SESSION_MAX_AGE_SECONDS,
-        DEFAULT_SESSION_MAX_AGE_SECONDS,
-        "AUTH_SESSION_MAX_AGE_SECONDS",
-      ),
-      sessionSecret: parseString(env.AUTH_SESSION_SECRET, DEFAULT_SESSION_SECRET),
-    },
+    auth,
     cors: {
       allowCredentials: parseBoolean(env.CORS_ALLOW_CREDENTIALS, true),
       allowedOrigins: parseList(env.CORS_ALLOWED_ORIGINS, []),
     },
     media,
-    server: {
-      apiBasePath: API_BASE_PATH,
-      mediaPhotoOriginalPath: MEDIA_PHOTO_ORIGINAL_PATH,
-      nodeEnv: parseNodeEnv(env.NODE_ENV),
-      port: parsePort(env.PORT),
-    },
+    server,
   };
 };
