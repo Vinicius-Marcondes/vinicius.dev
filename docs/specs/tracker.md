@@ -35,8 +35,8 @@
 ## Next Task Queue
 1. Complete reviewer validation for `QA-008` follow-up PR [#117](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/117).
 2. Complete reviewer validation for `CHAT-010` PR [#122](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/122).
-3. Execute `SEC-006` on `backend/SEC-006-websocket-auth-transport-hardening` from `develop`.
-4. Queue remaining phase-2 security follow-up `SEC-008` after `SEC-006` enters review.
+3. Execute `SEC-007` on `frontend/SEC-007-chat-session-storage-hardening` from `develop`.
+4. Queue remaining phase-2 security follow-up `SEC-008` after `SEC-007` enters review.
 
 ## Current Executable Cluster
 ### Frontend Admin API Integration
@@ -107,7 +107,7 @@ Done criteria for `CHAT-010`:
 - upload validation remains aligned with MIME, size, and one-file-per-message rules
 
 ### Security Hardening Execution
-- Status: in progress; first-wave critical tasks are complete and phase 2 execution continues with `SEC-006` after `SEC-005` merged to `develop`.
+- Status: in progress; first-wave critical tasks are complete and phase 2 execution continues with `SEC-007` after `SEC-006` merged to `develop`.
 - Primary spec: `SPEC-031`.
 - Supporting specs: `frontend-structure.md`, `frontend-architecture.md`, `project-structure.md`, `backend-architecture.md`, `chat-room-live-integration.md`, `frontend-admin-auth-integration.md`, `media-storage.md`, `admin-cms.md`, `infra-deployment.md`, `verification.md`, and `git-workflow.md`.
 - Scope: execute the approved remediation wave from the 2026-05-03 security review with one task branch per finding cluster.
@@ -149,6 +149,13 @@ Done criteria for `CHAT-010`:
   - Local execution: the WebSocket room-session auth transport moved from query-string `sessionId` to the approved `Sec-WebSocket-Protocol` handshake contract.
   - Local verification: websocket live contract tests, media verification, backend typecheck, and boundary verification passed on 2026-05-05.
   - PR/Open review: PR [#129](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/129) opened against `develop`.
+  - Completion: WebSocket auth transport hardening landed via merged PR [#129](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/129).
+- SEC-007 status log:
+  - Start: branch `frontend/SEC-007-chat-session-storage-hardening` moved to `In Progress` after PR [#129](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/129) merged to `develop`.
+  - Blocker: none.
+  - Local execution: migrate active room-session persistence from `localStorage` to `sessionStorage` and align frontend WebSocket handshake with the SEC-006 subprotocol contract.
+  - Local verification: frontend lint/build plus static checks for no `localStorage` or WebSocket `sessionId` query usage passed on 2026-05-05.
+  - PR/Open review: PR [#130](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/130) opened against `develop`.
 
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -158,8 +165,8 @@ Done criteria for `CHAT-010`:
 | Done | SEC-003 | SPEC-031 | backend | develop | `backend/SEC-003-mfa-lockout-and-delivery` | develop | `docs/specs/security-hardening-production-readiness.md` | [#126](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/126) merged | — |
 | Done | SEC-004 | SPEC-031 | backend | develop | `backend/SEC-004-chat-request-validation-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#127](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/127) merged | — |
 | Done | SEC-005 | SPEC-031 | backend | develop | `backend/SEC-005-upload-media-signature-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#128](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/128) merged | — |
-| In Review | SEC-006 | SPEC-031 | backend | develop | `backend/SEC-006-websocket-auth-transport-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#129](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/129) | — |
-| Blocked | SEC-007 | SPEC-031 | frontend | develop | `frontend/SEC-007-chat-session-storage-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Depends on `SEC-006` handshake contract before frontend storage migration. |
+| Done | SEC-006 | SPEC-031 | backend | develop | `backend/SEC-006-websocket-auth-transport-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#129](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/129) merged | — |
+| In Review | SEC-007 | SPEC-031 | frontend | develop | `frontend/SEC-007-chat-session-storage-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#130](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/130) | — |
 | Blocked | SEC-008 | SPEC-031 | backend | develop | `backend/SEC-008-chat-crypto-and-audit-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Phase 2 sequencing: queued after first-wave critical tasks (`SEC-001` to `SEC-003`). |
 | Blocked | SEC-009 | SPEC-031 | infra | develop | `infra/SEC-009-edge-headers-and-production-compose` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Depends on `SEC-001` and is reserved for Phase 3 hardening. |
 
