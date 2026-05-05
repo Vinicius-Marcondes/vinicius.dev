@@ -121,12 +121,13 @@ Done criteria for `CHAT-010`:
   - Start: branch `backend/SEC-002-cors-and-rate-limits` moved to `In Progress`.
   - Blocker: none.
   - Local verification: adapter coverage for CORS and targeted auth/chat rate-limits plus `backend` boundary verification passed on 2026-05-04.
+  - PR/Open review: PR [#125](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/125) opened against `develop`.
 
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Done | SPEC-031 | SPEC-031 | spec | develop | `spec/SPEC-031-security-hardening-production-readiness` | develop | `docs/specs/security-hardening-production-readiness.md` | [#123](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/123) merged | — |
 | In Review | SEC-001 | SPEC-031 | infra | develop | `infra/SEC-001-production-secret-enforcement` | develop | `docs/specs/security-hardening-production-readiness.md` | [#124](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/124) | — |
-| In Progress | SEC-002 | SPEC-031 | backend | develop | `backend/SEC-002-cors-and-rate-limits` | develop | `docs/specs/security-hardening-production-readiness.md` | — | — |
+| In Review | SEC-002 | SPEC-031 | backend | develop | `backend/SEC-002-cors-and-rate-limits` | develop | `docs/specs/security-hardening-production-readiness.md` | [#125](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/125) | — |
 | Todo | SEC-003 | SPEC-031 | backend | develop | `backend/SEC-003-mfa-lockout-and-delivery` | develop | `docs/specs/security-hardening-production-readiness.md` | — | — |
 | Blocked | SEC-004 | SPEC-031 | backend | develop | `backend/SEC-004-chat-request-validation-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Phase 2 sequencing: queued after first-wave critical tasks (`SEC-001` to `SEC-003`). |
 | Blocked | SEC-005 | SPEC-031 | backend | develop | `backend/SEC-005-upload-media-signature-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Phase 2 sequencing: queued after first-wave critical tasks (`SEC-001` to `SEC-003`). |
