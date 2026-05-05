@@ -1,0 +1,87 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-vinicius}
+      POSTGRES_USER: ${POSTGRES_USER:-vinicius}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in your env file}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vinicius} -d ${POSTGRES_DB:-vinicius}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_net
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: vinicius-dev-backend:local
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${BACKEND_NODE_ENV:-production}
+      PORT: ${BACKEND_PORT:-3000}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-vinicius}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-vinicius}?schema=public
+      AUTH_SESSION_SECRET: ${AUTH_SESSION_SECRET:?set AUTH_SESSION_SECRET in your env file}
+      AUTH_ROOM_PASSWORD_SECRET: ${AUTH_ROOM_PASSWORD_SECRET:?set AUTH_ROOM_PASSWORD_SECRET in your env file}
+      AUTH_MFA_ENABLED: ${AUTH_MFA_ENABLED:-true}
+      AUTH_MFA_CODE_MAX_AGE_SECONDS: ${AUTH_MFA_CODE_MAX_AGE_SECONDS:-600}
+      AUTH_MFA_MAX_ATTEMPTS: ${AUTH_MFA_MAX_ATTEMPTS:-5}
+      AUTH_MFA_RESEND_FROM_EMAIL: ${AUTH_MFA_RESEND_FROM_EMAIL:-}
+      AUTH_MFA_RESEND_API_KEY: ${AUTH_MFA_RESEND_API_KEY:-}
+      MEDIA_PHOTOS_ROOT: /var/lib/vinicius.dev/media/photos
+      MEDIA_CHAT_ROOT: /var/lib/vinicius.dev/media/chat
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - backend_media_photos:/var/lib/vinicius.dev/media/photos
+      - backend_media_chat:/var/lib/vinicius.dev/media/chat
+    networks:
+      - app_net
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    image: vinicius-dev-frontend:local
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - app_net
+
+  caddy:
+    image: caddy:2.9-alpine
+    restart: unless-stopped
+    depends_on:
+      frontend:
+        condition: service_started
+      backend:
+        condition: service_started
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - app_net
+
+networks:
+  app_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  backend_media_photos:
+  backend_media_chat:
+  caddy_data:
+  caddy_config:

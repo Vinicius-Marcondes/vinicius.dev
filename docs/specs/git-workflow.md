@@ -1,7 +1,7 @@
 # Git Workflow
 
 ## Purpose
-Define the mandatory branching, review, merge, revert, and hotfix rules for all future spec and implementation work.
+Define the mandatory branching, review, merge, revert, and tracker-based task execution rules for all future spec and implementation work.
 
 ## Scope
 Applies to spec authoring, harness updates, frontend work, backend work, infrastructure changes, and hotfixes.
@@ -11,7 +11,9 @@ Applies to spec authoring, harness updates, frontend work, backend work, infrast
 - `develop` is the active integration branch.
 - Pull requests must pass required validation before merge.
 - Every task gets its own branch.
-- Every executable task gets its own GitHub Issue and Project item.
+- Every executable task gets its own task ID and tracker entry in `tracker.md`.
+- `tracker.md` is the canonical execution record inside the repo.
+- GitHub Issues and GitHub Project items are not required for normal task tracking.
 - No implementation agent self-merges without review.
 - Merge commits are used for branch integration.
 - Hotfixes start from `main`.
@@ -46,20 +48,25 @@ Examples:
 ### Base branch rules
 - Spec and implementation tasks branch from `develop` by default.
 - Hotfix tasks branch from `main`.
-- If the repo has no commits yet, create the first commit on `main`, then create `develop` immediately after that bootstrap commit.
+
+### Tracker linkage rules
+- Every executable task maps to one tracker entry in `docs/specs/tracker.md`.
+- Every executable task maps to one task ID, one branch, and one primary acceptance source.
+- Task ID must appear in the tracker entry, branch name, commit messages, and PR title.
+- Tracker entries must include the source spec, acceptance source, base branch, branch name, merge target, and status.
+- Agents must update the tracker entry at task start, when blocked, when a PR opens for review, and when the task is merged or handed off.
+- Tracker status may use `Spec-ready`, `Todo`, `In Progress`, `Blocked`, `In Review`, and `Done`.
 
 ### Review rules
 - Every task branch requires review before merge.
 - Small tasks may use lightweight review, but still require a reviewer other than the implementer.
-- Review must confirm the task ID, branch naming, linked spec, and acceptance source.
+- Review must confirm the task ID, branch naming, linked spec, acceptance source, and tracker status.
 
-### GitHub linkage rules
-- Every executable task maps to one GitHub Issue in `Vinicius-Marcondes/vinicius.dev`.
-- Every executable task maps to one item in the dedicated `vinicius.dev` GitHub Project.
-- Task ID must appear in the issue title, branch name, commit messages, and PR title.
-- Issue bodies must include the source spec, acceptance source, base branch, merge target, and branch name.
-- Agents must comment on the issue at task start, blocker, and completion or handoff.
-- Agents must update Project status as work moves from `Spec-ready` to `Todo`, `In Progress`, `In Review`, and `Done`.
+### Pull request rules
+- Every reviewed task branch opens a PR against its merge target.
+- PR titles must include the task ID.
+- PR descriptions must include the source spec, acceptance source, base branch, merge target, and verification performed.
+- `In Review` tracker status means the PR exists and the expected validation state is visible.
 
 ### Merge target rules
 - Reviewed task branches merge into `develop`.
@@ -79,13 +86,12 @@ Examples:
 - PR titles/descriptions
 - Merge commit history
 - Revert traceability
-- GitHub Issue metadata
-- GitHub Project fields
+- Tracker task metadata
 
 ## Acceptance Checklist
 - [ ] Every task brief defines a task ID and branch name.
 - [ ] Every task branch has a defined base branch.
-- [ ] Every executable task has a linked GitHub Issue and Project item.
+- [ ] Every executable task has a tracker entry in `tracker.md`.
 - [ ] No implementation work is merged without review.
 - [ ] Required CI validation passes before merge.
 - [ ] Merge commits are used for integrating task branches.
@@ -95,20 +101,11 @@ Examples:
 - [ ] Reverts target identifiable task or merge commits instead of rewriting shared history.
 - [ ] Task branches are deleted after merge.
 - [ ] Commit messages and PR titles reference the task ID.
-- [ ] Issue comments and Project status updates are part of execution, not optional follow-up.
+- [ ] Tracker updates are part of execution, not optional follow-up.
 
 ## Dependencies
 - [README.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/README.md)
 - [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md)
-
-## Open Questions
-- Whether GitHub protections and PR templates should later automate parts of this policy.
-
-## Task-Splitting Notes
-- Every task must state its base branch and merge target.
-- Every task must state its GitHub Issue title/body and Project field values.
-- If a task needs to alter the workflow itself, do that in a dedicated `spec/` branch before splitting implementation work that depends on it.
-- When batching a milestone from `develop` to `main`, use an explicit milestone task ID so the promotion itself is traceable.
 
 ## Git Branch Implications
 - This file is the enforcement source for branch naming and merge policy.

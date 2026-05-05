@@ -21,6 +21,10 @@ type TaskInput = {
   mergeTarget: string;
 };
 
+function sleep(ms: number) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
 function getArg(name: string): string | undefined {
   const prefix = `--${name}=`;
   const match = process.argv.find((arg) => arg.startsWith(prefix));
@@ -125,21 +129,28 @@ function main() {
   ]);
   const fields = normalizeArray(parseJson<unknown>(fieldListRaw));
 
-  const itemListRaw = run([
-    "project",
-    "item-list",
-    input.projectNumber,
-    "--owner",
-    input.projectOwner,
-    "--format",
-    "json",
-  ]);
-  const items = normalizeArray(parseJson<unknown>(itemListRaw));
-  const item = items.find((entry) => {
-    const content = entry.content;
-    if (!content || typeof content !== "object") return false;
-    return String((content as Record<string, unknown>).url ?? "") === issueUrl;
-  });
+  let item: Record<string, unknown> | undefined;
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const itemListRaw = run([
+      "project",
+      "item-list",
+      input.projectNumber,
+      "--owner",
+      input.projectOwner,
+      "--format",
+      "json",
+    ]);
+    const items = normalizeArray(parseJson<unknown>(itemListRaw));
+    item = items.find((entry) => {
+      const content = entry.content;
+      if (!content || typeof content !== "object") return false;
+      return String((content as Record<string, unknown>).url ?? "") === issueUrl;
+    });
+    if (item?.id) {
+      break;
+    }
+    sleep(1000);
+  }
 
   if (!projectId || !item?.id) {
     throw new Error("Issue was created, but project item metadata could not be resolved.");
@@ -213,4 +224,3 @@ function main() {
 }
 
 main();
-

@@ -40,17 +40,13 @@ Every implementation-facing spec must include, where relevant:
 Task-level acceptance should additionally include:
 - [ ] Branch name and task ID are defined
 - [ ] Base branch is defined
-- [ ] GitHub Issue title and body are defined
-- [ ] GitHub Project item fields are defined
+- [ ] Tracker entry fields are defined
 - [ ] Review requirement is stated
 - [ ] Verification method is stated
 
 ## Dependencies
 - [git-workflow.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/git-workflow.md)
 - [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md)
-
-## Open Questions
-- None for the current standard.
 
 ## Task-Splitting Notes
 - When creating a task, copy the relevant checklist items into the task brief rather than paraphrasing them.

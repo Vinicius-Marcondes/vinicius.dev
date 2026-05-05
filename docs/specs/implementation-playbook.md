@@ -1,44 +1,32 @@
 # Implementation Playbook
 
 ## Purpose
-This playbook explains how to turn the spec harness into real work, in the correct order, with safe task decomposition, GitHub Project tracking, and agent orchestration.
+This playbook explains how to turn the spec harness into real work, in the correct order, with safe task decomposition, tracker-based execution, and branch/PR orchestration.
 
 ## Summary
 Use this sequence every time:
 1. confirm gates in [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md)
-2. approve the blocking specs for the next phase
-3. turn approved specs into task clusters
-4. split clusters into GitHub Issues
-5. run one agent per task branch
-6. monitor status in GitHub Project `vinicius.dev`
-7. merge reviewed work into `develop`
-8. promote milestones from `develop` to `main`
+2. confirm the current executable cluster in the harness, not from memory
+3. approve the blocking specs for the next phase
+4. turn approved specs into task clusters
+5. register executable tasks in `tracker.md`
+6. run one agent per task branch
+7. monitor status in `tracker.md` and open PRs
+8. merge reviewed work into `develop`
+9. promote milestones from `develop` to `main`
 
-This repo does not start from backend work. The current first implementation phase is frontend migration, because the imported `frontend/` is still a legacy React artifact and blocks backend tasking.
+The harness and `develop` must stay aligned. If implementation lands ahead of the harness, close out the completed cluster in docs before starting the next one.
 
 ## Phase Order
 ### Phase 0: Repo and workflow bootstrap
 - Confirm `main` exists and contains the latest harness.
 - Create `develop` from `main` if it does not exist yet.
-- Confirm GitHub Project `vinicius.dev` exists and is linked to the repo.
-- Confirm the issue/PR templates and helper scripts are present.
+- Confirm the PR template is present.
+- Confirm `tracker.md` is the active execution record.
 
 ### Phase 1: Gate review
 - Read [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md).
-- Read the latest [frontend-analyzer-report.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer-report.md).
 - Approve the specs that block the next layer of work.
-
-Current required approvals before real task cutting:
-- [frontend-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-structure.md)
-- [frontend-intake.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-intake.md)
-- [frontend-analyzer.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer.md)
-- [frontend-architecture.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-architecture.md)
-
-Do not cut backend tasks while the analyzer still reports:
-- legacy React architecture
-- missing TypeScript
-- missing `/thoughts`, `/chat`, or `/admin`
-- no Vite/Bun runtime
 
 ### Phase 2: Task clustering
 Create clusters from approved specs, not from intuition.
@@ -48,23 +36,13 @@ Each cluster should:
 - have a clear dependency boundary
 - contain tasks that can be parallelized without overlapping write scope
 
-Current cluster order:
-1. `Frontend migration`
-2. `Frontend validation and reconciliation`
-3. `Backend foundation`
-4. `Data and storage`
-5. `Admin backend and UI integration`
-6. `Infra and CI/CD`
-7. `Verification and release readiness`
-
-### Phase 3: Issue creation
+### Phase 3: Tracker registration
 For each executable task:
 - assign a Task ID
 - define source spec and acceptance source
 - define base branch and merge target
-- create one GitHub Issue
-- add it to GitHub Project `#2`
-- populate Project fields
+- define branch name
+- add one tracker entry in `tracker.md`
 
 Use:
 - `Status = Spec-ready` when the task is fully defined and unblocked
@@ -73,8 +51,8 @@ Use:
 ### Phase 4: Agent execution
 - One task = one branch = one agent.
 - Agents work from `develop` unless the task is a hotfix.
-- Agents must read the issue and source spec before touching code.
-- Agents must update the GitHub Issue and Project item during execution.
+- Agents must read the tracker entry and source spec before touching code.
+- Agents must update the tracker during execution.
 
 ### Phase 5: Review and merge
 - Implementation agent opens PR against `develop`.
@@ -88,33 +66,22 @@ Use:
 - Promote from `develop` to `main`.
 - Production releases come from tagged commits on `main`.
 
-## Current First Development Cluster
-The first real cluster is `Frontend migration`.
+## Current Executable Cluster
+The current executable cluster must be read from [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md).
 
-Create these tasks in this order:
-1. Archive current `frontend/` into tracked `frontend-legacy/`
-2. Scaffold clean `Vite + React + TypeScript + Bun` app
-3. Establish route skeleton and app shells for `/`, `/thoughts`, `/projects`, `/photos`, `/chat`, `/admin`
-4. Migrate landing screen
-5. Migrate projects screen
-6. Migrate photos screen
-7. Implement fully designed Thoughts screen
-8. Implement fully designed Chat Room screen
-9. Implement fully designed Admin screen
-10. Re-run frontend analyzer and clear migration blockers
-
-Only after that should backend clusters be created.
+Current follow-up rule:
+- keep the tracker aligned with branch, PR, and merge state before starting the next cluster
 
 ## Cluster-to-Task Rules
 ### Good task split
-- one route or screen migration per task
+- one storage or delivery concern per task
 - one infrastructure concern per task
 - one data or API concern per task
 - one verification concern per task
 
 ### Bad task split
-- one task touching both frontend migration and backend API design
-- one task spanning multiple independent screens
+- one task touching both public photo delivery and chat upload behavior
+- one task spanning multiple independent concerns with different dependencies
 - one task that changes structure, data contracts, and deployment at once
 - one task with unclear acceptance source
 
@@ -124,85 +91,38 @@ Parallelize only when:
 - dependencies are already satisfied
 - one task does not need the result of another task immediately
 
-For example, after the new frontend shell exists:
-- landing migration
-- projects migration
-- photos migration
-- Thoughts implementation
-can run in parallel if they do not all edit the same structural files.
-
-## GitHub Project Usage
-Read the Project as the execution board.
+## Tracker Usage
+Read `tracker.md` as the execution board.
 
 ### Status meaning
 - `Spec-ready`: task is defined and unblocked
 - `Todo`: task is approved and queued
 - `In Progress`: agent is actively implementing
+- `Blocked`: task cannot continue without an explicit unblock decision
 - `In Review`: PR exists or review/validation is pending
 - `Done`: merged and accepted
 
-### Required fields per issue
+### Required fields per task entry
 - `Task ID`
 - `Spec ID`
 - `Layer`
 - `Base Branch`
 - `Branch Name`
 - `Merge Target`
+- `Acceptance Source`
 - `PR`
 - `Blocked Reason`
-- `Owner`
-
-### Monitoring views
-Use these views in GitHub Project:
-- Board grouped by `Status`
-- Table sorted by `Layer`, then `Task ID`
-- Filtered view for `Blocked Reason is not empty`
-- Filtered view for `Layer = frontend`
-- Filtered view for `Layer = backend`
 
 ## Agent Types
-### 1. Frontend validator agent
-Use this agent when frontend files are added or changed materially.
-
-Responsibilities:
-- inspect imported or migrated frontend
-- run `bun scripts/frontend-analyzer.ts`
-- update the analyzer report
-- identify blockers and affected specs
-- refuse to bless backend tasking while frontend blockers remain
-
-Prompt pattern:
-```text
-Validate the frontend against the vinicius.dev spec harness.
-
-Read:
-- docs/specs/tracker.md
-- docs/specs/frontend-intake.md
-- docs/specs/frontend-analyzer.md
-- docs/specs/frontend-analyzer-report.md
-- docs/specs/frontend-structure.md
-- docs/specs/frontend-architecture.md
-- docs/specs/design-system.md
-- docs/specs/product-scope.md
-
-Then:
-1. Inspect the current frontend and any legacy snapshot.
-2. Run `bun scripts/frontend-analyzer.ts`.
-3. Classify findings only as `matches-spec`, `adapt-spec`, `blocks-backend`, or `missing-surface`.
-4. Identify exact spec files that need updates.
-5. Confirm whether backend tasking remains blocked.
-```
-
-### 2. Task-definition agent
+### 1. Task-definition agent
 Use this agent after the relevant specs are approved.
 
 Responsibilities:
 - read approved specs
 - respect the dependency matrix
-- create GitHub Issues
-- add them to Project `#2`
-- populate fields
-- cut migration-first issues before backend issues
+- create tracker entries
+- define branch and acceptance metadata
+- cut migration-first tasks before backend tasks
 
 Prompt pattern:
 ```text
@@ -218,99 +138,68 @@ Read:
 
 Then:
 1. Identify the next valid cluster.
-2. Refuse backend issue creation if frontend reconciliation is unresolved.
-3. Create one issue per executable task.
+2. Refuse backend task creation if frontend reconciliation is unresolved.
+3. Create one tracker entry per executable task.
 4. For each task define: Task ID, Spec ID, Layer, Base Branch, Branch Name, Merge Target, Acceptance Source, dependencies, and done criteria.
-5. Add each issue to Project `#2` and set fields.
+5. Record the tasks in `tracker.md`.
 ```
 
-### 3. Implementation agent
+### 2. Implementation agent
 Use one implementation agent per task.
 
 Responsibilities:
-- read issue and source spec
+- read the tracker entry and source spec
 - create or use the assigned branch
 - implement only the assigned slice
-- comment on the issue at start, blocker, and completion
-- move Project status during execution
+- update the tracker at start, blocker, review, and completion
 
 Prompt pattern:
 ```text
 Implement task <TASK-ID> for vinicius.dev.
 
 Read:
-- the linked GitHub Issue
-- the source spec named in the issue
-- the acceptance source named in the issue
+- the tracker entry for <TASK-ID>
+- the source spec named in the tracker
+- the acceptance source named in the tracker
 
 Constraints:
 - work only within the assigned scope
 - do not alter unrelated files or tasks
 - keep task ID in branch, commits, and PR title
-- update the issue at start, blocker, and completion
-- set Project status correctly
+- update the tracker at start, blocker, review, and completion
 ```
 
-### 4. Review agent
+### 3. Review agent
 Use for validation before merge.
 
 Responsibilities:
 - check acceptance against the source spec
 - check task scope and regressions
-- check issue/PR linkage and branch policy
-- move or confirm `In Review`/`Done` states
-
-## Commands and Helpers
-### Analyzer
-```bash
-bun scripts/frontend-analyzer.ts
-```
-
-### Project bootstrap
-```bash
-bun scripts/gh-project-bootstrap.ts --owner=Vinicius-Marcondes --repo=Vinicius-Marcondes/vinicius.dev --title=vinicius.dev
-```
-
-### Create a task issue from prepared JSON
-```bash
-bun scripts/gh-task-create.ts --input=/absolute/path/to/task.json
-```
-
-### Post progress and optionally move status
-```bash
-bun scripts/gh-task-progress.ts \
-  --repo=Vinicius-Marcondes/vinicius.dev \
-  --issue=<issue-number-or-url> \
-  --body="Started work on <TASK-ID>" \
-  --project-owner=Vinicius-Marcondes \
-  --project-number=2 \
-  --status="In Progress"
-```
+- check PR linkage and branch policy
+- confirm the tracker and cluster docs still describe the active phase correctly when the task closes a cluster
+- confirm `In Review` and `Done` transitions in the tracker
 
 ## Manual Operator Checklist
 Before starting any development session:
 - confirm `develop` exists
 - open the tracker
-- open the GitHub Project board
 - identify the current highest-priority approved cluster
-- confirm the analyzer report is current
 
 Before assigning an agent:
-- confirm the task exists as a GitHub Issue
+- confirm the task exists in `tracker.md`
 - confirm `Status` is `Spec-ready` or `Todo`
-- confirm source spec and acceptance source are in the issue
+- confirm source spec and acceptance source are recorded
 - confirm branch name and base branch are defined
 
 Before merging:
 - confirm the task is in `In Review`
 - confirm the PR exists and references the task ID
 - confirm acceptance is satisfied
-- confirm no open blocker remains on the issue
+- confirm no open blocker remains in the tracker
 
 ## Current Recommendation
 Start with:
-1. create `develop` from `main`
-2. create the frontend migration cluster as GitHub Issues
-3. assign agents one issue each starting with the new frontend shell and legacy snapshot work
-4. do not create backend implementation issues until the analyzer no longer reports migration blockers
-
+1. sync the harness to the latest merged cluster state
+2. register the current executable tasks in `tracker.md`
+3. assign one agent to the shared foundation task first when the cluster has a serial dependency chain
+4. parallelize only the tasks explicitly marked parallel-safe by the active cluster definition

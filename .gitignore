@@ -8,6 +8,8 @@ bun.lockb
 # Environment
 .env
 .env.*
+!.env.dev.example
+!.env.prod.example
 !.env.example
 
 # Build output
@@ -17,6 +19,9 @@ build/
 .turbo/
 coverage/
 
+# Local media
+backend/media/
+
 # Logs
 *.log
 npm-debug.log*
@@ -24,8 +29,10 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Local overrides
+/docker-compose.override.yml
+
 # OS/editor files
 .DS_Store
 .idea/
 .vscode/
-

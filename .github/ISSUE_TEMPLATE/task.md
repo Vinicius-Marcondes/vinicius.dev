@@ -1,10 +1,12 @@
 ---
-name: Task
-about: Execution task for vinicius.dev
+name: Task (optional)
+about: Optional external task record for vinicius.dev
 title: "[TASK-ID] short task title"
 labels: []
 assignees: []
 ---
+
+> `docs/specs/tracker.md` is the canonical task record. Use this template only when you intentionally want an additional GitHub issue.
 
 ## Summary
 Short description of the task.
@@ -19,10 +21,10 @@ Short description of the task.
 - Branch name:
 - Merge target:
 
-## Project Fields
+## Tracker Reference
 - Task ID:
-- Layer:
-- Status:
+- Tracker location:
+- Current status:
 
 ## Dependencies
 - Blocking tasks/specs:
@@ -31,9 +33,7 @@ Short description of the task.
 - [ ]
 - [ ]
 
-## Agent Reporting Rules
-- Comment when starting.
-- Comment immediately if blocked.
-- Comment when handing off or completing.
-- Keep the linked GitHub Project item status in sync.
-
+## Reporting Rules
+- Update `docs/specs/tracker.md` when starting.
+- Update `docs/specs/tracker.md` immediately if blocked.
+- Update `docs/specs/tracker.md` when handing off or completing.

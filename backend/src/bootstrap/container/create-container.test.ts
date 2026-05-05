@@ -1,0 +1,124 @@
+import { describe, expect, it } from "bun:test";
+
+import { createContainer, createRuntimeAuthMfaMessagePort } from "./create-container";
+
+describe("bootstrap container", () => {
+  it("wires media repository and filesystem storage ports", () => {
+    const container = createContainer({
+      MEDIA_CHAT_ROOT: "/tmp/chat",
+      MEDIA_PHOTOS_ROOT: "/tmp/photos",
+      NODE_ENV: "test",
+    });
+
+    expect(typeof container.chat.moderateUploadRetention.execute).toBe("function");
+    expect(typeof container.chat.openUploadMedia.execute).toBe("function");
+    expect(typeof container.chat.joinRoomSession?.execute).toBe("function");
+    expect(typeof container.chat.listModerationAudits?.execute).toBe("function");
+    expect(typeof container.chat.listRoomMessages?.execute).toBe("function");
+    expect(typeof container.chat.moderateRoomMessage?.execute).toBe("function");
+    expect(typeof container.chat.banRoomHandle?.execute).toBe("function");
+    expect(typeof container.chat.rotateRoomPassword?.execute).toBe("function");
+    expect(typeof container.chat.sendRoomTextMessage?.execute).toBe("function");
+    expect(typeof container.media.repository.findPhotoMediaById).toBe("function");
+    expect(typeof container.media.repository.findChatUploadMediaById).toBe("function");
+    expect(typeof container.media.storage.photos.openOriginal).toBe("function");
+    expect(typeof container.media.storage.chatUploads.openUpload).toBe("function");
+    expect(typeof container.media.storage.chatUploads.writeUpload).toBe("function");
+    expect(typeof container.chat.uploadMessageWithImage.execute).toBe("function");
+    expect(typeof container.auth?.loginWithCredentials.execute).toBe("function");
+    expect(typeof container.auth?.resolveAdminSession.execute).toBe("function");
+    expect(typeof container.auth?.refreshAdminSession.execute).toBe("function");
+    expect(typeof container.auth?.logoutAdminSession.execute).toBe("function");
+    expect(typeof container.auth?.verifyMfaChallenge.execute).toBe("function");
+    expect(typeof container.admin?.getDashboardSummary.execute).toBe("function");
+    expect(typeof container.admin?.listThoughts.execute).toBe("function");
+    expect(typeof container.admin?.listProjects.execute).toBe("function");
+    expect(typeof container.admin?.listPhotos.execute).toBe("function");
+    expect(typeof container.admin?.listStatusStripEntries.execute).toBe("function");
+    expect(typeof container.admin?.replaceStatusStripEntries.execute).toBe("function");
+    expect(typeof container.admin?.updateThoughtCuration.execute).toBe("function");
+    expect(typeof container.admin?.updateProjectCuration.execute).toBe("function");
+    expect(typeof container.admin?.updatePhotoCuration.execute).toBe("function");
+    expect(typeof container.admin?.updatePhotoMetadata.execute).toBe("function");
+  });
+
+  it("uses development debug MFA delivery when provider credentials are absent", async () => {
+    const originalLog = console.log;
+    const logs: string[] = [];
+    console.log = (message?: unknown, ...rest: unknown[]) => {
+      logs.push([message, ...rest].join(" "));
+    };
+
+    try {
+      const mfaMessage = createRuntimeAuthMfaMessagePort(
+        {
+          NODE_ENV: "development",
+        },
+        "development",
+        true,
+      );
+
+      await mfaMessage.sendMfaChallenge({
+        adminEmail: "admin@example.com",
+        challengeId: "challenge_1",
+        code: "123456",
+        expiresAt: new Date("2026-05-04T12:10:00.000Z"),
+      });
+    } finally {
+      console.log = originalLog;
+    }
+
+    expect(logs).toHaveLength(1);
+    expect(logs[0]).toContain("auth:mfa:debug");
+  });
+
+  it("requires provider credentials when MFA is enabled outside development", () => {
+    expect(() =>
+      createRuntimeAuthMfaMessagePort(
+        {
+          NODE_ENV: "production",
+        },
+        "production",
+        true,
+      ),
+    ).toThrow(
+      "AUTH_MFA_RESEND_API_KEY and AUTH_MFA_RESEND_FROM_EMAIL must be set when MFA is enabled outside development",
+    );
+  });
+
+  it("allows noop delivery in test and when MFA is disabled", async () => {
+    const testPort = createRuntimeAuthMfaMessagePort(
+      {
+        NODE_ENV: "test",
+      },
+      "test",
+      true,
+    );
+
+    await expect(
+      testPort.sendMfaChallenge({
+        adminEmail: "admin@example.com",
+        challengeId: "challenge_1",
+        code: "123456",
+        expiresAt: new Date("2026-05-04T12:10:00.000Z"),
+      }),
+    ).resolves.toBeUndefined();
+
+    const disabledPort = createRuntimeAuthMfaMessagePort(
+      {
+        NODE_ENV: "production",
+      },
+      "production",
+      false,
+    );
+
+    await expect(
+      disabledPort.sendMfaChallenge({
+        adminEmail: "admin@example.com",
+        challengeId: "challenge_2",
+        code: "654321",
+        expiresAt: new Date("2026-05-04T12:10:00.000Z"),
+      }),
+    ).resolves.toBeUndefined();
+  });
+});

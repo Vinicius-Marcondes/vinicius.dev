@@ -1,0 +1,12 @@
+services:
+  backend:
+    command: sh -c "bun install --frozen-lockfile && bun run start"
+    environment:
+      NODE_ENV: ${BACKEND_NODE_ENV:-development}
+    volumes:
+      - .:/app
+
+  frontend:
+    command: sh -c "bun install --frozen-lockfile && bun run dev --host 0.0.0.0 --port ${FRONTEND_PORT:-5173}"
+    volumes:
+      - .:/app
