@@ -36,6 +36,9 @@ jobs:
       - name: Build
         run: bun run build
 
+      - name: Tests
+        run: bun run test
+
   backend-validation:
     name: Backend Validation
     runs-on: ubuntu-latest
