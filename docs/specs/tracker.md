@@ -169,6 +169,7 @@ Done criteria for `CHAT-010`:
   - Blocker: none.
   - Local execution: add the Caddy edge security-header baseline, move production compose frontend/backend to Dockerfile builds with frozen-lock installs, and serve frontend runtime from built `dist` artifacts.
   - Local verification: production/dev compose config rendering (`--env-file`), Caddy config validation, frontend build/lint + static-route fallback smoke checks (`/`, `/admin`, `/chat`), and `backend` verify/deploy-readiness checks passed on 2026-05-05.
+  - PR/Open review: PR [#132](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/132) opened against `develop`.
 
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -181,7 +182,7 @@ Done criteria for `CHAT-010`:
 | Done | SEC-006 | SPEC-031 | backend | develop | `backend/SEC-006-websocket-auth-transport-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#129](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/129) merged | — |
 | Done | SEC-007 | SPEC-031 | frontend | develop | `frontend/SEC-007-chat-session-storage-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#130](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/130) merged | — |
 | Done | SEC-008 | SPEC-031 | backend | develop | `backend/SEC-008-chat-crypto-and-audit-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#131](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/131) merged | — |
-| In Progress | SEC-009 | SPEC-031 | infra | develop | `infra/SEC-009-edge-headers-and-production-compose` | develop | `docs/specs/security-hardening-production-readiness.md` | — | — |
+| In Review | SEC-009 | SPEC-031 | infra | develop | `infra/SEC-009-edge-headers-and-production-compose` | develop | `docs/specs/security-hardening-production-readiness.md` | [#132](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/132) | — |
 
 Done criteria for `SPEC-031`:
 - `docs/specs/security-hardening-production-readiness.md` exists and follows the harness section template
