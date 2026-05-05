@@ -9,6 +9,7 @@
 | Backend auth/admin HTTP contracts available | yes | Backend already serves `/api/auth/*` and `/api/admin/dashboard/summary`. |
 | Frontend admin auth integration spec approved | yes | `SPEC-028` is approved below and ready to drive `FE-011`. |
 | Chat room live integration spec approved | yes | `SPEC-030` is merged to `develop` and ready to drive `CHAT-008`, `CHAT-009`, and `CHAT-010`. |
+| Testing coverage foundation spec approved | yes | `SPEC-032` defines the first backend/frontend/CI test coverage wave and is ready to drive `QA-009` through `QA-013`. |
 
 ## Global Decisions
 - Use Bun for both frontend and backend toolchains.
@@ -35,6 +36,7 @@
 ## Next Task Queue
 1. Complete reviewer validation for `QA-008` follow-up PR [#117](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/117).
 2. Complete reviewer validation for `CHAT-010` PR [#122](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/122).
+3. Execute `SPEC-032` testing coverage foundation tasks `QA-009` through `QA-013`.
 
 ## Current Executable Cluster
 ### Frontend Admin API Integration
@@ -196,6 +198,47 @@ Done criteria for `SPEC-031`:
 - `docs/specs/tracker.md` and `docs/specs/README.md` are updated to register the spec and implementation task queue
 - implementation tasks are registered in the tracker with branch metadata, acceptance source, and execution order
 
+### Testing Coverage Foundation
+- Status: tasked locally; implementation branches are being split for separate review.
+- Primary spec: `SPEC-032`.
+- Supporting specs: `verification.md`, `ci-cd.md`, `project-structure.md`, `backend-architecture.md`, `frontend-structure.md`, `frontend-architecture.md`, `git-workflow.md`, and `acceptance-criteria.md`.
+- Scope: improve backend application/repository coverage, add frontend Vitest and React Testing Library coverage, introduce focused Prisma/Postgres contract tests in CI, and keep coverage report-only.
+- Non-scope: Playwright/browser E2E, coverage thresholds, broad test relocation, deployment policy changes, and unrelated product changes.
+
+| Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| In Progress | SPEC-032 | SPEC-032 | spec | develop | `spec/SPEC-032-testing-coverage-foundation` | develop | `docs/specs/testing-coverage-foundation.md` | not opened | — |
+| In Progress | QA-009 | SPEC-032 | backend | develop | `backend/QA-009-backend-application-coverage` | develop | `docs/specs/testing-coverage-foundation.md` | not opened | — |
+| In Progress | QA-010 | SPEC-032 | backend | develop | `backend/QA-010-prisma-db-contract-tests` | develop | `docs/specs/testing-coverage-foundation.md` | not opened | — |
+| In Progress | QA-011 | SPEC-032 | frontend | develop | `frontend/QA-011-frontend-vitest-foundation` | develop | `docs/specs/testing-coverage-foundation.md` | not opened | — |
+| In Progress | QA-012 | SPEC-032 | frontend | develop | `frontend/QA-012-frontend-chat-admin-tests` | develop | `docs/specs/testing-coverage-foundation.md` | not opened | — |
+| In Progress | QA-013 | SPEC-032 | infra | develop | `infra/QA-013-concise-testing-ci` | develop | `docs/specs/testing-coverage-foundation.md` | not opened | — |
+
+Done criteria for `QA-009`:
+- backend content application tests cover cursor handling, pagination normalization, filters, detail nulls, DTO mapping, photo URLs, and status strip mapping
+- backend admin application tests cover list normalization, curation mappings, update null returns, metadata date handling, and status-strip replacement mapping
+- backend `bun run test`, `bun run test:coverage`, and `bun run typecheck` pass
+
+Done criteria for `QA-010`:
+- DB-backed Prisma contract tests cover high-risk admin, content, and chat repository paths
+- DB tests isolate deterministic data and clean up after themselves
+- backend `bun run test:db` passes with `DATABASE_URL`
+
+Done criteria for `QA-011`:
+- frontend Vitest, React Testing Library, DOM setup, `test`, and `test:coverage` scripts exist
+- low-level frontend tests cover shared API, mappers/filters, dashboard mapper, chat API helpers, auth parsing, and route loader/action behavior
+- frontend `bun run test`, `bun run test:coverage`, `bun run lint`, and `bun run build` pass
+
+Done criteria for `QA-012`:
+- frontend component tests cover admin login states, admin dashboard rendering, chat gate/session bootstrap, message state, upload validation/progress UI, and image viewer behavior
+- browser primitives are mocked locally in tests without adding Playwright or E2E tooling
+- frontend `bun run test` passes
+
+Done criteria for `QA-013`:
+- PR validation runs frontend lint/build/test, backend typecheck/test/verify, and focused backend DB contract tests with Postgres
+- coverage commands are available but report-only
+- CI YAML stays concise and does not add E2E or deployment changes
+
 ## Spec Table
 | Spec ID | Title | Layer | Status | Depends on | Blocks | Git workflow defined | Ready for task split | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -203,6 +246,7 @@ Done criteria for `SPEC-031`:
 | SPEC-029 | CI Workflow Maintenance | Infra | Approved | `ci-cd.md`, `verification.md`, `git-workflow.md`, `acceptance-criteria.md` | `QA-008` | yes | yes | Removes analyzer freshness automation and maintains Node.js 24 workflow compatibility without changing deployment policy. |
 | SPEC-030 | Chat Room Live Integration | Cross-layer | Tasked | `frontend-structure.md`, `frontend-architecture.md`, `frontend-admin-auth-integration.md`, `project-structure.md`, `backend-architecture.md`, `data-model.md`, `media-storage.md`, `admin-cms.md`, `verification.md`, `git-workflow.md`, `acceptance-criteria.md` | `CHAT-008`, `CHAT-009`, `CHAT-010` | yes | yes | Replaces the mock chat room with backend join/session contracts, realtime delivery, and protected upload/viewer behavior while adding backend-generated room password management to the admin dashboard. |
 | SPEC-031 | Security Hardening and Production Readiness | Cross-layer | Tasked | `frontend-structure.md`, `frontend-architecture.md`, `project-structure.md`, `backend-architecture.md`, `chat-room-live-integration.md`, `frontend-admin-auth-integration.md`, `media-storage.md`, `admin-cms.md`, `infra-deployment.md`, `verification.md`, `git-workflow.md`, `acceptance-criteria.md` | `SEC-001`, `SEC-002`, `SEC-003`, `SEC-004`, `SEC-005`, `SEC-006`, `SEC-007`, `SEC-008`, `SEC-009` | yes | yes | Approved remediation spec from the 2026-05-03 security/bug review; implementation queue is registered with first-wave critical tasks unblocked first. |
+| SPEC-032 | Testing Coverage Foundation | Cross-layer | Tasked | `verification.md`, `ci-cd.md`, `project-structure.md`, `backend-architecture.md`, `frontend-structure.md`, `frontend-architecture.md`, `git-workflow.md`, `acceptance-criteria.md` | `QA-009`, `QA-010`, `QA-011`, `QA-012`, `QA-013` | yes | yes | Adds the first cross-layer coverage baseline: backend coverage improvements, frontend Vitest coverage, focused Prisma/Postgres CI contracts, and report-only coverage commands. |
 
 ## Tasking Rule
 A spec may only move to `Tasked` when:
