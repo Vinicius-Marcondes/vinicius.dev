@@ -162,6 +162,9 @@ Done criteria for `CHAT-010`:
   - Local verification: chat use-case, admin-route, and Prisma repository tests plus backend typecheck and boundary verification passed on 2026-05-05.
   - PR/Open review: PR [#131](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/131) opened against `develop`.
   - Completion: chat crypto and moderation-audit hardening landed via merged PR [#131](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/131).
+  - Follow-up start: branch `backend/SEC-008-room-password-decrypt-recovery` opened to keep admin room-access reads recoverable when existing development data contains plaintext or differently keyed readable-password ciphertext.
+  - Follow-up local verification: Prisma chat repository/admin route tests, backend typecheck, and boundary verification passed on 2026-05-05.
+  - Follow-up PR/Open review: PR [#135](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/135) opened against `develop`.
 - SEC-009 status log:
   - Start: branch `infra/SEC-009-edge-headers-and-production-compose` moved to `In Progress` after PR [#131](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/131) merged to `develop`.
   - Blocker: none.
