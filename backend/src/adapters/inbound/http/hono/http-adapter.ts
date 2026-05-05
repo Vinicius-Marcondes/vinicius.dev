@@ -652,6 +652,39 @@ const isSupportedChatUploadMimeType = (value: string): value is ChatUploadMimeTy
   return supportedChatUploadMimeTypes.includes(value as ChatUploadMimeType);
 };
 
+const hasLeadingBytes = (input: Uint8Array, signature: readonly number[]) => {
+  if (input.byteLength < signature.length) {
+    return false;
+  }
+
+  for (let index = 0; index < signature.length; index += 1) {
+    if (input[index] !== signature[index]) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+const isChatUploadMimeSignatureValid = (mimeType: ChatUploadMimeType, bytes: Uint8Array) => {
+  if (mimeType === "image/jpeg") {
+    return hasLeadingBytes(bytes, [0xff, 0xd8, 0xff]);
+  }
+
+  if (mimeType === "image/png") {
+    return hasLeadingBytes(bytes, [0x89, 0x50, 0x4e, 0x47]);
+  }
+
+  return (
+    hasLeadingBytes(bytes, [0x52, 0x49, 0x46, 0x46]) &&
+    bytes.byteLength >= 12 &&
+    bytes[8] === 0x57 &&
+    bytes[9] === 0x45 &&
+    bytes[10] === 0x42 &&
+    bytes[11] === 0x50
+  );
+};
+
 const getRequiredFormText = (
   formData: FormData,
   field: string,
@@ -1295,6 +1328,7 @@ const createChatFamily = (
   chatApp.get("/uploads/:id/media", async (c) => {
     c.header("Cache-Control", "private, no-store");
     c.header("Vary", "x-chat-room-session-id");
+    c.header("X-Content-Type-Options", "nosniff");
 
     const id = c.req.param("id")?.trim();
 
@@ -1503,13 +1537,26 @@ const createChatFamily = (
       );
     }
 
+    const uploadBytes = new Uint8Array(await uploadFile.arrayBuffer());
+
+    if (!isChatUploadMimeSignatureValid(mimeType, uploadBytes)) {
+      return c.json(
+        {
+          error: "invalid_upload",
+          field: "file",
+          reason: "mime_signature_mismatch",
+        },
+        400,
+      );
+    }
+
     let result;
 
     try {
       result = await container.chat.uploadMessageWithImage.execute({
         body: getOptionalFormText(formData, "body"),
         image: {
-          body: new Uint8Array(await uploadFile.arrayBuffer()),
+          body: uploadBytes,
           displayFilename: uploadFile.name.trim() || "upload",
           mimeType,
         },
