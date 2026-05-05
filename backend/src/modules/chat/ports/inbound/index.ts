@@ -227,10 +227,8 @@ export type UploadChatMessageImageInput = Readonly<{
 }>;
 
 export type UploadChatMessageWithImageInput = Readonly<{
-  authorHandleId: string;
   body?: string;
   image: UploadChatMessageImageInput;
-  roomId: string;
   roomSessionId: string;
   tone?: "cyan" | "pink" | "system" | null;
 }>;

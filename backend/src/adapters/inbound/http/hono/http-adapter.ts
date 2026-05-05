@@ -645,6 +645,8 @@ const supportedChatUploadMimeTypes: readonly ChatUploadMimeType[] = [
   "image/png",
   "image/webp",
 ];
+const MAX_CHAT_MESSAGE_BODY_LENGTH = 2000;
+const CHAT_UPLOAD_ROOM_SLUG = "night-shift";
 
 const isSupportedChatUploadMimeType = (value: string): value is ChatUploadMimeType => {
   return supportedChatUploadMimeTypes.includes(value as ChatUploadMimeType);
@@ -1229,6 +1231,16 @@ const createChatFamily = (
       return c.json(body.error, 400);
     }
 
+    if (body.value.length > MAX_CHAT_MESSAGE_BODY_LENGTH) {
+      return c.json(
+        {
+          error: "invalid_request",
+          field: "body",
+        },
+        400,
+      );
+    }
+
     const toneInput = parsedBody.value.tone;
 
     if (
@@ -1352,6 +1364,19 @@ const createChatFamily = (
       return limited;
     }
 
+    if (!resolveRoomSessionUseCase) {
+      return c.json<NotImplementedResponse>(
+        {
+          family: "chat",
+          method: c.req.method,
+          route: c.req.path,
+          service: serviceName,
+          status: "not_implemented",
+        },
+        501,
+      );
+    }
+
     let formData: FormData;
 
     try {
@@ -1366,22 +1391,34 @@ const createChatFamily = (
       );
     }
 
-    const roomId = getRequiredFormText(formData, "roomId");
-
-    if ("error" in roomId) {
-      return c.json(roomId.error, 400);
-    }
-
     const roomSessionId = getRequiredFormText(formData, "roomSessionId");
 
     if ("error" in roomSessionId) {
       return c.json(roomSessionId.error, 400);
     }
 
-    const authorHandleId = getRequiredFormText(formData, "authorHandleId");
+    let resolvedSession;
 
-    if ("error" in authorHandleId) {
-      return c.json(authorHandleId.error, 400);
+    try {
+      resolvedSession = await resolveRoomSessionUseCase.execute({
+        roomSessionId: roomSessionId.value,
+        slug: CHAT_UPLOAD_ROOM_SLUG,
+      });
+    } catch (error) {
+      if (
+        error instanceof InvalidChatRoomSessionError ||
+        error instanceof BannedChatHandleError
+      ) {
+        return c.json(
+          {
+            error: "denied",
+            resource: "chat",
+          },
+          403,
+        );
+      }
+
+      throw error;
     }
 
     const toneInput = getOptionalFormText(formData, "tone")?.trim();
@@ -1470,15 +1507,13 @@ const createChatFamily = (
 
     try {
       result = await container.chat.uploadMessageWithImage.execute({
-        authorHandleId: authorHandleId.value,
         body: getOptionalFormText(formData, "body"),
         image: {
           body: new Uint8Array(await uploadFile.arrayBuffer()),
           displayFilename: uploadFile.name.trim() || "upload",
           mimeType,
         },
-        roomId: roomId.value,
-        roomSessionId: roomSessionId.value,
+        roomSessionId: resolvedSession.session.id,
         tone,
       });
     } catch (error) {
@@ -1495,7 +1530,7 @@ const createChatFamily = (
       throw error;
     }
 
-    live.broadcastByRoomId(roomId.value, {
+    live.broadcastByRoomId(resolvedSession.room.id, {
       item: {
         attachment: result.attachment,
         author: result.author,

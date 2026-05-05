@@ -1162,14 +1162,12 @@ describe("chat upload message with image use case", () => {
     });
 
     const output = await useCase.execute({
-      authorHandleId: "handle_1",
       body: "  post from bunker  ",
       image: {
         body: new TextEncoder().encode("upload-bytes"),
         displayFilename: "bunker.png",
         mimeType: "image/png",
       },
-      roomId: "room 123",
       roomSessionId: "session_1",
       tone: "cyan",
     });
@@ -1242,20 +1240,18 @@ describe("chat upload message with image use case", () => {
 
     await expect(
       useCase.execute({
-        authorHandleId: "handle_1",
         image: {
           body: new Uint8Array([1, 2, 3, 4]),
           displayFilename: "scan.webp",
           mimeType: "image/webp",
         },
-        roomId: "room-1",
         roomSessionId: "session_1",
       }),
     ).rejects.toThrow("database write failed");
     expect(deletedPaths).toEqual(["room_1/upload_1.webp"]);
   });
 
-  it("rejects uploads when the session does not match the requested room or handle", async () => {
+  it("rejects uploads when the session actor cannot be resolved as an active room handle", async () => {
     const useCase = createUploadChatMessageWithImageUseCase({
       repository: {
         createMessageWithUpload: async () => {
@@ -1264,7 +1260,7 @@ describe("chat upload message with image use case", () => {
         findHandleById: async () => ({
           createdAt: new Date("2026-04-24T00:00:00.000Z"),
           handle: "vinicius",
-          id: "handle_1",
+          id: "handle_2",
           normalizedHandle: "vinicius",
           roomId: "room_1",
           status: "active",
@@ -1294,13 +1290,11 @@ describe("chat upload message with image use case", () => {
 
     await expect(
       useCase.execute({
-        authorHandleId: "handle_1",
         image: {
           body: new Uint8Array([1, 2, 3, 4]),
           displayFilename: "scan.webp",
           mimeType: "image/webp",
         },
-        roomId: "room_1",
         roomSessionId: "session_1",
       }),
     ).rejects.toThrow("chat upload actor/session does not match the requested room");
