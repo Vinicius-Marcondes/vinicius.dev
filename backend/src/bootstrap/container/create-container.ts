@@ -1,4 +1,8 @@
 import { createPrismaPersistenceAdapter } from "@/adapters/outbound/persistence";
+import {
+  createDevelopmentAuthMfaMessagePort,
+  createResendAuthMfaMessagePort,
+} from "@/adapters/outbound/mail";
 import { createFilesystemMediaStorageAdapter } from "@/adapters/outbound/storage/filesystem";
 import {
   createGetAdminDashboardSummaryUseCase,
@@ -46,6 +50,7 @@ import type {
   ResolveAdminSessionPort,
   VerifyMfaChallengePort,
 } from "@/modules/auth/ports/inbound";
+import type { AuthMfaMessagePort } from "@/modules/auth/ports/outbound";
 import {
   createBanChatRoomHandleUseCase,
   createGetChatRoomAccessUseCase,
@@ -158,6 +163,34 @@ const parseAuthMfaEnabled = (value: string | undefined): boolean => {
   return value !== "false";
 };
 
+export const createRuntimeAuthMfaMessagePort = (
+  env: BootstrapEnv,
+  nodeEnv: BootstrapConfig["server"]["nodeEnv"],
+  mfaEnabled: boolean,
+): AuthMfaMessagePort => {
+  if (!mfaEnabled || nodeEnv === "test") {
+    return createNoopAuthMfaMessagePort();
+  }
+
+  const resendApiKey = env.AUTH_MFA_RESEND_API_KEY?.trim();
+  const resendFromEmail = env.AUTH_MFA_RESEND_FROM_EMAIL?.trim();
+
+  if (resendApiKey && resendFromEmail) {
+    return createResendAuthMfaMessagePort({
+      apiKey: resendApiKey,
+      fromEmail: resendFromEmail,
+    });
+  }
+
+  if (nodeEnv === "development") {
+    return createDevelopmentAuthMfaMessagePort();
+  }
+
+  throw new Error(
+    "AUTH_MFA_RESEND_API_KEY and AUTH_MFA_RESEND_FROM_EMAIL must be set when MFA is enabled outside development",
+  );
+};
+
 export const createContainer = (env: BootstrapEnv = Bun.env): BootstrapContainer => {
   const config = loadBootstrapConfig(env);
   const persistence = createPrismaPersistenceAdapter(undefined, {
@@ -173,6 +206,8 @@ export const createContainer = (env: BootstrapEnv = Bun.env): BootstrapContainer
   const chatSessionTokenHasher = createHmacSessionTokenHashPort(config.auth.roomPasswordSecret);
   const chatPasswordHasher = createBunPasswordHashPort();
   const chatSessionTokenGenerator = createCryptoSessionTokenGenerator();
+  const mfaEnabled = parseAuthMfaEnabled(env.AUTH_MFA_ENABLED);
+  const mfaMessage = createRuntimeAuthMfaMessagePort(env, config.server.nodeEnv, mfaEnabled);
 
   return {
     admin: {
@@ -214,8 +249,8 @@ export const createContainer = (env: BootstrapEnv = Bun.env): BootstrapContainer
         mfaCodeGenerator: createRandomDigitMfaCodeGenerator(),
         mfaCodeHasher: authMfaCodeHasher,
         mfaCodeMaxAgeSeconds: config.auth.mfaCodeMaxAgeSeconds,
-        mfaEnabled: parseAuthMfaEnabled(env.AUTH_MFA_ENABLED),
-        mfaMessage: createNoopAuthMfaMessagePort(),
+        mfaEnabled,
+        mfaMessage,
         passwordHasher: createBunPasswordHashPort(),
         repository: persistence.admin,
         sessionMaxAgeSeconds: config.auth.sessionMaxAgeSeconds,
@@ -242,6 +277,7 @@ export const createContainer = (env: BootstrapEnv = Bun.env): BootstrapContainer
       verifyMfaChallenge: createVerifyMfaChallengeUseCase({
         clock: authClock,
         mfaCodeHasher: authMfaCodeHasher,
+        mfaMaxAttempts: config.auth.mfaMaxAttempts,
         repository: persistence.admin,
         sessionMaxAgeSeconds: config.auth.sessionMaxAgeSeconds,
         sessionTokenGenerator: createCryptoSessionTokenGenerator(),
