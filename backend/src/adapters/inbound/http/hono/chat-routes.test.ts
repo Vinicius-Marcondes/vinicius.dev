@@ -273,9 +273,15 @@ const createTestContainer = ({
   },
 });
 
+const jpegSignatureBytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
+const pngSignatureBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const webpSignatureBytes = new Uint8Array([
+  0x52, 0x49, 0x46, 0x46, 0x24, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50,
+]);
+
 const createUploadFormData = ({
   body = "message body",
-  bytes = new Uint8Array([1, 2, 3, 4]),
+  bytes = pngSignatureBytes,
   fileName = "scan.png",
   legacyAuthorHandleId,
   legacyRoomId,
@@ -1114,7 +1120,7 @@ describe("chat routes", () => {
     expect(capturedInput).toEqual({
       body: "message body",
       image: {
-        body: new Uint8Array([1, 2, 3, 4]),
+        body: pngSignatureBytes,
         displayFilename: "scan.png",
         mimeType: "image/png",
       },
@@ -1179,6 +1185,75 @@ describe("chat routes", () => {
       error: "invalid_upload",
       field: "file",
       reason: "unsupported_mime_type",
+    });
+    expect(called).toBe(false);
+  });
+
+  it("accepts jpeg, png, and webp signatures for allowed MIME types", async () => {
+    const acceptedMimeTypes: string[] = [];
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeUpload: async (input) => {
+          acceptedMimeTypes.push(input.image.mimeType);
+          return defaultUploadResponse;
+        },
+      }),
+    );
+
+    const uploadCases = [
+      {
+        bytes: jpegSignatureBytes,
+        fileName: "scan.jpg",
+        mimeType: "image/jpeg",
+      },
+      {
+        bytes: pngSignatureBytes,
+        fileName: "scan.png",
+        mimeType: "image/png",
+      },
+      {
+        bytes: webpSignatureBytes,
+        fileName: "scan.webp",
+        mimeType: "image/webp",
+      },
+    ] as const;
+
+    for (const uploadCase of uploadCases) {
+      const response = await app.request("/api/chat/messages/upload", {
+        body: createUploadFormData(uploadCase),
+        method: "POST",
+      });
+
+      expect(response.status).toBe(201);
+    }
+
+    expect(acceptedMimeTypes).toEqual(["image/jpeg", "image/png", "image/webp"]);
+  });
+
+  it("rejects upload requests with MIME/signature mismatches", async () => {
+    let called = false;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeUpload: async () => {
+          called = true;
+          throw new Error("should not run");
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/messages/upload", {
+      body: createUploadFormData({
+        bytes: jpegSignatureBytes,
+        mimeType: "image/png",
+      }),
+      method: "POST",
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "invalid_upload",
+      field: "file",
+      reason: "mime_signature_mismatch",
     });
     expect(called).toBe(false);
   });

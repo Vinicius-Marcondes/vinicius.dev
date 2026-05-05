@@ -35,8 +35,8 @@
 ## Next Task Queue
 1. Complete reviewer validation for `QA-008` follow-up PR [#117](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/117).
 2. Complete reviewer validation for `CHAT-010` PR [#122](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/122).
-3. Execute `SEC-004` on `backend/SEC-004-chat-request-validation-hardening` from `develop`.
-4. Queue phase-2 security follow-ups (`SEC-005`, `SEC-006`, `SEC-008`) after `SEC-004` enters review.
+3. Execute `SEC-005` on `backend/SEC-005-upload-media-signature-hardening` from `develop`.
+4. Queue remaining phase-2 security follow-ups (`SEC-006`, `SEC-008`) after `SEC-005` enters review.
 
 ## Current Executable Cluster
 ### Frontend Admin API Integration
@@ -107,7 +107,7 @@ Done criteria for `CHAT-010`:
 - upload validation remains aligned with MIME, size, and one-file-per-message rules
 
 ### Security Hardening Execution
-- Status: in progress; first-wave critical tasks are complete and phase 2 execution has started with `SEC-004`.
+- Status: in progress; first-wave critical tasks are complete and phase 2 execution continues with `SEC-005` after `SEC-004` merged to `develop`.
 - Primary spec: `SPEC-031`.
 - Supporting specs: `frontend-structure.md`, `frontend-architecture.md`, `project-structure.md`, `backend-architecture.md`, `chat-room-live-integration.md`, `frontend-admin-auth-integration.md`, `media-storage.md`, `admin-cms.md`, `infra-deployment.md`, `verification.md`, and `git-workflow.md`.
 - Scope: execute the approved remediation wave from the 2026-05-03 security review with one task branch per finding cluster.
@@ -135,6 +135,12 @@ Done criteria for `CHAT-010`:
   - Blocker: none.
   - Local verification: chat adapter/use-case tests, backend typecheck, and boundary verification passed on 2026-05-05.
   - PR/Open review: PR [#127](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/127) opened against `develop`.
+  - Completion: chat request-validation hardening landed via merged PR [#127](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/127).
+- SEC-005 status log:
+  - Start: branch `backend/SEC-005-upload-media-signature-hardening` moved to `In Progress` after PR [#127](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/127) merged to `develop`.
+  - Blocker: none.
+  - Local execution: upload signature validation for JPEG/PNG/WebP plus protected chat media `nosniff` response headers were implemented in the Hono chat adapter.
+  - Local verification: chat upload/media adapter tests, backend typecheck, and boundary verification passed on 2026-05-05.
 
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -142,8 +148,8 @@ Done criteria for `CHAT-010`:
 | Done | SEC-001 | SPEC-031 | infra | develop | `infra/SEC-001-production-secret-enforcement` | develop | `docs/specs/security-hardening-production-readiness.md` | [#124](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/124) merged | — |
 | Done | SEC-002 | SPEC-031 | backend | develop | `backend/SEC-002-cors-and-rate-limits` | develop | `docs/specs/security-hardening-production-readiness.md` | [#125](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/125) merged | — |
 | Done | SEC-003 | SPEC-031 | backend | develop | `backend/SEC-003-mfa-lockout-and-delivery` | develop | `docs/specs/security-hardening-production-readiness.md` | [#126](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/126) merged | — |
-| In Review | SEC-004 | SPEC-031 | backend | develop | `backend/SEC-004-chat-request-validation-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#127](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/127) | — |
-| Blocked | SEC-005 | SPEC-031 | backend | develop | `backend/SEC-005-upload-media-signature-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Phase 2 sequencing: queued after first-wave critical tasks (`SEC-001` to `SEC-003`). |
+| Done | SEC-004 | SPEC-031 | backend | develop | `backend/SEC-004-chat-request-validation-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#127](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/127) merged | — |
+| In Progress | SEC-005 | SPEC-031 | backend | develop | `backend/SEC-005-upload-media-signature-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | — |
 | Blocked | SEC-006 | SPEC-031 | backend | develop | `backend/SEC-006-websocket-auth-transport-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Depends on `SEC-002`; phase-ordered after first-wave critical tasks. |
 | Blocked | SEC-007 | SPEC-031 | frontend | develop | `frontend/SEC-007-chat-session-storage-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Depends on `SEC-006` handshake contract before frontend storage migration. |
 | Blocked | SEC-008 | SPEC-031 | backend | develop | `backend/SEC-008-chat-crypto-and-audit-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Phase 2 sequencing: queued after first-wave critical tasks (`SEC-001` to `SEC-003`). |

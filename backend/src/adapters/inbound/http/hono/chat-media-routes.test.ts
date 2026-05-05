@@ -192,6 +192,7 @@ describe("chat media routes", () => {
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(response.headers.get("content-type")).toBe("image/webp");
     expect(response.headers.get("content-length")).toBe(String(bytes.byteLength));
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     expectChatMediaVaryHeader(response);
     await expect(response.text()).resolves.toBe("upload-bytes");
   });
@@ -213,6 +214,7 @@ describe("chat media routes", () => {
 
     expect(response.status).toBe(403);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     expectChatMediaVaryHeader(response);
     await expect(response.json()).resolves.toEqual({
       error: "denied",
@@ -230,6 +232,7 @@ describe("chat media routes", () => {
 
     expect(response.status).toBe(404);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     expectChatMediaVaryHeader(response);
     await expect(response.json()).resolves.toEqual({
       error: "not_found",
@@ -247,6 +250,7 @@ describe("chat media routes", () => {
 
     expect(response.status).toBe(400);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     expectChatMediaVaryHeader(response);
     await expect(response.json()).resolves.toEqual({
       error: "invalid_path",
@@ -260,6 +264,7 @@ describe("chat media routes", () => {
 
     expect(response.status).toBe(400);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     expectChatMediaVaryHeader(response);
     await expect(response.json()).resolves.toEqual({
       error: "invalid_request",
