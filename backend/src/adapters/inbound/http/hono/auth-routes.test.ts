@@ -69,6 +69,10 @@ const createDefaultAuth = (): NonNullable<BootstrapContainer["auth"]> => ({
 
 const createTestContainer = (
   auth?: Partial<NonNullable<BootstrapContainer["auth"]>>,
+  cors?: Readonly<{
+    allowCredentials?: boolean;
+    allowedOrigins?: string[];
+  }>,
 ): BootstrapContainer => {
   const base: BootstrapContainer = {
     chat: {
@@ -104,8 +108,8 @@ const createTestContainer = (
         sessionSecret: "test-session-secret",
       },
       cors: {
-        allowCredentials: true,
-        allowedOrigins: [],
+        allowCredentials: cors?.allowCredentials ?? true,
+        allowedOrigins: cors?.allowedOrigins ?? [],
       },
       media: {
         chatRoot: "/tmp/chat",
@@ -206,6 +210,58 @@ const createTestContainer = (
 };
 
 describe("auth routes", () => {
+  it("applies CORS policy from bootstrap config for allowed origins", async () => {
+    const app = createHonoHttpAdapter(
+      createTestContainer(
+        {},
+        {
+          allowCredentials: true,
+          allowedOrigins: ["https://app.viniciuslab.dev"],
+        },
+      ),
+    );
+
+    const response = await app.request("/api/auth/login", {
+      headers: {
+        "access-control-request-headers": "content-type,x-chat-room-session-id",
+        "access-control-request-method": "POST",
+        origin: "https://app.viniciuslab.dev",
+      },
+      method: "OPTIONS",
+    });
+
+    expect(response.headers.get("access-control-allow-origin")).toBe(
+      "https://app.viniciuslab.dev",
+    );
+    expect(response.headers.get("access-control-allow-credentials")).toBe("true");
+    expect(response.headers.get("access-control-allow-methods")).toContain("POST");
+    expect(response.headers.get("access-control-allow-headers")).toContain(
+      "x-chat-room-session-id",
+    );
+  });
+
+  it("does not allow CORS for origins outside the bootstrap allowlist", async () => {
+    const app = createHonoHttpAdapter(
+      createTestContainer(
+        {},
+        {
+          allowCredentials: true,
+          allowedOrigins: ["https://app.viniciuslab.dev"],
+        },
+      ),
+    );
+
+    const response = await app.request("/api/auth/login", {
+      headers: {
+        "access-control-request-method": "POST",
+        origin: "https://evil.example",
+      },
+      method: "OPTIONS",
+    });
+
+    expect(response.headers.get("access-control-allow-origin")).toBeNull();
+  });
+
   it("maps login payload to the auth use case", async () => {
     let capturedEmail: string | undefined;
     let capturedPassword: string | undefined;
@@ -369,6 +425,64 @@ describe("auth routes", () => {
     });
   });
 
+  it("rate limits repeated login attempts", async () => {
+    let callCount = 0;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        loginWithCredentials: {
+          execute: async () => {
+            callCount += 1;
+
+            return {
+              challenge: {
+                delivery: "email",
+                expiresAt: "2026-04-28T12:10:00.000Z",
+                id: "challenge_1",
+                maskedEmail: "ad***@example.com",
+              },
+              state: "mfa_required",
+            };
+          },
+        },
+      }),
+    );
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const response = await app.request("/api/auth/login", {
+        body: JSON.stringify({
+          email: "admin@example.com",
+          password: "correct-password",
+        }),
+        headers: {
+          "content-type": "application/json",
+          "x-forwarded-for": "203.0.113.10",
+        },
+        method: "POST",
+      });
+
+      expect(response.status).toBe(200);
+    }
+
+    const limitedResponse = await app.request("/api/auth/login", {
+      body: JSON.stringify({
+        email: "admin@example.com",
+        password: "correct-password",
+      }),
+      headers: {
+        "content-type": "application/json",
+        "x-forwarded-for": "203.0.113.10",
+      },
+      method: "POST",
+    });
+
+    expect(limitedResponse.status).toBe(429);
+    await expect(limitedResponse.json()).resolves.toEqual({
+      error: "rate_limited",
+      resource: "api",
+    });
+    expect(callCount).toBe(5);
+  });
+
   it("maps MFA verify payload and returns ready state", async () => {
     let capturedChallengeId: string | undefined;
     let capturedCode: string | undefined;
@@ -526,6 +640,67 @@ describe("auth routes", () => {
       error: "challenge_not_pending",
       resource: "mfa_challenge",
     });
+  });
+
+  it("rate limits repeated MFA verification attempts", async () => {
+    let callCount = 0;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        verifyMfaChallenge: {
+          execute: async () => {
+            callCount += 1;
+
+            return {
+              admin: {
+                email: "admin@example.com",
+                id: "admin_1",
+              },
+              session: {
+                expiresAt: "2026-04-28T12:10:00.000Z",
+                id: "session_1",
+              },
+              sessionToken: "session-token-1",
+              state: "ready",
+            };
+          },
+        },
+      }),
+    );
+
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const response = await app.request("/api/auth/mfa/verify", {
+        body: JSON.stringify({
+          challengeId: "challenge_1",
+          code: "123456",
+        }),
+        headers: {
+          "content-type": "application/json",
+          "x-forwarded-for": "203.0.113.11",
+        },
+        method: "POST",
+      });
+
+      expect(response.status).toBe(200);
+    }
+
+    const limitedResponse = await app.request("/api/auth/mfa/verify", {
+      body: JSON.stringify({
+        challengeId: "challenge_1",
+        code: "123456",
+      }),
+      headers: {
+        "content-type": "application/json",
+        "x-forwarded-for": "203.0.113.11",
+      },
+      method: "POST",
+    });
+
+    expect(limitedResponse.status).toBe(429);
+    await expect(limitedResponse.json()).resolves.toEqual({
+      error: "rate_limited",
+      resource: "api",
+    });
+    expect(callCount).toBe(10);
   });
 
   it("refreshes an admin session from cookie auth", async () => {
