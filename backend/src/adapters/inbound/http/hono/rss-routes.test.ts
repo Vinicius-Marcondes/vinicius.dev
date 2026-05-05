@@ -33,6 +33,7 @@ const createTestContainer = (): BootstrapContainer => ({
   config: {
     auth: {
       mfaCodeMaxAgeSeconds: 600,
+      mfaMaxAttempts: 5,
       roomPasswordSecret: "test-room-secret",
       sessionCookieName: "vinicius.dev-session",
       sessionMaxAgeSeconds: 604800,

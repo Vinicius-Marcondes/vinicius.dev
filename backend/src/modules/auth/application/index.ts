@@ -32,6 +32,7 @@ import type {
 } from "@/modules/auth/ports/outbound";
 
 const DEFAULT_MFA_CODE_LENGTH = 6;
+const DEFAULT_MFA_MAX_ATTEMPTS = 5;
 const DEFAULT_SESSION_TOKEN_BYTES = 32;
 
 const normalizeEmail = (value: string): string => value.trim().toLowerCase();
@@ -211,6 +212,7 @@ export type LoginWithCredentialsDependencies = Readonly<{
 
 export type VerifyMfaChallengeDependencies = Readonly<{
   sessionMaxAgeSeconds: number;
+  mfaMaxAttempts?: number;
   repository: Pick<
     AuthRepositoryPort,
     | "findMfaChallengeById"
@@ -344,6 +346,7 @@ export const createLoginWithCredentialsUseCase = ({
 
 export const createVerifyMfaChallengeUseCase = ({
   sessionMaxAgeSeconds,
+  mfaMaxAttempts = DEFAULT_MFA_MAX_ATTEMPTS,
   repository,
   mfaCodeHasher,
   sessionTokenHasher,
@@ -384,7 +387,16 @@ export const createVerifyMfaChallengeUseCase = ({
     });
 
     if (!isValidCode) {
+      const attemptsAfterFailure = challenge.attempts + 1;
       await repository.incrementMfaChallengeAttempts(challengeId);
+
+      if (attemptsAfterFailure >= mfaMaxAttempts) {
+        await repository.markMfaChallengeExpired({
+          challengeId,
+          expiredAt: now,
+        });
+      }
+
       throw new InvalidAuthCredentialsError();
     }
 

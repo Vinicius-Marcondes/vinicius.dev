@@ -24,6 +24,7 @@ describe("bootstrap config", () => {
     expect(config).toEqual({
       auth: {
         mfaCodeMaxAgeSeconds: 600,
+        mfaMaxAttempts: 5,
         roomPasswordSecret: "development-room-password-secret",
         sessionCookieName: "vinicius.dev-session",
         sessionMaxAgeSeconds: 604800,
@@ -57,6 +58,7 @@ describe("bootstrap config", () => {
   it("applies environment overrides for runtime config", () => {
     const config = loadBootstrapConfig({
       AUTH_MFA_CODE_MAX_AGE_SECONDS: "120",
+      AUTH_MFA_MAX_ATTEMPTS: "3",
       AUTH_ROOM_PASSWORD_SECRET: "room-secret",
       AUTH_SESSION_COOKIE_NAME: "session-cookie",
       AUTH_SESSION_MAX_AGE_SECONDS: "3600",
@@ -86,6 +88,7 @@ describe("bootstrap config", () => {
     expect(config.auth.sessionCookieName).toBe("session-cookie");
     expect(config.auth.sessionMaxAgeSeconds).toBe(3600);
     expect(config.auth.mfaCodeMaxAgeSeconds).toBe(120);
+    expect(config.auth.mfaMaxAttempts).toBe(3);
     expect(config.auth.roomPasswordSecret).toBe("room-secret");
     expect(config.cors.allowCredentials).toBe(false);
     expect(config.cors.allowedOrigins).toEqual([
@@ -150,6 +153,14 @@ describe("bootstrap config", () => {
         MEDIA_PHOTOS_ROOT: "/tmp/media",
       }),
     ).toThrow("MEDIA_PHOTOS_ROOT and MEDIA_CHAT_ROOT must be different");
+  });
+
+  it("rejects non-positive MFA max attempts", () => {
+    expect(() =>
+      loadBootstrapConfig({
+        AUTH_MFA_MAX_ATTEMPTS: "0",
+      }),
+    ).toThrow("AUTH_MFA_MAX_ATTEMPTS must be greater than zero");
   });
 
   it("rejects existing symlink aliases to the same root", async () => {

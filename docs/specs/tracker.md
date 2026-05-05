@@ -107,7 +107,7 @@ Done criteria for `CHAT-010`:
 - upload validation remains aligned with MIME, size, and one-file-per-message rules
 
 ### Security Hardening Execution
-- Status: tasked; first-wave critical tasks are queued.
+- Status: in progress; first-wave critical tasks are executing.
 - Primary spec: `SPEC-031`.
 - Supporting specs: `frontend-structure.md`, `frontend-architecture.md`, `project-structure.md`, `backend-architecture.md`, `chat-room-live-integration.md`, `frontend-admin-auth-integration.md`, `media-storage.md`, `admin-cms.md`, `infra-deployment.md`, `verification.md`, and `git-workflow.md`.
 - Scope: execute the approved remediation wave from the 2026-05-03 security review with one task branch per finding cluster.
@@ -117,13 +117,17 @@ Done criteria for `CHAT-010`:
   - Blocker: none.
   - PR/Open review: PR [#124](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/124) opened against `develop`.
   - Completion: production secret enforcement, compose env contract, and operator env docs updated; awaiting review/merge.
+- SEC-003 status log:
+  - Start: branch `backend/SEC-003-mfa-lockout-and-delivery` moved to `In Progress`.
+  - Local execution: MFA challenge attempt ceiling + expiry enforcement and non-test delivery wiring were implemented with focused auth and delivery tests.
+  - Blocker: none.
 
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Done | SPEC-031 | SPEC-031 | spec | develop | `spec/SPEC-031-security-hardening-production-readiness` | develop | `docs/specs/security-hardening-production-readiness.md` | [#123](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/123) merged | — |
 | In Review | SEC-001 | SPEC-031 | infra | develop | `infra/SEC-001-production-secret-enforcement` | develop | `docs/specs/security-hardening-production-readiness.md` | [#124](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/124) | — |
 | Todo | SEC-002 | SPEC-031 | backend | develop | `backend/SEC-002-cors-and-rate-limits` | develop | `docs/specs/security-hardening-production-readiness.md` | — | — |
-| Todo | SEC-003 | SPEC-031 | backend | develop | `backend/SEC-003-mfa-lockout-and-delivery` | develop | `docs/specs/security-hardening-production-readiness.md` | — | — |
+| In Progress | SEC-003 | SPEC-031 | backend | develop | `backend/SEC-003-mfa-lockout-and-delivery` | develop | `docs/specs/security-hardening-production-readiness.md` | — | — |
 | Blocked | SEC-004 | SPEC-031 | backend | develop | `backend/SEC-004-chat-request-validation-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Phase 2 sequencing: queued after first-wave critical tasks (`SEC-001` to `SEC-003`). |
 | Blocked | SEC-005 | SPEC-031 | backend | develop | `backend/SEC-005-upload-media-signature-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Phase 2 sequencing: queued after first-wave critical tasks (`SEC-001` to `SEC-003`). |
 | Blocked | SEC-006 | SPEC-031 | backend | develop | `backend/SEC-006-websocket-auth-transport-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Depends on `SEC-002`; phase-ordered after first-wave critical tasks. |
