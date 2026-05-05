@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "test:coverage": "bun test --coverage",
+    "test:db": "if [ -z \"$DATABASE_URL\" ]; then echo \"DATABASE_URL is required for DB contract tests\"; exit 1; fi; bun test ./src/adapters/outbound/persistence/prisma/prisma-db-contract.db.ts",
     "seed": "bun prisma/seed.ts",
     "postinstall": "prisma generate",
     "prisma:format": "prisma format",
