@@ -15,6 +15,34 @@ env:
   BUN_VERSION: 1.3.11
 
 jobs:
+  frontend-validation:
+    name: frontend validation
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run frontend lint
+        run: bun run lint
+
+      - name: Run frontend build
+        run: bun run build
+
+      - name: Run frontend tests
+        run: bun run test
+
   backend-verify:
     name: backend verify
     runs-on: ubuntu-latest
@@ -37,5 +65,55 @@ jobs:
       - name: Generate Prisma client
         run: bun run prisma:generate
 
+      - name: Run backend typecheck
+        run: bun run typecheck
+
+      - name: Run backend tests
+        run: bun run test
+
       - name: Run backend verification
         run: bun run verify
+
+  backend-db-contracts:
+    name: backend DB contracts
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: vinicius_test
+          POSTGRES_PASSWORD: vinicius
+          POSTGRES_USER: vinicius
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U vinicius -d vinicius_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://vinicius:vinicius@localhost:5432/vinicius_test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install backend dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Apply migrations
+        run: bunx prisma migrate deploy
+
+      - name: Generate Prisma client
+        run: bun run prisma:generate
+
+      - name: Run backend DB contract tests
+        run: bun run test:db
