@@ -1,13 +1,26 @@
-development.viniciuslab.dev, viniciuslab.dev, :80 {
+(common_security_headers) {
 	header {
 		X-Content-Type-Options "nosniff"
 		X-Frame-Options "SAMEORIGIN"
 		Referrer-Policy "strict-origin-when-cross-origin"
 		Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), microphone=(), payment=(), usb=()"
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	}
+}
+
+(production_csp) {
+	header {
 		Content-Security-Policy "default-src 'self'; base-uri 'self'; frame-ancestors 'self'; object-src 'none'; form-action 'self'; connect-src 'self' wss:; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self'"
 	}
+}
 
+(development_csp) {
+	header {
+		Content-Security-Policy "default-src 'self'; base-uri 'self'; frame-ancestors 'self'; object-src 'none'; form-action 'self'; connect-src 'self' ws: wss:; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'"
+	}
+}
+
+(app_routes) {
 	handle /api/* {
 		reverse_proxy backend:3000
 	}
@@ -24,4 +37,16 @@ development.viniciuslab.dev, viniciuslab.dev, :80 {
 	handle {
 		reverse_proxy frontend:5173
 	}
+}
+
+development.viniciuslab.dev, :80 {
+	import common_security_headers
+	import development_csp
+	import app_routes
+}
+
+viniciuslab.dev {
+	import common_security_headers
+	import production_csp
+	import app_routes
 }
