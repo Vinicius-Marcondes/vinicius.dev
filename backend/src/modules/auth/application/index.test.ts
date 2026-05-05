@@ -296,6 +296,49 @@ describe("auth MFA verify use case", () => {
       status: "pending",
     });
   });
+
+  it("expires the challenge after reaching the MFA max attempt ceiling", async () => {
+    const repository = createTestRepository();
+    await repository.createMfaChallenge({
+      adminEmail: "admin@example.com",
+      adminUserId: "admin_1",
+      codeHash: "hashed:123456",
+      expiresAt: new Date("2026-04-28T12:10:00.000Z"),
+      id: "challenge_3",
+      sentAt: baseNow,
+    });
+    const useCase = createVerifyMfaChallengeUseCase({
+      clock: {
+        now: () => baseNow,
+      },
+      mfaCodeHasher: {
+        verify: async () => false,
+      },
+      mfaMaxAttempts: 2,
+      repository,
+      sessionMaxAgeSeconds: 3600,
+      sessionTokenHasher: createTokenHasher(),
+    });
+
+    await expect(
+      useCase.execute({
+        challengeId: "challenge_3",
+        code: "000000",
+      }),
+    ).rejects.toBeInstanceOf(InvalidAuthCredentialsError);
+
+    await expect(
+      useCase.execute({
+        challengeId: "challenge_3",
+        code: "111111",
+      }),
+    ).rejects.toBeInstanceOf(InvalidAuthCredentialsError);
+
+    await expect(repository.findMfaChallengeById("challenge_3")).resolves.toMatchObject({
+      attempts: 2,
+      status: "expired",
+    });
+  });
 });
 
 describe("auth session lifecycle use cases", () => {

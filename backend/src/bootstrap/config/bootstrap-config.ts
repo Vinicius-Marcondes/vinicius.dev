@@ -20,6 +20,7 @@ const DEFAULT_SESSION_SECRET = "development-session-secret";
 const DEFAULT_SESSION_COOKIE_NAME = "vinicius.dev-session";
 const DEFAULT_SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 const DEFAULT_MFA_CODE_MAX_AGE_SECONDS = 60 * 10;
+const DEFAULT_MFA_MAX_ATTEMPTS = 5;
 const DEFAULT_ROOM_PASSWORD_SECRET = "development-room-password-secret";
 
 export type NodeEnv = "development" | "test" | "production";
@@ -27,6 +28,7 @@ export type NodeEnv = "development" | "test" | "production";
 export type BootstrapConfig = {
   auth: {
     mfaCodeMaxAgeSeconds: number;
+    mfaMaxAttempts: number;
     roomPasswordSecret: string;
     sessionCookieName: string;
     sessionMaxAgeSeconds: number;
@@ -212,6 +214,11 @@ export const loadBootstrapConfig = (
       DEFAULT_MFA_CODE_MAX_AGE_SECONDS,
       "AUTH_MFA_CODE_MAX_AGE_SECONDS",
     ),
+    mfaMaxAttempts: parseInteger(
+      env.AUTH_MFA_MAX_ATTEMPTS,
+      DEFAULT_MFA_MAX_ATTEMPTS,
+      "AUTH_MFA_MAX_ATTEMPTS",
+    ),
     roomPasswordSecret: parseString(
       env.AUTH_ROOM_PASSWORD_SECRET,
       DEFAULT_ROOM_PASSWORD_SECRET,
@@ -240,6 +247,10 @@ export const loadBootstrapConfig = (
     auth.roomPasswordSecret === DEFAULT_ROOM_PASSWORD_SECRET
   ) {
     throw new Error("AUTH_ROOM_PASSWORD_SECRET must be set in production");
+  }
+
+  if (auth.mfaMaxAttempts < 1) {
+    throw new Error("AUTH_MFA_MAX_ATTEMPTS must be greater than zero");
   }
 
   return {

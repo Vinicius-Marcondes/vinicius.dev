@@ -13,6 +13,17 @@ import { createHonoHttpAdapter } from "./http-adapter";
 
 const encoder = new TextEncoder();
 
+const expectChatMediaVaryHeader = (response: Response) => {
+  const varyTokens =
+    response.headers
+      .get("vary")
+      ?.split(",")
+      .map((token) => token.trim().toLowerCase()) ?? [];
+
+  expect(varyTokens).toContain("x-chat-room-session-id");
+  expect(varyTokens).toContain("origin");
+};
+
 const createTestContainer = ({
   executeOpenUploadMedia = async () => null,
   executeUpload = async () => ({
@@ -51,6 +62,7 @@ const createTestContainer = ({
   config: {
     auth: {
       mfaCodeMaxAgeSeconds: 600,
+      mfaMaxAttempts: 5,
       roomPasswordSecret: "test-room-secret",
       sessionCookieName: "vinicius.dev-session",
       sessionMaxAgeSeconds: 604800,
@@ -180,7 +192,7 @@ describe("chat media routes", () => {
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(response.headers.get("content-type")).toBe("image/webp");
     expect(response.headers.get("content-length")).toBe(String(bytes.byteLength));
-    expect(response.headers.get("vary")).toBe("x-chat-room-session-id");
+    expectChatMediaVaryHeader(response);
     await expect(response.text()).resolves.toBe("upload-bytes");
   });
 
@@ -201,7 +213,7 @@ describe("chat media routes", () => {
 
     expect(response.status).toBe(403);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
-    expect(response.headers.get("vary")).toBe("x-chat-room-session-id");
+    expectChatMediaVaryHeader(response);
     await expect(response.json()).resolves.toEqual({
       error: "denied",
       resource: "chat",
@@ -218,7 +230,7 @@ describe("chat media routes", () => {
 
     expect(response.status).toBe(404);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
-    expect(response.headers.get("vary")).toBe("x-chat-room-session-id");
+    expectChatMediaVaryHeader(response);
     await expect(response.json()).resolves.toEqual({
       error: "not_found",
       resource: "chat_upload",
@@ -235,7 +247,7 @@ describe("chat media routes", () => {
 
     expect(response.status).toBe(400);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
-    expect(response.headers.get("vary")).toBe("x-chat-room-session-id");
+    expectChatMediaVaryHeader(response);
     await expect(response.json()).resolves.toEqual({
       error: "invalid_path",
       field: "id",
@@ -248,7 +260,7 @@ describe("chat media routes", () => {
 
     expect(response.status).toBe(400);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
-    expect(response.headers.get("vary")).toBe("x-chat-room-session-id");
+    expectChatMediaVaryHeader(response);
     await expect(response.json()).resolves.toEqual({
       error: "invalid_request",
       field: "x-chat-room-session-id",
