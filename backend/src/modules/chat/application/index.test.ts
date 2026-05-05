@@ -573,6 +573,68 @@ describe("chat moderation audits list use case", () => {
     });
   });
 
+  it("redacts unknown moderation audit state fields from API output", async () => {
+    const useCase = createListChatModerationAuditsUseCase({
+      repository: {
+        listModerationAudits: async () => ({
+          items: [
+            {
+              action: "delete_message",
+              actorAdminUserId: "admin_1",
+              createdAt: new Date("2026-04-28T12:06:00.000Z"),
+              id: "audit_1",
+              nextState: {
+                messageModerationState: "deleted",
+                secretInternalKey: "do-not-leak",
+              },
+              previousState: {
+                messageModerationState: "visible",
+                uploadStoragePath: "/srv/private/path.png",
+              },
+              reason: null,
+              roomId: "room_1",
+              targetBanId: null,
+              targetHandleId: null,
+              targetMessageId: "message_1",
+              targetRoomPasswordRotationId: null,
+              targetSessionId: null,
+              targetUploadId: "upload_1",
+            },
+          ],
+          nextCursor: null,
+        }),
+      },
+    });
+
+    await expect(useCase.execute({})).resolves.toEqual({
+      items: [
+        {
+          action: "delete_message",
+          actorAdminUserId: "admin_1",
+          createdAt: "2026-04-28T12:06:00.000Z",
+          id: "audit_1",
+          nextState: {
+            messageModerationState: "deleted",
+          },
+          previousState: {
+            messageModerationState: "visible",
+          },
+          reason: null,
+          roomId: "room_1",
+          targetBanId: null,
+          targetHandleId: null,
+          targetMessageId: "message_1",
+          targetRoomPasswordRotationId: null,
+          targetSessionId: null,
+          targetUploadId: "upload_1",
+        },
+      ],
+      pageInfo: {
+        nextCursor: null,
+      },
+    });
+  });
+
   it("rejects malformed moderation audit cursor input", async () => {
     const useCase = createListChatModerationAuditsUseCase({
       repository: {
@@ -987,6 +1049,55 @@ describe("chat handle ban use case", () => {
 });
 
 describe("chat room password rotation use case", () => {
+  it("uses a CSPRNG-generated default room password format when no password generator is injected", async () => {
+    const occurredAt = new Date("2026-04-28T12:08:00.000Z");
+    const generatedPasswords: string[] = [];
+    const useCase = createRotateChatRoomPasswordUseCase({
+      clock: () => occurredAt,
+      hashRoomPassword: async (plainText) => `hash:${plainText}`,
+      repository: {
+        rotateRoomPassword: async (input) => {
+          generatedPasswords.push(input.nextPassword);
+
+          return {
+            auditId: `audit_${generatedPasswords.length}`,
+            currentPassword: input.nextPassword,
+            revokedSessionCount: 0,
+            room: {
+              createdAt: occurredAt,
+              id: "room_1",
+              passwordHash: input.nextPasswordHash,
+              passwordRotatedAt: occurredAt,
+              passwordVersion: generatedPasswords.length,
+              slug: "night-shift",
+              updatedAt: occurredAt,
+            },
+            rotation: {
+              id: `rotation_${generatedPasswords.length}`,
+              rotatedAt: occurredAt,
+            },
+          };
+        },
+      },
+      sessionTtlHours: 24,
+    });
+
+    await useCase.execute({
+      actorAdminUserId: "admin_1",
+      slug: "night-shift",
+    });
+    await useCase.execute({
+      actorAdminUserId: "admin_1",
+      slug: "night-shift",
+    });
+
+    expect(generatedPasswords).toHaveLength(2);
+    for (const password of generatedPasswords) {
+      expect(password).toMatch(/^[A-HJ-NP-Za-km-z2-9]{4}-[A-HJ-NP-Za-km-z2-9]{4}-[A-HJ-NP-Za-km-z2-9]{4}$/);
+    }
+    expect(generatedPasswords[0]).not.toBe(generatedPasswords[1]);
+  });
+
   it("generates the next password, rotates the hash, and returns rotation metadata", async () => {
     const occurredAt = new Date("2026-04-28T12:08:00.000Z");
     const capturedCalls: Array<Record<string, unknown>> = [];

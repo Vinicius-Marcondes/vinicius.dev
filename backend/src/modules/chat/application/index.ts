@@ -6,6 +6,10 @@ import type { ChatRepositoryPort } from "@/modules/chat/ports/outbound";
 import type {
   BanChatRoomHandleInput,
   BanChatRoomHandleOutput,
+  ChatModerationAuditBanHandleStateOutput,
+  ChatModerationAuditOutput,
+  ChatModerationAuditRoomPasswordRotationStateOutput,
+  ChatModerationAuditVisibilityStateOutput,
   BanChatRoomHandlePort,
   ChatUploadMimeType,
   ChatRoomMessageOutput,
@@ -390,6 +394,160 @@ const mapChatMessageOutput = (input: Readonly<{
   sentAt: input.sentAt.toISOString(),
 });
 
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+};
+
+const readOptionalStringOrNull = (
+  source: Record<string, unknown>,
+  key: string,
+): string | null | undefined => {
+  const value = source[key];
+  return typeof value === "string" || value === null ? value : undefined;
+};
+
+const readOptionalModerationState = (
+  source: Record<string, unknown>,
+  key: string,
+): "visible" | "hidden" | "deleted" | null | undefined => {
+  const value = source[key];
+
+  if (value === null || value === "visible" || value === "hidden" || value === "deleted") {
+    return value;
+  }
+
+  return undefined;
+};
+
+const readOptionalHandleStatus = (
+  source: Record<string, unknown>,
+  key: string,
+): "active" | "banned" | null | undefined => {
+  const value = source[key];
+
+  if (value === null || value === "active" || value === "banned") {
+    return value;
+  }
+
+  return undefined;
+};
+
+const readOptionalNumber = (
+  source: Record<string, unknown>,
+  key: string,
+): number | undefined => {
+  const value = source[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+};
+
+const mapChatModerationVisibilityState = (
+  value: unknown,
+): ChatModerationAuditVisibilityStateOutput | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const messageDeletedAt = readOptionalStringOrNull(value, "messageDeletedAt");
+  const messageHiddenAt = readOptionalStringOrNull(value, "messageHiddenAt");
+  const messageModerationState = readOptionalModerationState(
+    value,
+    "messageModerationState",
+  );
+  const uploadDeletedAt = readOptionalStringOrNull(value, "uploadDeletedAt");
+  const uploadHiddenAt = readOptionalStringOrNull(value, "uploadHiddenAt");
+  const uploadModerationState = readOptionalModerationState(value, "uploadModerationState");
+  const state: ChatModerationAuditVisibilityStateOutput = {
+    ...(typeof messageDeletedAt !== "undefined"
+      ? {
+          messageDeletedAt,
+        }
+      : {}),
+    ...(typeof messageHiddenAt !== "undefined"
+      ? {
+          messageHiddenAt,
+        }
+      : {}),
+    ...(typeof messageModerationState !== "undefined"
+      ? {
+          messageModerationState,
+        }
+      : {}),
+    ...(typeof uploadDeletedAt !== "undefined"
+      ? {
+          uploadDeletedAt,
+        }
+      : {}),
+    ...(typeof uploadHiddenAt !== "undefined"
+      ? {
+          uploadHiddenAt,
+        }
+      : {}),
+    ...(typeof uploadModerationState !== "undefined"
+      ? {
+          uploadModerationState,
+        }
+      : {}),
+  };
+
+  return Object.keys(state).length > 0 ? state : null;
+};
+
+const mapChatModerationHandleState = (
+  value: unknown,
+): ChatModerationAuditBanHandleStateOutput | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const handleStatus = readOptionalHandleStatus(value, "handleStatus");
+  const revokedSessionCount = readOptionalNumber(value, "revokedSessionCount");
+  const state: ChatModerationAuditBanHandleStateOutput = {
+    ...(typeof handleStatus !== "undefined"
+      ? {
+          handleStatus,
+        }
+      : {}),
+    ...(typeof revokedSessionCount !== "undefined"
+      ? {
+          revokedSessionCount,
+        }
+      : {}),
+  };
+
+  return Object.keys(state).length > 0 ? state : null;
+};
+
+const mapChatModerationRoomPasswordState = (
+  value: unknown,
+): ChatModerationAuditRoomPasswordRotationStateOutput | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const passwordRotatedAt = readOptionalStringOrNull(value, "passwordRotatedAt");
+  const passwordVersion = readOptionalNumber(value, "passwordVersion");
+  const revokedSessionCount = readOptionalNumber(value, "revokedSessionCount");
+  const state: ChatModerationAuditRoomPasswordRotationStateOutput = {
+    ...(typeof passwordRotatedAt !== "undefined"
+      ? {
+          passwordRotatedAt,
+        }
+      : {}),
+    ...(typeof passwordVersion !== "undefined"
+      ? {
+          passwordVersion,
+        }
+      : {}),
+    ...(typeof revokedSessionCount !== "undefined"
+      ? {
+          revokedSessionCount,
+        }
+      : {}),
+  };
+
+  return Object.keys(state).length > 0 ? state : null;
+};
+
 const mapChatModerationAuditOutput = (input: Readonly<{
   action: "delete_message" | "hide_media_metadata" | "ban_handle" | "room_password_rotation";
   actorAdminUserId: string;
@@ -405,13 +563,11 @@ const mapChatModerationAuditOutput = (input: Readonly<{
   targetRoomPasswordRotationId: string | null;
   targetSessionId: string | null;
   targetUploadId: string | null;
-}>) => ({
-  action: input.action,
+}>): ChatModerationAuditOutput => {
+  const base = {
   actorAdminUserId: input.actorAdminUserId,
   createdAt: input.createdAt.toISOString(),
   id: input.id,
-  nextState: input.nextState,
-  previousState: input.previousState,
   reason: input.reason,
   roomId: input.roomId,
   targetBanId: input.targetBanId,
@@ -420,7 +576,33 @@ const mapChatModerationAuditOutput = (input: Readonly<{
   targetRoomPasswordRotationId: input.targetRoomPasswordRotationId,
   targetSessionId: input.targetSessionId,
   targetUploadId: input.targetUploadId,
-});
+  } as const;
+
+  if (input.action === "ban_handle") {
+    return {
+      ...base,
+      action: input.action,
+      nextState: mapChatModerationHandleState(input.nextState),
+      previousState: mapChatModerationHandleState(input.previousState),
+    };
+  }
+
+  if (input.action === "room_password_rotation") {
+    return {
+      ...base,
+      action: input.action,
+      nextState: mapChatModerationRoomPasswordState(input.nextState),
+      previousState: mapChatModerationRoomPasswordState(input.previousState),
+    };
+  }
+
+  return {
+    ...base,
+    action: input.action,
+    nextState: mapChatModerationVisibilityState(input.nextState),
+    previousState: mapChatModerationVisibilityState(input.previousState),
+  };
+};
 
 const resolveSessionExpiry = (joinedAt: Date, sessionMaxAgeSeconds: number): Date => {
   return new Date(joinedAt.getTime() + sessionMaxAgeSeconds * 1000);
@@ -835,8 +1017,19 @@ export const createGetChatRoomAccessUseCase = ({
 
 const createReadableRoomPassword = (): string => {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  const maxByte = Math.floor(256 / alphabet.length) * alphabet.length;
+  const randomByte = new Uint8Array(1);
+  const nextCharacter = (): string => {
+    let sampled = 0;
+    do {
+      crypto.getRandomValues(randomByte);
+      sampled = randomByte[0]!;
+    } while (sampled >= maxByte);
+
+    return alphabet[sampled % alphabet.length]!;
+  };
   const segments = [4, 4, 4].map((segmentLength) =>
-    Array.from({ length: segmentLength }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join(""),
+    Array.from({ length: segmentLength }, () => nextCharacter()).join(""),
   );
 
   return segments.join("-");

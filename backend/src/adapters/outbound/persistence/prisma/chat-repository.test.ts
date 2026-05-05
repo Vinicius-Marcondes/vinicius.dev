@@ -1,7 +1,18 @@
 import { describe, expect, it } from "bun:test";
+import { createCipheriv, createHash } from "node:crypto";
 
 import { createPrismaChatRepository } from "./chat-repository";
 import type { PrismaDatabaseClient } from "./prisma-client";
+
+const encryptLegacyReadablePassword = (plainText: string, secret: string): string => {
+  const iv = Buffer.from("00112233445566778899aabb", "hex");
+  const key = createHash("sha256").update(secret).digest();
+  const cipher = createCipheriv("aes-256-gcm", key, iv);
+  const encrypted = Buffer.concat([cipher.update(plainText, "utf8"), cipher.final()]);
+  const tag = cipher.getAuthTag();
+
+  return `${iv.toString("base64url")}.${encrypted.toString("base64url")}.${tag.toString("base64url")}`;
+};
 
 describe("prisma chat repository", () => {
   it("maps a room session row for upload actor validation", async () => {
@@ -59,6 +70,128 @@ describe("prisma chat repository", () => {
       passwordVersion: 3,
       slug: "night-shift",
       updatedAt: new Date("2026-04-24T10:05:00.000Z"),
+    });
+  });
+
+  it("decrypts legacy room-password ciphertext for room access reads", async () => {
+    const roomPasswordSecret = "legacy-room-secret";
+    const repository = createPrismaChatRepository({
+      chatRoom: {
+        findUnique: async () => ({
+          currentPasswordCiphertext: encryptLegacyReadablePassword(
+            "night-runner-42",
+            roomPasswordSecret,
+          ),
+          id: "room_1",
+          passwordRotatedAt: new Date("2026-04-20T08:00:00.000Z"),
+          passwordVersion: 3,
+          slug: "night-shift",
+        }),
+      },
+    } as unknown as PrismaDatabaseClient, {
+      roomPasswordSecret,
+    });
+
+    await expect(repository.findRoomAccessBySlug("night-shift")).resolves.toEqual({
+      currentPassword: "night-runner-42",
+      id: "room_1",
+      passwordRotatedAt: new Date("2026-04-20T08:00:00.000Z"),
+      passwordVersion: 3,
+      slug: "night-shift",
+    });
+  });
+
+  it("writes versioned HKDF ciphertext and decrypts it through room access lookup", async () => {
+    const occurredAt = new Date("2026-04-28T12:10:00.000Z");
+    const roomPasswordSecret = "room-secret-v2";
+    let storedCiphertext = "";
+    const rotateRepository = createPrismaChatRepository({
+      $transaction: async <T>(
+        runInTransaction: (tx: {
+          chatModerationAuditRecord: {
+            create: (args: { data: Record<string, unknown>; select: { id: true } }) => Promise<{ id: string }>;
+          };
+          chatRoom: {
+            findUnique: (args: { where: { slug: string } }) => Promise<Record<string, unknown> | null>;
+            update: (args: { data: Record<string, unknown>; select: Record<string, true>; where: { id: string } }) => Promise<Record<string, unknown>>;
+          };
+          chatRoomPasswordRotation: {
+            create: (args: { data: Record<string, unknown>; select: { id: true; rotatedAt: true } }) => Promise<{ id: string; rotatedAt: Date }>;
+          };
+          chatRoomSession: {
+            updateMany: (args: { data: Record<string, unknown>; where: Record<string, unknown> }) => Promise<{ count: number }>;
+          };
+        }) => Promise<T>,
+      ) =>
+        runInTransaction({
+          chatModerationAuditRecord: {
+            create: async () => ({ id: "audit_1" }),
+          },
+          chatRoom: {
+            findUnique: async () => ({
+              createdAt: new Date("2026-04-24T10:00:00.000Z"),
+              id: "room_1",
+              passwordHash: "hash:old",
+              passwordRotatedAt: new Date("2026-04-20T10:00:00.000Z"),
+              passwordVersion: 3,
+              slug: "night-shift",
+              updatedAt: new Date("2026-04-24T10:00:00.000Z"),
+            }),
+            update: async ({ data }) => {
+              storedCiphertext = data.currentPasswordCiphertext as string;
+
+              return {
+                createdAt: new Date("2026-04-24T10:00:00.000Z"),
+                id: "room_1",
+                passwordHash: "hash:new",
+                passwordRotatedAt: occurredAt,
+                passwordVersion: 4,
+                slug: "night-shift",
+                updatedAt: occurredAt,
+              };
+            },
+          },
+          chatRoomPasswordRotation: {
+            create: async () => ({ id: "rotation_1", rotatedAt: occurredAt }),
+          },
+          chatRoomSession: {
+            updateMany: async () => ({ count: 0 }),
+          },
+        }),
+    } as unknown as PrismaDatabaseClient, {
+      roomPasswordSecret,
+    });
+
+    await rotateRepository.rotateRoomPassword({
+      actorAdminUserId: "admin_1",
+      nextPassword: "new-secret",
+      nextPasswordHash: "hash:new",
+      occurredAt,
+      slug: "night-shift",
+    });
+
+    expect(storedCiphertext).toMatch(/^v2\./);
+
+    const readRepository = createPrismaChatRepository({
+      chatRoom: {
+        findUnique: async () => ({
+          currentPasswordCiphertext: storedCiphertext,
+          id: "room_1",
+          passwordRotatedAt: occurredAt,
+          passwordVersion: 4,
+          slug: "night-shift",
+        }),
+      },
+    } as unknown as PrismaDatabaseClient, {
+      roomPasswordSecret,
+    });
+
+    await expect(readRepository.findRoomAccessBySlug("night-shift")).resolves.toEqual({
+      currentPassword: "new-secret",
+      id: "room_1",
+      passwordRotatedAt: occurredAt,
+      passwordVersion: 4,
+      slug: "night-shift",
     });
   });
 

@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, hkdfSync, randomBytes } from "node:crypto";
 
 import type {
   BanChatRoomHandleCommand,
@@ -34,7 +34,23 @@ import { ChatUploadMimeType } from "../../../../../generated/prisma/client";
 
 import type { PrismaDatabaseClient } from "./prisma-client";
 
+const ROOM_PASSWORD_CIPHERTEXT_VERSION = "v2";
+const ROOM_PASSWORD_HKDF_INFO = "vinicius.dev/chat-room-readable-password/aes-256-gcm";
+const ROOM_PASSWORD_HKDF_SALT = "vinicius.dev/chat-room-readable-password/salt";
+const ROOM_PASSWORD_KEY_LENGTH_BYTES = 32;
+
 const createReadablePasswordKey = (secret: string): Buffer =>
+  Buffer.from(
+    hkdfSync(
+      "sha256",
+      Buffer.from(secret, "utf8"),
+      Buffer.from(ROOM_PASSWORD_HKDF_SALT, "utf8"),
+      Buffer.from(ROOM_PASSWORD_HKDF_INFO, "utf8"),
+      ROOM_PASSWORD_KEY_LENGTH_BYTES,
+    ),
+  );
+
+const createLegacyReadablePasswordKey = (secret: string): Buffer =>
   createHash("sha256").update(secret).digest();
 
 const encryptReadablePassword = (plainText: string, secret: string): string => {
@@ -44,27 +60,57 @@ const encryptReadablePassword = (plainText: string, secret: string): string => {
   const encrypted = Buffer.concat([cipher.update(plainText, "utf8"), cipher.final()]);
   const tag = cipher.getAuthTag();
 
-  return `${iv.toString("base64url")}.${encrypted.toString("base64url")}.${tag.toString("base64url")}`;
+  return `${ROOM_PASSWORD_CIPHERTEXT_VERSION}.${iv.toString("base64url")}.${encrypted.toString("base64url")}.${tag.toString("base64url")}`;
 };
 
-const decryptReadablePassword = (ciphertext: string, secret: string): string => {
-  const [ivBase64, payloadBase64, tagBase64] = ciphertext.split(".");
-
-  if (!ivBase64 || !payloadBase64 || !tagBase64) {
-    throw new Error("Invalid encrypted room password payload");
-  }
-
-  const decipher = createDecipheriv(
-    "aes-256-gcm",
-    createReadablePasswordKey(secret),
-    Buffer.from(ivBase64, "base64url"),
-  );
+const decryptReadablePasswordPayload = (
+  ciphertextParts: readonly [string, string, string],
+  key: Buffer,
+): string => {
+  const [ivBase64, payloadBase64, tagBase64] = ciphertextParts;
+  const decipher = createDecipheriv("aes-256-gcm", key, Buffer.from(ivBase64, "base64url"));
   decipher.setAuthTag(Buffer.from(tagBase64, "base64url"));
 
   return Buffer.concat([
     decipher.update(Buffer.from(payloadBase64, "base64url")),
     decipher.final(),
   ]).toString("utf8");
+};
+
+const decryptReadablePassword = (ciphertext: string, secret: string): string => {
+  const parts = ciphertext.split(".");
+
+  if (parts[0] === ROOM_PASSWORD_CIPHERTEXT_VERSION) {
+    if (parts.length !== 4) {
+      throw new Error("Invalid encrypted room password payload");
+    }
+
+    const [, ivBase64, payloadBase64, tagBase64] = parts;
+
+    if (!ivBase64 || !payloadBase64 || !tagBase64) {
+      throw new Error("Invalid encrypted room password payload");
+    }
+
+    return decryptReadablePasswordPayload(
+      [ivBase64, payloadBase64, tagBase64],
+      createReadablePasswordKey(secret),
+    );
+  }
+
+  if (parts.length !== 3) {
+    throw new Error("Invalid encrypted room password payload");
+  }
+
+  const [ivBase64, payloadBase64, tagBase64] = parts;
+
+  if (!ivBase64 || !payloadBase64 || !tagBase64) {
+    throw new Error("Invalid encrypted room password payload");
+  }
+
+  return decryptReadablePasswordPayload(
+    [ivBase64, payloadBase64, tagBase64],
+    createLegacyReadablePasswordKey(secret),
+  );
 };
 
 const notImplemented = <T>(method: string): Promise<T> => {

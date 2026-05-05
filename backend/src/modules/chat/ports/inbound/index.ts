@@ -100,13 +100,30 @@ export type ListChatModerationAuditsInput = Readonly<{
   roomId?: string;
 }>;
 
-export type ChatModerationAuditOutput = Readonly<{
-  action: "delete_message" | "hide_media_metadata" | "ban_handle" | "room_password_rotation";
+export type ChatModerationAuditVisibilityStateOutput = Readonly<{
+  messageDeletedAt?: string | null;
+  messageHiddenAt?: string | null;
+  messageModerationState?: "visible" | "hidden" | "deleted" | null;
+  uploadDeletedAt?: string | null;
+  uploadHiddenAt?: string | null;
+  uploadModerationState?: "visible" | "hidden" | "deleted" | null;
+}>;
+
+export type ChatModerationAuditBanHandleStateOutput = Readonly<{
+  handleStatus?: "active" | "banned" | null;
+  revokedSessionCount?: number;
+}>;
+
+export type ChatModerationAuditRoomPasswordRotationStateOutput = Readonly<{
+  passwordRotatedAt?: string | null;
+  passwordVersion?: number;
+  revokedSessionCount?: number;
+}>;
+
+type BaseChatModerationAuditOutput = Readonly<{
   actorAdminUserId: string;
   createdAt: string;
   id: string;
-  nextState: unknown | null;
-  previousState: unknown | null;
   reason: string | null;
   roomId: string | null;
   targetBanId: string | null;
@@ -116,6 +133,23 @@ export type ChatModerationAuditOutput = Readonly<{
   targetSessionId: string | null;
   targetUploadId: string | null;
 }>;
+
+export type ChatModerationAuditOutput =
+  | (BaseChatModerationAuditOutput & Readonly<{
+      action: "delete_message" | "hide_media_metadata";
+      nextState: ChatModerationAuditVisibilityStateOutput | null;
+      previousState: ChatModerationAuditVisibilityStateOutput | null;
+    }>)
+  | (BaseChatModerationAuditOutput & Readonly<{
+      action: "ban_handle";
+      nextState: ChatModerationAuditBanHandleStateOutput | null;
+      previousState: ChatModerationAuditBanHandleStateOutput | null;
+    }>)
+  | (BaseChatModerationAuditOutput & Readonly<{
+      action: "room_password_rotation";
+      nextState: ChatModerationAuditRoomPasswordRotationStateOutput | null;
+      previousState: ChatModerationAuditRoomPasswordRotationStateOutput | null;
+    }>);
 
 export type ListChatModerationAuditsOutput = Readonly<{
   items: readonly ChatModerationAuditOutput[];
