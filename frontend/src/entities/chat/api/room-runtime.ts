@@ -54,6 +54,9 @@ export const sendChatMessage = (
   )
 
 const trimTrailingSlash = (value: string) => value.replace(/\/$/, '')
+const chatLiveTransportProtocol = 'chat-room-live.v1'
+const buildChatLiveRoomSessionProtocol = (roomSessionId: string) =>
+  `chat-room-session.${roomSessionId}`
 
 const parseResponsePayload = async (response: Response) => {
   const contentType = response.headers.get('content-type') ?? ''
@@ -195,9 +198,11 @@ export const createChatLiveSocket = (
     window.location.origin,
   )
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
-  url.searchParams.set('sessionId', roomSessionId)
 
-  const socket = new WebSocket(url)
+  const socket = new WebSocket(url.toString(), [
+    chatLiveTransportProtocol,
+    buildChatLiveRoomSessionProtocol(roomSessionId),
+  ])
 
   socket.addEventListener('open', (event) => {
     handlers.onOpen?.(event)

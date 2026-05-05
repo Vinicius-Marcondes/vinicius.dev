@@ -42,7 +42,7 @@ type AttachmentMediaState = Readonly<{
 const readStoredSession = (): PersistedChatSession | null => {
   if (typeof window === 'undefined') return null
 
-  const raw = window.localStorage.getItem(storageKey)
+  const raw = window.sessionStorage.getItem(storageKey)
   if (!raw) return null
 
   try {
@@ -59,12 +59,12 @@ const readStoredSession = (): PersistedChatSession | null => {
 
 const clearStoredSession = () => {
   if (typeof window === 'undefined') return
-  window.localStorage.removeItem(storageKey)
+  window.sessionStorage.removeItem(storageKey)
 }
 
 const persistSession = (value: PersistedChatSession) => {
   if (typeof window === 'undefined') return
-  window.localStorage.setItem(storageKey, JSON.stringify(value))
+  window.sessionStorage.setItem(storageKey, JSON.stringify(value))
 }
 
 const hasSessionExpired = (expiresAt: string | null) => {
