@@ -35,8 +35,8 @@
 ## Next Task Queue
 1. Complete reviewer validation for `QA-008` follow-up PR [#117](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/117).
 2. Complete reviewer validation for `CHAT-010` PR [#122](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/122).
-3. Execute `SEC-008` on `backend/SEC-008-chat-crypto-and-audit-hardening` from `develop`.
-4. Queue phase-3 hardening follow-up `SEC-009` after `SEC-008` enters review.
+3. Execute `SEC-009` on `infra/SEC-009-edge-headers-and-production-compose` from `develop`.
+4. Queue review handoff for `SEC-009` once Caddy/compose hardening verification is complete.
 
 ## Current Executable Cluster
 ### Frontend Admin API Integration
@@ -107,7 +107,7 @@ Done criteria for `CHAT-010`:
 - upload validation remains aligned with MIME, size, and one-file-per-message rules
 
 ### Security Hardening Execution
-- Status: in progress; first-wave critical tasks are complete and phase 2 execution continues with `SEC-008` after `SEC-007` merged to `develop`.
+- Status: in progress; first-wave and phase 2 tasks are complete, and phase 3 execution is active on `SEC-009`.
 - Primary spec: `SPEC-031`.
 - Supporting specs: `frontend-structure.md`, `frontend-architecture.md`, `project-structure.md`, `backend-architecture.md`, `chat-room-live-integration.md`, `frontend-admin-auth-integration.md`, `media-storage.md`, `admin-cms.md`, `infra-deployment.md`, `verification.md`, and `git-workflow.md`.
 - Scope: execute the approved remediation wave from the 2026-05-03 security review with one task branch per finding cluster.
@@ -163,6 +163,13 @@ Done criteria for `CHAT-010`:
   - Local execution: replace `Math.random()` room-password generation with a CSPRNG, replace raw SHA-256 readable-password key derivation with HKDF (with legacy decrypt compatibility), and map moderation audit API states through explicit typed/redacted DTOs.
   - Local verification: chat use-case, admin-route, and Prisma repository tests plus backend typecheck and boundary verification passed on 2026-05-05.
   - PR/Open review: PR [#131](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/131) opened against `develop`.
+  - Completion: chat crypto and moderation-audit hardening landed via merged PR [#131](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/131).
+- SEC-009 status log:
+  - Start: branch `infra/SEC-009-edge-headers-and-production-compose` moved to `In Progress` after PR [#131](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/131) merged to `develop`.
+  - Blocker: none.
+  - Local execution: add the Caddy edge security-header baseline, move production compose frontend/backend to Dockerfile builds with frozen-lock installs, and serve frontend runtime from built `dist` artifacts.
+  - Local verification: production/dev compose config rendering (`--env-file`), Caddy config validation, frontend build/lint + static-route fallback smoke checks (`/`, `/admin`, `/chat`), and `backend` verify/deploy-readiness checks passed on 2026-05-05.
+  - PR/Open review: PR [#132](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/132) opened against `develop`.
 
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -174,8 +181,8 @@ Done criteria for `CHAT-010`:
 | Done | SEC-005 | SPEC-031 | backend | develop | `backend/SEC-005-upload-media-signature-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#128](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/128) merged | — |
 | Done | SEC-006 | SPEC-031 | backend | develop | `backend/SEC-006-websocket-auth-transport-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#129](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/129) merged | — |
 | Done | SEC-007 | SPEC-031 | frontend | develop | `frontend/SEC-007-chat-session-storage-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#130](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/130) merged | — |
-| In Review | SEC-008 | SPEC-031 | backend | develop | `backend/SEC-008-chat-crypto-and-audit-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#131](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/131) | — |
-| Blocked | SEC-009 | SPEC-031 | infra | develop | `infra/SEC-009-edge-headers-and-production-compose` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Depends on `SEC-001` and is reserved for Phase 3 hardening. |
+| Done | SEC-008 | SPEC-031 | backend | develop | `backend/SEC-008-chat-crypto-and-audit-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#131](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/131) merged | — |
+| In Review | SEC-009 | SPEC-031 | infra | develop | `infra/SEC-009-edge-headers-and-production-compose` | develop | `docs/specs/security-hardening-production-readiness.md` | [#132](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/132) | — |
 
 Done criteria for `SPEC-031`:
 - `docs/specs/security-hardening-production-readiness.md` exists and follows the harness section template

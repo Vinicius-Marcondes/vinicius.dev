@@ -11,6 +11,11 @@
 - Base: `docker-compose.yml` (shared and production-safe defaults).
 - Development override: `docker-compose.dev.yml` (source bind mounts and install-on-start workflow).
 
+## Production runtime baseline
+
+- Backend image is built from `backend/Dockerfile` with `bun install --frozen-lockfile` and Prisma client generation during image build.
+- Frontend image is built from `frontend/Dockerfile`, runs `bun run build` during image build, and serves the built `dist/` artifact at runtime.
+
 ## Env templates
 
 - Development template: `.env.dev.example`
