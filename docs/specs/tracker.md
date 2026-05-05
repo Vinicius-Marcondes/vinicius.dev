@@ -154,6 +154,8 @@ Done criteria for `CHAT-010`:
   - Start: branch `frontend/SEC-007-chat-session-storage-hardening` moved to `In Progress` after PR [#129](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/129) merged to `develop`.
   - Blocker: none.
   - Local execution: migrate active room-session persistence from `localStorage` to `sessionStorage` and align frontend WebSocket handshake with the SEC-006 subprotocol contract.
+  - Local verification: frontend lint/build plus static checks for no `localStorage` or WebSocket `sessionId` query usage passed on 2026-05-05.
+  - PR/Open review: PR [#130](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/130) opened against `develop`.
 
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -164,7 +166,7 @@ Done criteria for `CHAT-010`:
 | Done | SEC-004 | SPEC-031 | backend | develop | `backend/SEC-004-chat-request-validation-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#127](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/127) merged | — |
 | Done | SEC-005 | SPEC-031 | backend | develop | `backend/SEC-005-upload-media-signature-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#128](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/128) merged | — |
 | Done | SEC-006 | SPEC-031 | backend | develop | `backend/SEC-006-websocket-auth-transport-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#129](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/129) merged | — |
-| In Progress | SEC-007 | SPEC-031 | frontend | develop | `frontend/SEC-007-chat-session-storage-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | — |
+| In Review | SEC-007 | SPEC-031 | frontend | develop | `frontend/SEC-007-chat-session-storage-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#130](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/130) | — |
 | Blocked | SEC-008 | SPEC-031 | backend | develop | `backend/SEC-008-chat-crypto-and-audit-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Phase 2 sequencing: queued after first-wave critical tasks (`SEC-001` to `SEC-003`). |
 | Blocked | SEC-009 | SPEC-031 | infra | develop | `infra/SEC-009-edge-headers-and-production-compose` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Depends on `SEC-001` and is reserved for Phase 3 hardening. |
 
