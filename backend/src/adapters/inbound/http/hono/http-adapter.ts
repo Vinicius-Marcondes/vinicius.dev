@@ -40,6 +40,7 @@ import type { BootstrapContainer } from "@/bootstrap/container";
 
 import { presentThoughtsRssFeed } from "./rss-presenter";
 import { presentSitemapXml } from "./sitemap-presenter";
+import { parseChatLiveWebSocketHandshake } from "./chat-live-contract";
 
 const serviceName = "vinicius.dev-backend";
 const defaultMediaContentType = "application/octet-stream";
@@ -1007,11 +1008,15 @@ const createChatFamily = (
       return c.json({ error: "invalid_path", field: "slug" }, 400);
     }
 
-    const roomSessionId = c.req.query("sessionId")?.trim();
+    const parsedHandshake = parseChatLiveWebSocketHandshake(
+      c.req.header("sec-websocket-protocol"),
+    );
 
-    if (!roomSessionId) {
-      return c.json({ error: "invalid_query", field: "sessionId" }, 400);
+    if ("error" in parsedHandshake) {
+      return c.json(parsedHandshake.error, 400);
     }
+
+    const roomSessionId = parsedHandshake.value.roomSessionId;
 
     if (!resolveRoomSessionUseCase || !container.chat.listRoomParticipants) {
       return c.json<NotImplementedResponse>(
@@ -1032,24 +1037,32 @@ const createChatFamily = (
         container.chat.listRoomParticipants.execute({ roomSessionId, slug }),
       ]);
 
-      return upgradeWebSocket(c, {
-        onClose: () => {
-          live.remove(slug, roomSessionId);
+      return upgradeWebSocket(
+        c,
+        {
+          onClose: () => {
+            live.remove(slug, roomSessionId);
+          },
+          onOpen: (_event, ws) => {
+            live.add({
+              roomId: resolvedSession.room.id,
+              roomSessionId,
+              roomSlug: slug,
+              socket: ws,
+            });
+            live.sendToSession(slug, roomSessionId, {
+              items: snapshot.items,
+              type: "participant.snapshot",
+            });
+            void broadcastParticipantSnapshot(slug, resolvedSession.session.id);
+          },
         },
-        onOpen: (_event, ws) => {
-          live.add({
-            roomId: resolvedSession.room.id,
-            roomSessionId,
-            roomSlug: slug,
-            socket: ws,
-          });
-          live.sendToSession(slug, roomSessionId, {
-            items: snapshot.items,
-            type: "participant.snapshot",
-          });
-          void broadcastParticipantSnapshot(slug, resolvedSession.session.id);
+        {
+          headers: {
+            "Sec-WebSocket-Protocol": parsedHandshake.value.transportProtocol,
+          },
         },
-      });
+      );
     } catch (error) {
       if (error instanceof InvalidChatRoomSessionError) {
         return c.json({ error: "denied", resource: "chat" }, 401);

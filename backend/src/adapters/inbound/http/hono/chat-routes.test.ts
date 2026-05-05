@@ -26,6 +26,10 @@ import {
 } from "@/modules/chat/application";
 
 import { createHonoHttpAdapter } from "./http-adapter";
+import {
+  buildChatLiveRoomSessionProtocol,
+  chatLiveTransportProtocol,
+} from "./chat-live-contract";
 
 const defaultUploadResponse: UploadChatMessageWithImageOutput = {
   attachment: {
@@ -318,6 +322,16 @@ const createUploadFormData = ({
   return formData;
 };
 
+const createWebSocketUpgradeHeaders = (protocols: readonly string[]) => ({
+  connection: "Upgrade",
+  "sec-websocket-key": "dGhlIHNhbXBsZSBub25jZQ==",
+  "sec-websocket-protocol": protocols.join(", "),
+  "sec-websocket-version": "13",
+  upgrade: "websocket",
+});
+
+const resolveWebSocketHandler = async () => (await import("hono/bun")).websocket;
+
 describe("chat routes", () => {
   it("maps a valid join request into the chat join use case", async () => {
     let capturedInput: JoinChatRoomSessionInput | undefined;
@@ -583,6 +597,151 @@ describe("chat routes", () => {
       error: "denied",
       resource: "chat",
     });
+  });
+
+  it("rejects live websocket requests that do not provide the websocket auth contract", async () => {
+    const app = createHonoHttpAdapter(createTestContainer());
+
+    const response = await app.request("/api/chat/rooms/night-shift/live");
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "invalid_request",
+      field: "sec-websocket-protocol",
+      reason: "missing_transport_protocol",
+    });
+  });
+
+  it("accepts websocket live auth via sec-websocket-protocol without query-string session ids", async () => {
+    let capturedResolveInput: ResolveChatRoomSessionInput | undefined;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeResolve: async (input) => {
+          capturedResolveInput = input;
+
+          return {
+            participant: {
+              handle: "vinicius",
+              id: "handle_1",
+              status: "online",
+            },
+            room: {
+              id: "room_1",
+              slug: "night-shift",
+            },
+            session: {
+              expiresAt: "2026-04-25T12:00:00.000Z",
+              handleId: "handle_1",
+              id: "session_1",
+              joinedAt: "2026-04-24T12:00:00.000Z",
+              roomId: "room_1",
+              status: "active",
+            },
+          };
+        },
+      }),
+    );
+    const websocket = await resolveWebSocketHandler();
+    const server = Bun.serve({
+      fetch: (request, bunServer) => app.fetch(request, bunServer),
+      port: 0,
+      websocket,
+    });
+    const protocols = [
+      chatLiveTransportProtocol,
+      buildChatLiveRoomSessionProtocol("session_1"),
+    ];
+
+    try {
+      const negotiated = await new Promise<{
+        message: unknown;
+        protocol: string;
+      }>((resolve, reject) => {
+        const socket = new WebSocket(
+          `ws://127.0.0.1:${server.port}/api/chat/rooms/night-shift/live`,
+          protocols,
+        );
+        const timeout = setTimeout(() => {
+          socket.close();
+          reject(new Error("timed out waiting for websocket participant snapshot"));
+        }, 2_000);
+        let settled = false;
+
+        socket.onmessage = (event) => {
+          if (settled) {
+            return;
+          }
+
+          settled = true;
+          clearTimeout(timeout);
+          socket.close();
+          resolve({
+            message: JSON.parse(String(event.data)),
+            protocol: socket.protocol,
+          });
+        };
+
+        socket.onerror = () => {
+          if (settled) {
+            return;
+          }
+
+          settled = true;
+          clearTimeout(timeout);
+          reject(new Error("failed to open websocket live connection"));
+        };
+      });
+
+      expect(negotiated.protocol).toBe(chatLiveTransportProtocol);
+      expect(negotiated.message).toEqual({
+        items: [
+          {
+            handle: "vinicius",
+            status: "online",
+          },
+        ],
+        type: "participant.snapshot",
+      });
+      expect(capturedResolveInput).toEqual({
+        roomSessionId: "session_1",
+        slug: "night-shift",
+      });
+    } finally {
+      await server.stop(true);
+    }
+  });
+
+  it("rejects live websocket upgrades when the room session is invalid", async () => {
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeResolve: async () => {
+          throw new InvalidChatRoomSessionError();
+        },
+      }),
+    );
+    const websocket = await resolveWebSocketHandler();
+    const server = Bun.serve({
+      fetch: (request, bunServer) => app.fetch(request, bunServer),
+      port: 0,
+      websocket,
+    });
+
+    try {
+      const response = await fetch(`http://127.0.0.1:${server.port}/api/chat/rooms/night-shift/live`, {
+        headers: createWebSocketUpgradeHeaders([
+          chatLiveTransportProtocol,
+          buildChatLiveRoomSessionProtocol("expired_session"),
+        ]),
+      });
+
+      expect(response.status).toBe(401);
+      await expect(response.json()).resolves.toEqual({
+        error: "denied",
+        resource: "chat",
+      });
+    } finally {
+      await server.stop(true);
+    }
   });
 
   it("maps a valid participants request into the participants use case", async () => {
