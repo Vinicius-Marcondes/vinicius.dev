@@ -169,6 +169,9 @@ Done criteria for `CHAT-010`:
   - Local verification: production/dev compose config rendering (`--env-file`), Caddy config validation, frontend build/lint + static-route fallback smoke checks (`/`, `/admin`, `/chat`), and `backend` verify/deploy-readiness checks passed on 2026-05-05.
   - PR/Open review: PR [#132](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/132) opened against `develop`.
   - Completion: edge security headers and production compose/runtime hardening landed via merged PR [#132](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/132).
+  - Follow-up start: branch `infra/SEC-009-development-csp-vite-fix` opened to fix the development host CSP regression where Vite's React-refresh preamble was blocked.
+  - Follow-up local verification: production/dev compose config rendering and Caddy config validation passed on 2026-05-05.
+  - Follow-up PR/Open review: PR [#134](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/134) opened against `develop`.
 
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
