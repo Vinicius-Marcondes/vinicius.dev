@@ -162,7 +162,7 @@ Done criteria for `CHAT-010`:
   - Blocker: none.
   - Local execution: replace `Math.random()` room-password generation with a CSPRNG, replace raw SHA-256 readable-password key derivation with HKDF (with legacy decrypt compatibility), and map moderation audit API states through explicit typed/redacted DTOs.
   - Local verification: chat use-case, admin-route, and Prisma repository tests plus backend typecheck and boundary verification passed on 2026-05-05.
-  - PR/Open review: not opened yet (coordinator publish/review flow pending).
+  - PR/Open review: PR [#131](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/131) opened against `develop`.
 
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -174,7 +174,7 @@ Done criteria for `CHAT-010`:
 | Done | SEC-005 | SPEC-031 | backend | develop | `backend/SEC-005-upload-media-signature-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#128](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/128) merged | — |
 | Done | SEC-006 | SPEC-031 | backend | develop | `backend/SEC-006-websocket-auth-transport-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#129](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/129) merged | — |
 | Done | SEC-007 | SPEC-031 | frontend | develop | `frontend/SEC-007-chat-session-storage-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#130](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/130) merged | — |
-| In Progress | SEC-008 | SPEC-031 | backend | develop | `backend/SEC-008-chat-crypto-and-audit-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | — | — |
+| In Review | SEC-008 | SPEC-031 | backend | develop | `backend/SEC-008-chat-crypto-and-audit-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#131](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/131) | — |
 | Blocked | SEC-009 | SPEC-031 | infra | develop | `infra/SEC-009-edge-headers-and-production-compose` | develop | `docs/specs/security-hardening-production-readiness.md` | — | Depends on `SEC-001` and is reserved for Phase 3 hardening. |
 
 Done criteria for `SPEC-031`:
