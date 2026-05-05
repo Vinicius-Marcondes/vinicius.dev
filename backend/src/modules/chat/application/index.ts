@@ -896,11 +896,7 @@ export const createUploadChatMessageWithImageUseCase = ({
   ): Promise<UploadChatMessageWithImageOutput> => {
     const session = await repository.findSessionById(input.roomSessionId);
 
-    if (
-      !session ||
-      !isRoomSessionActive(session, clock(), input.roomId) ||
-      session.handleId !== input.authorHandleId
-    ) {
+    if (!session || !isRoomSessionActive(session, clock(), session.roomId)) {
       throw new InvalidChatUploadActorError();
     }
 
@@ -909,15 +905,16 @@ export const createUploadChatMessageWithImageUseCase = ({
     if (
       !authorHandle ||
       authorHandle.status !== "active" ||
-      authorHandle.roomId !== input.roomId
+      authorHandle.roomId !== session.roomId
     ) {
       throw new InvalidChatUploadActorError();
     }
 
+    const roomId = authorHandle.roomId;
     const messageId = createId();
     const uploadId = createId();
     const sentAt = clock();
-    const storageKey = buildStorageKey(input.roomId, uploadId, input.image.mimeType);
+    const storageKey = buildStorageKey(roomId, uploadId, input.image.mimeType);
 
     const persistedBody = normalizeBody(input.body);
     const writtenUpload = await storage.writeUpload({
@@ -927,14 +924,14 @@ export const createUploadChatMessageWithImageUseCase = ({
 
     try {
       const created = await repository.createMessageWithUpload({
-        authorHandleId: input.authorHandleId,
+        authorHandleId: authorHandle.id,
         body: persistedBody,
         byteSize: writtenUpload.byteSize,
         displayFilename: input.image.displayFilename,
         messageId,
         mimeType: input.image.mimeType,
-        roomId: input.roomId,
-        roomSessionId: input.roomSessionId,
+        roomId,
+        roomSessionId: session.id,
         sentAt,
         storageKey: writtenUpload.storageKey,
         storagePath: writtenUpload.storagePath,

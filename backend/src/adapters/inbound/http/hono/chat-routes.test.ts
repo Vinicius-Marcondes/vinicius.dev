@@ -277,21 +277,34 @@ const createUploadFormData = ({
   body = "message body",
   bytes = new Uint8Array([1, 2, 3, 4]),
   fileName = "scan.png",
+  legacyAuthorHandleId,
+  legacyRoomId,
   mimeType = "image/png",
+  roomSessionId = "session_1",
   tone = "cyan",
 }: {
   body?: string;
   bytes?: Uint8Array;
   fileName?: string;
+  legacyAuthorHandleId?: string;
+  legacyRoomId?: string;
   mimeType?: string;
+  roomSessionId?: string;
   tone?: string;
 } = {}): FormData => {
   const formData = new FormData();
   const fileBytes = new Uint8Array(bytes.byteLength);
   fileBytes.set(bytes);
-  formData.append("roomId", "room_1");
-  formData.append("roomSessionId", "session_1");
-  formData.append("authorHandleId", "handle_1");
+  formData.append("roomSessionId", roomSessionId);
+
+  if (legacyRoomId) {
+    formData.append("roomId", legacyRoomId);
+  }
+
+  if (legacyAuthorHandleId) {
+    formData.append("authorHandleId", legacyAuthorHandleId);
+  }
+
   formData.append("body", body);
   formData.append("tone", tone);
   formData.append("file", new File([fileBytes.buffer], fileName, { type: mimeType }));
@@ -976,6 +989,36 @@ describe("chat routes", () => {
     expect(called).toBe(false);
   });
 
+  it("rejects text message requests over the 2000-character limit before calling the core", async () => {
+    let called = false;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeSendText: async () => {
+          called = true;
+          throw new Error("should not run");
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/rooms/night-shift/messages", {
+      body: JSON.stringify({
+        body: "x".repeat(2001),
+      }),
+      headers: {
+        "content-type": "application/json",
+        "x-chat-room-session-id": "session_1",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "invalid_request",
+      field: "body",
+    });
+    expect(called).toBe(false);
+  });
+
   it("returns denied when text message access is invalid for the room session", async () => {
     const app = createHonoHttpAdapter(
       createTestContainer({
@@ -1004,18 +1047,38 @@ describe("chat routes", () => {
   });
 
   it("maps a valid upload request into the chat upload use case", async () => {
-    let capturedAuthorHandleId: string | undefined;
+    let capturedInput: UploadChatMessageWithImageInput | undefined;
     let capturedMimeType: string | undefined;
-    let capturedRoomId: string | undefined;
-    let capturedRoomSessionId: string | undefined;
+    let capturedResolveInput: ResolveChatRoomSessionInput | undefined;
     let capturedTone: "cyan" | "pink" | "system" | null | undefined;
     const app = createHonoHttpAdapter(
       createTestContainer({
+        executeResolve: async (input) => {
+          capturedResolveInput = input;
+
+          return {
+            participant: {
+              handle: "vinicius",
+              id: "handle_1",
+              status: "online",
+            },
+            room: {
+              id: "room_1",
+              slug: "night-shift",
+            },
+            session: {
+              expiresAt: "2026-04-25T12:00:00.000Z",
+              handleId: "handle_1",
+              id: "session_1",
+              joinedAt: "2026-04-24T12:00:00.000Z",
+              roomId: "room_1",
+              status: "active",
+            },
+          };
+        },
         executeUpload: async (input) => {
-          capturedAuthorHandleId = input.authorHandleId;
+          capturedInput = input;
           capturedMimeType = input.image.mimeType;
-          capturedRoomId = input.roomId;
-          capturedRoomSessionId = input.roomSessionId;
           capturedTone = input.tone;
 
           return defaultUploadResponse;
@@ -1024,7 +1087,10 @@ describe("chat routes", () => {
     );
 
     const response = await app.request("/api/chat/messages/upload", {
-      body: createUploadFormData(),
+      body: createUploadFormData({
+        legacyAuthorHandleId: "forged_handle",
+        legacyRoomId: "forged_room",
+      }),
       method: "POST",
     });
 
@@ -1045,11 +1111,48 @@ describe("chat routes", () => {
         tone: "cyan",
       },
     });
-    expect(capturedRoomId).toBe("room_1");
-    expect(capturedRoomSessionId).toBe("session_1");
-    expect(capturedAuthorHandleId).toBe("handle_1");
+    expect(capturedInput).toEqual({
+      body: "message body",
+      image: {
+        body: new Uint8Array([1, 2, 3, 4]),
+        displayFilename: "scan.png",
+        mimeType: "image/png",
+      },
+      roomSessionId: "session_1",
+      tone: "cyan",
+    });
+    expect(capturedResolveInput).toEqual({
+      roomSessionId: "session_1",
+      slug: "night-shift",
+    });
     expect(capturedTone).toBe("cyan");
     expect(capturedMimeType).toBe("image/png");
+  });
+
+  it("rejects upload requests missing roomSessionId before reaching the core", async () => {
+    let called = false;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeUpload: async () => {
+          called = true;
+          throw new Error("should not run");
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/messages/upload", {
+      body: createUploadFormData({
+        roomSessionId: "   ",
+      }),
+      method: "POST",
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "invalid_request",
+      field: "roomSessionId",
+    });
+    expect(called).toBe(false);
   });
 
   it("rejects invalid MIME types before reaching the core", async () => {
@@ -1132,7 +1235,7 @@ describe("chat routes", () => {
     expect(called).toBe(false);
   });
 
-  it("returns denied when the room session and author ids do not match", async () => {
+  it("returns denied when upload actor validation fails in the core", async () => {
     const app = createHonoHttpAdapter(
       createTestContainer({
         executeUpload: async () => {
@@ -1151,6 +1254,33 @@ describe("chat routes", () => {
       error: "denied",
       resource: "chat",
     });
+  });
+
+  it("returns denied when upload room-session validation fails before reaching the core", async () => {
+    let called = false;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeResolve: async () => {
+          throw new InvalidChatRoomSessionError();
+        },
+        executeUpload: async () => {
+          called = true;
+          throw new Error("should not run");
+        },
+      }),
+    );
+
+    const response = await app.request("/api/chat/messages/upload", {
+      body: createUploadFormData(),
+      method: "POST",
+    });
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      error: "denied",
+      resource: "chat",
+    });
+    expect(called).toBe(false);
   });
 
   it("rate limits repeated chat room join attempts", async () => {
