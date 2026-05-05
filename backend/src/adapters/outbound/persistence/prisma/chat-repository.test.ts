@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { createCipheriv, createHash } from "node:crypto";
+import { createCipheriv, createHash, hkdfSync } from "node:crypto";
 
 import { createPrismaChatRepository } from "./chat-repository";
 import type { PrismaDatabaseClient } from "./prisma-client";
@@ -12,6 +12,24 @@ const encryptLegacyReadablePassword = (plainText: string, secret: string): strin
   const tag = cipher.getAuthTag();
 
   return `${iv.toString("base64url")}.${encrypted.toString("base64url")}.${tag.toString("base64url")}`;
+};
+
+const encryptVersionedReadablePassword = (plainText: string, secret: string): string => {
+  const iv = Buffer.from("00112233445566778899aabb", "hex");
+  const key = Buffer.from(
+    hkdfSync(
+      "sha256",
+      Buffer.from(secret, "utf8"),
+      Buffer.from("vinicius.dev/chat-room-readable-password/salt", "utf8"),
+      Buffer.from("vinicius.dev/chat-room-readable-password/aes-256-gcm", "utf8"),
+      32,
+    ),
+  );
+  const cipher = createCipheriv("aes-256-gcm", key, iv);
+  const encrypted = Buffer.concat([cipher.update(plainText, "utf8"), cipher.final()]);
+  const tag = cipher.getAuthTag();
+
+  return `v2.${iv.toString("base64url")}.${encrypted.toString("base64url")}.${tag.toString("base64url")}`;
 };
 
 describe("prisma chat repository", () => {
@@ -99,6 +117,45 @@ describe("prisma chat repository", () => {
       passwordVersion: 3,
       slug: "night-shift",
     });
+  });
+
+  it("treats manually stored readable room-password plaintext as missing access", async () => {
+    const repository = createPrismaChatRepository({
+      chatRoom: {
+        findUnique: async () => ({
+          currentPasswordCiphertext: "manual-password-from-db",
+          id: "room_1",
+          passwordRotatedAt: new Date("2026-04-20T08:00:00.000Z"),
+          passwordVersion: 3,
+          slug: "night-shift",
+        }),
+      },
+    } as unknown as PrismaDatabaseClient, {
+      roomPasswordSecret: "room-secret",
+    });
+
+    await expect(repository.findRoomAccessBySlug("night-shift")).resolves.toBeNull();
+  });
+
+  it("treats readable room-password ciphertext from another secret as missing access", async () => {
+    const repository = createPrismaChatRepository({
+      chatRoom: {
+        findUnique: async () => ({
+          currentPasswordCiphertext: encryptVersionedReadablePassword(
+            "night-runner-42",
+            "previous-room-secret",
+          ),
+          id: "room_1",
+          passwordRotatedAt: new Date("2026-04-20T08:00:00.000Z"),
+          passwordVersion: 3,
+          slug: "night-shift",
+        }),
+      },
+    } as unknown as PrismaDatabaseClient, {
+      roomPasswordSecret: "current-room-secret",
+    });
+
+    await expect(repository.findRoomAccessBySlug("night-shift")).resolves.toBeNull();
   });
 
   it("writes versioned HKDF ciphertext and decrypts it through room access lookup", async () => {

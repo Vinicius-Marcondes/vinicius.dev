@@ -113,6 +113,14 @@ const decryptReadablePassword = (ciphertext: string, secret: string): string => 
   );
 };
 
+const tryDecryptReadablePassword = (ciphertext: string, secret: string): string | null => {
+  try {
+    return decryptReadablePassword(ciphertext, secret);
+  } catch {
+    return null;
+  }
+};
+
 const notImplemented = <T>(method: string): Promise<T> => {
   return Promise.reject(new Error(`Prisma chat repository method not implemented: ${method}`));
 };
@@ -229,8 +237,17 @@ const mapRoomAccessRow = (
     return null;
   }
 
+  const currentPassword = tryDecryptReadablePassword(
+    row.currentPasswordCiphertext,
+    roomPasswordSecret,
+  );
+
+  if (!currentPassword) {
+    return null;
+  }
+
   return {
-    currentPassword: decryptReadablePassword(row.currentPasswordCiphertext, roomPasswordSecret),
+    currentPassword,
     id: row.id,
     passwordRotatedAt: row.passwordRotatedAt,
     passwordVersion: row.passwordVersion,

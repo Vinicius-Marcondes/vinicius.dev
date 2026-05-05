@@ -529,6 +529,25 @@ describe("admin routes", () => {
     })
   })
 
+  it("returns not_found when chat room access cannot be recovered", async () => {
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeGetRoomAccess: async () => null,
+      }),
+    )
+    const response = await app.request('/api/admin/chat/rooms/night-shift/access', {
+      headers: {
+        cookie: 'vinicius.dev-session=session-token-1',
+      },
+    })
+
+    expect(response.status).toBe(404)
+    await expect(response.json()).resolves.toEqual({
+      error: 'not_found',
+      resource: 'chat_room',
+    })
+  })
+
   it("maps moderation audit listing query params into the use case", async () => {
     let capturedInput: ListChatModerationAuditsInput | undefined;
     const app = createHonoHttpAdapter(
