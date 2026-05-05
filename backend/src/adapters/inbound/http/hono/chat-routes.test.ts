@@ -1151,4 +1151,156 @@ describe("chat routes", () => {
       resource: "chat",
     });
   });
+
+  it("rate limits repeated chat room join attempts", async () => {
+    let callCount = 0;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeJoin: async () => {
+          callCount += 1;
+
+          return {
+            participant: {
+              handle: "vinicius",
+              id: "handle_1",
+              status: "online",
+            },
+            room: {
+              id: "room_1",
+              slug: "night-shift",
+            },
+            session: {
+              expiresAt: "2026-04-25T12:00:00.000Z",
+              handleId: "handle_1",
+              id: "session_1",
+              joinedAt: "2026-04-24T12:00:00.000Z",
+              roomId: "room_1",
+              status: "active",
+            },
+          };
+        },
+      }),
+    );
+
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const response = await app.request("/api/chat/rooms/night-shift/join", {
+        body: JSON.stringify({
+          handle: "vinicius",
+          password: "open-sesame",
+        }),
+        headers: {
+          "content-type": "application/json",
+          "x-forwarded-for": "198.51.100.10",
+        },
+        method: "POST",
+      });
+
+      expect(response.status).toBe(200);
+    }
+
+    const limitedResponse = await app.request("/api/chat/rooms/night-shift/join", {
+      body: JSON.stringify({
+        handle: "vinicius",
+        password: "open-sesame",
+      }),
+      headers: {
+        "content-type": "application/json",
+        "x-forwarded-for": "198.51.100.10",
+      },
+      method: "POST",
+    });
+
+    expect(limitedResponse.status).toBe(429);
+    await expect(limitedResponse.json()).resolves.toEqual({
+      error: "rate_limited",
+      resource: "api",
+    });
+    expect(callCount).toBe(10);
+  });
+
+  it("rate limits repeated chat message send attempts", async () => {
+    let callCount = 0;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeSendText: async () => {
+          callCount += 1;
+          return defaultTextMessageResponse;
+        },
+      }),
+    );
+
+    for (let attempt = 0; attempt < 30; attempt += 1) {
+      const response = await app.request("/api/chat/rooms/night-shift/messages", {
+        body: JSON.stringify({
+          body: "message body",
+        }),
+        headers: {
+          "content-type": "application/json",
+          "x-chat-room-session-id": "session_1",
+          "x-forwarded-for": "198.51.100.11",
+        },
+        method: "POST",
+      });
+
+      expect(response.status).toBe(201);
+    }
+
+    const limitedResponse = await app.request("/api/chat/rooms/night-shift/messages", {
+      body: JSON.stringify({
+        body: "message body",
+      }),
+      headers: {
+        "content-type": "application/json",
+        "x-chat-room-session-id": "session_1",
+        "x-forwarded-for": "198.51.100.11",
+      },
+      method: "POST",
+    });
+
+    expect(limitedResponse.status).toBe(429);
+    await expect(limitedResponse.json()).resolves.toEqual({
+      error: "rate_limited",
+      resource: "api",
+    });
+    expect(callCount).toBe(30);
+  });
+
+  it("rate limits repeated chat upload attempts", async () => {
+    let callCount = 0;
+    const app = createHonoHttpAdapter(
+      createTestContainer({
+        executeUpload: async () => {
+          callCount += 1;
+          return defaultUploadResponse;
+        },
+      }),
+    );
+
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const response = await app.request("/api/chat/messages/upload", {
+        body: createUploadFormData(),
+        headers: {
+          "x-forwarded-for": "198.51.100.12",
+        },
+        method: "POST",
+      });
+
+      expect(response.status).toBe(201);
+    }
+
+    const limitedResponse = await app.request("/api/chat/messages/upload", {
+      body: createUploadFormData(),
+      headers: {
+        "x-forwarded-for": "198.51.100.12",
+      },
+      method: "POST",
+    });
+
+    expect(limitedResponse.status).toBe(429);
+    await expect(limitedResponse.json()).resolves.toEqual({
+      error: "rate_limited",
+      resource: "api",
+    });
+    expect(callCount).toBe(10);
+  });
 });

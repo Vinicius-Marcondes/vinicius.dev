@@ -2,6 +2,7 @@ import { extname } from "node:path";
 
 import { Hono, type Context } from "hono";
 import { upgradeWebSocket } from "hono/bun";
+import { cors } from "hono/cors";
 
 import {
   InvalidAuthCredentialsError,
@@ -42,6 +43,15 @@ import { presentSitemapXml } from "./sitemap-presenter";
 
 const serviceName = "vinicius.dev-backend";
 const defaultMediaContentType = "application/octet-stream";
+const corsAllowMethods = [
+  "GET",
+  "POST",
+  "PATCH",
+  "PUT",
+  "DELETE",
+  "OPTIONS",
+] as const;
+const corsAllowHeaders = ["Content-Type", "x-chat-room-session-id"] as const;
 const mediaContentTypeByExtension: Record<string, string> = {
   ".avif": "image/avif",
   ".gif": "image/gif",
@@ -86,6 +96,24 @@ type ChatLiveConnection = Readonly<{
   roomSlug: string;
   socket: ChatLiveSocket;
 }>;
+
+type RateLimitRule = Readonly<{
+  maxRequests: number;
+  windowMs: number;
+}>;
+
+type RateLimitWindow = Readonly<{
+  count: number;
+  resetAt: number;
+}>;
+
+const rateLimitRules = {
+  authLogin: { maxRequests: 5, windowMs: 60_000 },
+  authMfaVerify: { maxRequests: 10, windowMs: 60_000 },
+  chatJoin: { maxRequests: 10, windowMs: 60_000 },
+  chatSendMessage: { maxRequests: 30, windowMs: 60_000 },
+  chatUpload: { maxRequests: 10, windowMs: 60_000 },
+} as const satisfies Record<string, RateLimitRule>;
 
 const createChatLiveManager = () => {
   const connectionsByRoomSlug = new Map<string, Map<string, ChatLiveConnection>>();
@@ -178,6 +206,55 @@ const createChatLiveManager = () => {
 
       this.broadcast(roomSlug, payload);
     },
+  };
+};
+
+const parseForwardedForAddress = (value: string | undefined) =>
+  value
+    ?.split(",")
+    .map((candidate) => candidate.trim())
+    .find((candidate) => candidate.length > 0);
+
+const resolveRateLimitClientKey = (context: Context) =>
+  parseForwardedForAddress(context.req.header("x-forwarded-for")) ??
+  context.req.header("x-real-ip")?.trim() ??
+  context.req.header("cf-connecting-ip")?.trim() ??
+  "global";
+
+const createRateLimiter = (rule: RateLimitRule) => {
+  const windows = new Map<string, RateLimitWindow>();
+
+  return (context: Context) => {
+    const now = Date.now();
+    const key = resolveRateLimitClientKey(context);
+    const existing = windows.get(key);
+
+    if (!existing || now >= existing.resetAt) {
+      windows.set(key, {
+        count: 1,
+        resetAt: now + rule.windowMs,
+      });
+      return null;
+    }
+
+    if (existing.count >= rule.maxRequests) {
+      context.header("Retry-After", String(Math.max(1, Math.ceil((existing.resetAt - now) / 1000))));
+
+      return context.json(
+        {
+          error: "rate_limited",
+          resource: "api",
+        },
+        429,
+      );
+    }
+
+    windows.set(key, {
+      count: existing.count + 1,
+      resetAt: existing.resetAt,
+    });
+
+    return null;
   };
 };
 
@@ -720,6 +797,9 @@ const createChatFamily = (
   live: ReturnType<typeof createChatLiveManager>,
 ) => {
   const chatApp = new Hono();
+  const joinRateLimiter = createRateLimiter(rateLimitRules.chatJoin);
+  const sendMessageRateLimiter = createRateLimiter(rateLimitRules.chatSendMessage);
+  const uploadRateLimiter = createRateLimiter(rateLimitRules.chatUpload);
   const resolveRoomSessionUseCase = (container.chat as {
     resolveRoomSession?: ResolveChatRoomSessionPort;
   }).resolveRoomSession;
@@ -754,6 +834,12 @@ const createChatFamily = (
   };
 
   chatApp.post("/rooms/:slug/join", async (c) => {
+    const limited = joinRateLimiter(c);
+
+    if (limited) {
+      return limited;
+    }
+
     if (!container.chat.joinRoomSession) {
       return c.json<NotImplementedResponse>(
         {
@@ -1088,6 +1174,12 @@ const createChatFamily = (
   });
 
   chatApp.post("/rooms/:slug/messages", async (c) => {
+    const limited = sendMessageRateLimiter(c);
+
+    if (limited) {
+      return limited;
+    }
+
     if (!sendRoomTextMessageUseCase) {
       return c.json<NotImplementedResponse>(
         {
@@ -1254,6 +1346,12 @@ const createChatFamily = (
   });
 
   chatApp.post("/messages/upload", async (c) => {
+    const limited = uploadRateLimiter(c);
+
+    if (limited) {
+      return limited;
+    }
+
     let formData: FormData;
 
     try {
@@ -1525,8 +1623,16 @@ const createAuthFamily = (container: BootstrapContainer) => {
   }
 
   const authApp = new Hono();
+  const loginRateLimiter = createRateLimiter(rateLimitRules.authLogin);
+  const mfaVerifyRateLimiter = createRateLimiter(rateLimitRules.authMfaVerify);
 
   authApp.post("/login", async (c) => {
+    const limited = loginRateLimiter(c);
+
+    if (limited) {
+      return limited;
+    }
+
     const parsedBody = await readJsonObject(c.req.raw);
 
     if ("error" in parsedBody) {
@@ -1582,6 +1688,12 @@ const createAuthFamily = (container: BootstrapContainer) => {
   });
 
   authApp.post("/mfa/verify", async (c) => {
+    const limited = mfaVerifyRateLimiter(c);
+
+    if (limited) {
+      return limited;
+    }
+
     const parsedBody = await readJsonObject(c.req.raw);
 
     if ("error" in parsedBody) {
@@ -2621,6 +2733,16 @@ const createSitemapFamily = () => {
 export const createHonoHttpAdapter = (container: BootstrapContainer) => {
   const app = new Hono();
   const live = createChatLiveManager();
+
+  app.use(
+    "/api/*",
+    cors({
+      allowHeaders: [...corsAllowHeaders],
+      allowMethods: [...corsAllowMethods],
+      credentials: container.config.cors.allowCredentials,
+      origin: container.config.cors.allowedOrigins,
+    }),
+  );
 
   app.get("/api", (c) =>
     c.json({
