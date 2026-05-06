@@ -37,6 +37,7 @@
 1. Complete reviewer validation for `QA-008` follow-up PR [#117](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/117).
 2. Complete reviewer validation for `CHAT-010` PR [#122](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/122).
 3. Execute `SPEC-032` testing coverage foundation tasks `QA-009` through `QA-013`.
+4. Execute `SPEC-033` photo catalog and admin upload tasks `PHOTO-001` through `PHOTO-004`.
 
 ## Current Executable Cluster
 ### Frontend Admin API Integration
@@ -239,6 +240,48 @@ Done criteria for `QA-013`:
 - coverage commands are available but report-only
 - CI YAML stays concise and does not add E2E or deployment changes
 
+### Photo Catalog And Admin Upload
+- Status: tasked locally; implementation branches are being split for separate review.
+- Primary spec: `SPEC-033`.
+- Supporting specs: `product-scope.md`, `frontend-structure.md`, `frontend-architecture.md`, `project-structure.md`, `backend-architecture.md`, `data-model.md`, `media-storage.md`, `admin-cms.md`, `verification.md`, `git-workflow.md`, and `acceptance-criteria.md`.
+- Scope: draft-first admin original uploads, photo original metadata, public photo list facets, public real-image gallery integration, and admin photo management UI.
+- Non-scope: thumbnail generation, EXIF extraction, CDN/object storage, bulk upload, drag sorting, analytics, and a dedicated public photo detail route.
+
+| Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| In Progress | SPEC-033 | SPEC-033 | spec | develop | `spec/SPEC-033-photo-catalog-gallery` | develop | `docs/specs/photo-catalog-gallery.md` | not opened | — |
+| In Progress | PHOTO-001 | SPEC-033 | data | develop | `data/PHOTO-001-photo-original-metadata` | develop | `docs/specs/photo-catalog-gallery.md` | not opened | — |
+| In Progress | PHOTO-002 | SPEC-033 | backend | develop | `backend/PHOTO-002-admin-photo-upload-api` | develop | `docs/specs/photo-catalog-gallery.md` | not opened | — |
+| In Progress | PHOTO-003 | SPEC-033 | frontend | develop | `frontend/PHOTO-003-public-photo-gallery-api` | develop | `docs/specs/photo-catalog-gallery.md` | not opened | — |
+| In Progress | PHOTO-004 | SPEC-033 | admin | develop | `admin/PHOTO-004-admin-photo-management-screen` | develop | `docs/specs/photo-catalog-gallery.md` | not opened | — |
+
+Done criteria for `SPEC-033`:
+- `docs/specs/photo-catalog-gallery.md` exists and follows the harness section template.
+- task IDs, branch names, dependencies, acceptance source, and verification methods are defined.
+- `docs/specs/tracker.md` and `docs/specs/README.md` register the spec and implementation queue.
+
+Done criteria for `PHOTO-001`:
+- `Photo` has nullable original display filename, MIME type, and byte-size metadata.
+- existing photo rows and public media delivery remain compatible.
+- Prisma schema, migration, generated client, and repository tests cover metadata mapping.
+
+Done criteria for `PHOTO-002`:
+- `POST /api/admin/photos` creates draft, unfeatured photo records with stored originals.
+- upload validation covers required fields, MIME type, magic bytes, date parsing, max `25 MB`, and safe storage paths.
+- written originals are cleaned up when persistence fails.
+- backend route, use-case, repository, storage, typecheck, boundary, and media verification pass.
+
+Done criteria for `PHOTO-003`:
+- public `/photos` loads from `/api/photos` via React Router loader.
+- URL-backed filters and page pagination drive server-side queries.
+- cards and lightbox render real original URLs with lazy loading and film-frame fallback.
+- frontend tests, lint, and build pass.
+
+Done criteria for `PHOTO-004`:
+- `/admin/photos` is session-protected and linked from admin navigation.
+- admin can upload a draft photo, inspect paginated records, edit metadata, publish/unpublish, and feature/unfeature.
+- admin route/action/component tests, frontend lint, and frontend build pass.
+
 ## Spec Table
 | Spec ID | Title | Layer | Status | Depends on | Blocks | Git workflow defined | Ready for task split | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -247,6 +290,7 @@ Done criteria for `QA-013`:
 | SPEC-030 | Chat Room Live Integration | Cross-layer | Tasked | `frontend-structure.md`, `frontend-architecture.md`, `frontend-admin-auth-integration.md`, `project-structure.md`, `backend-architecture.md`, `data-model.md`, `media-storage.md`, `admin-cms.md`, `verification.md`, `git-workflow.md`, `acceptance-criteria.md` | `CHAT-008`, `CHAT-009`, `CHAT-010` | yes | yes | Replaces the mock chat room with backend join/session contracts, realtime delivery, and protected upload/viewer behavior while adding backend-generated room password management to the admin dashboard. |
 | SPEC-031 | Security Hardening and Production Readiness | Cross-layer | Tasked | `frontend-structure.md`, `frontend-architecture.md`, `project-structure.md`, `backend-architecture.md`, `chat-room-live-integration.md`, `frontend-admin-auth-integration.md`, `media-storage.md`, `admin-cms.md`, `infra-deployment.md`, `verification.md`, `git-workflow.md`, `acceptance-criteria.md` | `SEC-001`, `SEC-002`, `SEC-003`, `SEC-004`, `SEC-005`, `SEC-006`, `SEC-007`, `SEC-008`, `SEC-009` | yes | yes | Approved remediation spec from the 2026-05-03 security/bug review; implementation queue is registered with first-wave critical tasks unblocked first. |
 | SPEC-032 | Testing Coverage Foundation | Cross-layer | Tasked | `verification.md`, `ci-cd.md`, `project-structure.md`, `backend-architecture.md`, `frontend-structure.md`, `frontend-architecture.md`, `git-workflow.md`, `acceptance-criteria.md` | `QA-009`, `QA-010`, `QA-011`, `QA-012`, `QA-013` | yes | yes | Adds the first cross-layer coverage baseline: backend coverage improvements, frontend Vitest coverage, focused Prisma/Postgres CI contracts, and report-only coverage commands. |
+| SPEC-033 | Photo Catalog And Admin Upload | Cross-layer | Tasked | `product-scope.md`, `frontend-structure.md`, `frontend-architecture.md`, `project-structure.md`, `backend-architecture.md`, `data-model.md`, `media-storage.md`, `admin-cms.md`, `verification.md`, `git-workflow.md`, `acceptance-criteria.md` | `PHOTO-001`, `PHOTO-002`, `PHOTO-003`, `PHOTO-004` | yes | yes | Adds draft-first admin photo original uploads, public gallery API integration with real images and facets, and admin photo management. |
 
 ## Tasking Rule
 A spec may only move to `Tasked` when:
