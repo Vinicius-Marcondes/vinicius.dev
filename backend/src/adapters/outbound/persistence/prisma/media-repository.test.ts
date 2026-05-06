@@ -13,6 +13,9 @@ describe("prisma media repository", () => {
         findFirst: async () => ({
           createdAt: new Date("2026-03-22T00:00:00.000Z"),
           id: "p-2026-014",
+          originalByteSize: 482113,
+          originalDisplayFilename: "paulista-0214.webp",
+          originalMimeType: "image/webp",
           originalPath: "published/p-2026-014.jpg",
           originalReferencePolicy: "filesystem_reference" as const,
           title: "paulista at 02:14",
@@ -26,6 +29,9 @@ describe("prisma media repository", () => {
     expect(photo).toEqual({
       createdAt: new Date("2026-03-22T00:00:00.000Z"),
       id: "p-2026-014",
+      originalByteSize: 482113,
+      originalDisplayFilename: "paulista-0214.webp",
+      originalMimeType: "image/webp",
       originalReference: "published/p-2026-014.jpg",
       originalReferencePolicy: "filesystem_reference",
       title: "paulista at 02:14",
