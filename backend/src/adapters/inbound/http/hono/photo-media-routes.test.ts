@@ -168,6 +168,9 @@ const createTestContainer = (options: TestContainerOptions = {}): BootstrapConta
           return {
             createdAt: new Date("2026-03-22T00:00:00.000Z"),
             id,
+            originalByteSize: null,
+            originalDisplayFilename: null,
+            originalMimeType: null,
             originalReference: media.originalReference,
             originalReferencePolicy: media.originalReferencePolicy ?? "backend_media_route",
             title: "paulista at 02:14",

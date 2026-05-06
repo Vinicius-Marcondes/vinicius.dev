@@ -318,6 +318,10 @@ export const createListPublishedPhotosUseCase = ({
     });
 
     return {
+      facets: {
+        locations: [...(result.facets?.locations ?? [])],
+        years: [...(result.facets?.years ?? [])],
+      },
       items: result.items.map(mapPhotoSummary),
       pageInfo: {
         page: result.page,

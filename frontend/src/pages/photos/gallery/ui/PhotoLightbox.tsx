@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent } from 'react'
+import { useEffect, useEffectEvent, useState } from 'react'
 import type { PhotoRecord } from '../../../../entities/photo'
 import { FilmFrame } from './FilmFrame'
 
@@ -21,6 +21,11 @@ function formatDate(isoDate: string) {
 export function PhotoLightbox({ index, onClose, onNavigate, open, photos }: PhotoLightboxProps) {
   const handleClose = useEffectEvent(onClose)
   const handleNavigate = useEffectEvent(onNavigate)
+  const photo = photos[index]
+  const imageKey = photo ? `${photo.id}:${photo.originalUrl}` : 'empty'
+  const [imageState, setImageState] = useState({ error: false, key: imageKey, loaded: false })
+  const hasLoaded = imageState.key === imageKey && imageState.loaded
+  const hasError = imageState.key === imageKey && imageState.error
 
   useEffect(() => {
     if (!open) return
@@ -42,8 +47,6 @@ export function PhotoLightbox({ index, onClose, onNavigate, open, photos }: Phot
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [open])
-
-  const photo = photos[index]
 
   if (!open || !photo) {
     return null
@@ -67,7 +70,32 @@ export function PhotoLightbox({ index, onClose, onNavigate, open, photos }: Phot
           &lt;
         </button>
         <div className="photo-lightbox__frame">
-          <FilmFrame tone={photo.tone} label={photo.frame} />
+          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+            {!hasError ? (
+              <img
+                src={photo.originalUrl}
+                alt={photo.title}
+                loading="lazy"
+                onLoad={() => setImageState({ error: false, key: imageKey, loaded: true })}
+                onError={() => setImageState({ error: true, key: imageKey, loaded: false })}
+                style={{
+                  display: 'block',
+                  height: '100%',
+                  inset: 0,
+                  objectFit: 'cover',
+                  opacity: hasLoaded ? 1 : 0,
+                  position: 'absolute',
+                  transition: 'opacity 200ms ease',
+                  width: '100%',
+                }}
+              />
+            ) : null}
+            {!hasLoaded || hasError ? (
+              <span style={{ position: 'absolute', inset: 0 }}>
+                <FilmFrame tone={photo.tone} label={photo.frame} />
+              </span>
+            ) : null}
+          </div>
         </div>
         <button type="button" className="photo-lightbox__nav" onClick={() => onNavigate(1)} aria-label="Next photo">
           &gt;

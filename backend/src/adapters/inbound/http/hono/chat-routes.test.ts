@@ -31,6 +31,13 @@ import {
   chatLiveTransportProtocol,
 } from "./chat-live-contract";
 
+let testServerPort = 38_710;
+
+const nextTestServerPort = () => {
+  testServerPort += 1;
+  return testServerPort;
+};
+
 const defaultUploadResponse: UploadChatMessageWithImageOutput = {
   attachment: {
     byteSize: 4,
@@ -644,7 +651,7 @@ describe("chat routes", () => {
     const websocket = await resolveWebSocketHandler();
     const server = Bun.serve({
       fetch: (request, bunServer) => app.fetch(request, bunServer),
-      port: 0,
+      port: nextTestServerPort(),
       websocket,
     });
     const protocols = [
@@ -722,7 +729,7 @@ describe("chat routes", () => {
     const websocket = await resolveWebSocketHandler();
     const server = Bun.serve({
       fetch: (request, bunServer) => app.fetch(request, bunServer),
-      port: 0,
+      port: nextTestServerPort(),
       websocket,
     });
 

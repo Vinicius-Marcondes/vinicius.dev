@@ -174,6 +174,9 @@ export type AdminPhotoCurationRow = Readonly<{
   caption: string | null;
   camera: string | null;
   film: string | null;
+  originalDisplayFilename?: string | null;
+  originalMimeType?: string | null;
+  originalByteSize?: number | null;
   tags: readonly string[];
   updatedAt: Date;
 }>;
@@ -213,6 +216,23 @@ export type UpdateAdminPhotoMetadataCommand = Readonly<{
   caption?: string | null;
   camera?: string | null;
   film?: string | null;
+}>;
+
+export type CreateAdminPhotoCommand = Readonly<{
+  id: string;
+  title: string;
+  frame: string;
+  date: Date;
+  location: string;
+  tags: readonly string[];
+  tone: "amber" | "cyan" | "mono" | "sunset" | "violet";
+  caption: string | null;
+  camera: string | null;
+  film: string | null;
+  originalPath: string;
+  originalDisplayFilename: string;
+  originalMimeType: string;
+  originalByteSize: number;
 }>;
 
 export type AdminStatusStripEntryRepositoryRow = Readonly<{
@@ -258,6 +278,8 @@ export interface AdminRepositoryPort {
   updateThoughtCuration(input: UpdateAdminThoughtCurationCommand): Promise<AdminThoughtCurationRow | null>;
   listProjectsForCuration(query: AdminProjectCurationListQuery): Promise<AdminProjectCurationListPage>;
   updateProjectCuration(input: UpdateAdminProjectCurationCommand): Promise<AdminProjectCurationRow | null>;
+  createPhoto(input: CreateAdminPhotoCommand): Promise<AdminPhotoCurationRow>;
+  findPhotoForCurationById(id: string): Promise<AdminPhotoCurationRow | null>;
   listPhotosForCuration(query: AdminPhotoCurationListQuery): Promise<AdminPhotoCurationListPage>;
   updatePhotoCuration(input: UpdateAdminPhotoCurationCommand): Promise<AdminPhotoCurationRow | null>;
   updatePhotoMetadata(input: UpdateAdminPhotoMetadataCommand): Promise<AdminPhotoCurationRow | null>;

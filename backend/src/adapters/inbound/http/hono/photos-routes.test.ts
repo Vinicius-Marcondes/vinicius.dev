@@ -84,6 +84,10 @@ const createTestContainer = (): BootstrapContainer => ({
     },
     listPublishedPhotos: {
       execute: async ({ location, page, pageSize, search, year }) => ({
+        facets: {
+          locations: ["Sao Paulo", "Tokyo"],
+          years: [2026, 2025],
+        },
         items: [
           {
             date: "2026-03-22",
@@ -160,6 +164,10 @@ describe("photos routes", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
+      facets: {
+        locations: ["Sao Paulo", "Tokyo"],
+        years: [2026, 2025],
+      },
       items: [
         {
           date: "2026-03-22",

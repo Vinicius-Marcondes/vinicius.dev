@@ -40,6 +40,32 @@ describe("filesystem media storage adapter", () => {
     await expect(readStorageObjectText(file!.stream)).resolves.toBe("photo-bytes");
   });
 
+  it("writes and deletes photo originals under the configured photos root", async () => {
+    const photosRoot = await createTempRoot("photos");
+    const chatRoot = await createTempRoot("chat");
+    const adapter = createFilesystemMediaStorageAdapter({
+      chatRoot,
+      photosRoot,
+    });
+
+    const written = await adapter.photos.writeOriginal!({
+      body: new TextEncoder().encode("photo-upload-bytes"),
+      storageKey: "2026/03/photo_123.webp",
+    });
+
+    expect(written).toEqual({
+      byteSize: 18,
+      storageKey: "2026/03/photo_123.webp",
+      storagePath: "2026/03/photo_123.webp",
+    });
+
+    const reopened = await adapter.photos.openOriginal(written.storagePath);
+    await expect(readStorageObjectText(reopened!.stream)).resolves.toBe("photo-upload-bytes");
+
+    await adapter.photos.deleteOriginal!(written.storagePath);
+    await expect(adapter.photos.openOriginal(written.storagePath)).resolves.toBeNull();
+  });
+
   it("writes chat uploads under the configured chat root and reopens them", async () => {
     const photosRoot = await createTempRoot("photos");
     const chatRoot = await createTempRoot("chat");
@@ -80,6 +106,12 @@ describe("filesystem media storage adapter", () => {
       adapter.chatUploads.writeUpload({
         body: new TextEncoder().encode("x"),
         storageKey: "../outside.webp",
+      }),
+    ).rejects.toThrow("Storage path escapes configured root");
+    await expect(
+      adapter.photos.writeOriginal!({
+        body: new TextEncoder().encode("x"),
+        storageKey: "../outside.jpg",
       }),
     ).rejects.toThrow("Storage path escapes configured root");
   });
