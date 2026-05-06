@@ -178,6 +178,11 @@ Done criteria for `CHAT-010`:
   - Follow-up start: branch `infra/SEC-009-development-csp-vite-fix` opened to fix the development host CSP regression where Vite's React-refresh preamble was blocked.
   - Follow-up local verification: production/dev compose config rendering and Caddy config validation passed on 2026-05-05.
   - Follow-up PR/Open review: PR [#134](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/134) opened against `develop`.
+- INFRA-004 status log:
+  - Start: branch `infra/INFRA-004-development-host-origin-config` moved to `In Progress`.
+  - Blocker: none.
+  - Scope: add explicit Vite development host allowlisting for `development.viniciuslab.dev`, pass backend CORS env through compose, and document the development runtime env contract.
+  - Local verification: frontend lint/build plus development and production compose config rendering passed on 2026-05-05.
 
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -191,6 +196,7 @@ Done criteria for `CHAT-010`:
 | Done | SEC-007 | SPEC-031 | frontend | develop | `frontend/SEC-007-chat-session-storage-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#130](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/130) merged | — |
 | Done | SEC-008 | SPEC-031 | backend | develop | `backend/SEC-008-chat-crypto-and-audit-hardening` | develop | `docs/specs/security-hardening-production-readiness.md` | [#131](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/131) merged | — |
 | Done | SEC-009 | SPEC-031 | infra | develop | `infra/SEC-009-edge-headers-and-production-compose` | develop | `docs/specs/security-hardening-production-readiness.md` | [#132](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/132) merged | — |
+| In Progress | INFRA-004 | SPEC-031 | infra | develop | `infra/INFRA-004-development-host-origin-config` | develop | `docs/specs/infra-deployment.md`, `docs/specs/security-hardening-production-readiness.md` | not opened | — |
 
 Done criteria for `SPEC-031`:
 - `docs/specs/security-hardening-production-readiness.md` exists and follows the harness section template
@@ -198,6 +204,13 @@ Done criteria for `SPEC-031`:
 - task IDs, branch names, dependencies, and verification methods are defined for the remediation wave
 - `docs/specs/tracker.md` and `docs/specs/README.md` are updated to register the spec and implementation task queue
 - implementation tasks are registered in the tracker with branch metadata, acceptance source, and execution order
+
+Done criteria for `INFRA-004`:
+- Vite development server allowlists `development.viniciuslab.dev` through an explicit server-only env value, not a wildcard host policy.
+- Development compose passes the Vite host allowlist to the frontend service.
+- Backend CORS env is wired through compose and sample env files include development and production origin policies.
+- Infra docs explain the development Vite host requirement.
+- Frontend lint/build and development/production compose config rendering pass.
 
 ### Testing Coverage Foundation
 - Status: tasked locally; implementation branches are being split for separate review.

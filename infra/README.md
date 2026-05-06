@@ -11,6 +11,8 @@
 - Base: `docker-compose.yml` (shared and production-safe defaults).
 - Development override: `docker-compose.dev.yml` (source bind mounts and install-on-start workflow).
 
+The development override runs the Vite dev server behind Caddy for `development.viniciuslab.dev`, so `FRONTEND_DEV_ALLOWED_HOSTS` must explicitly include that hostname.
+
 ## Production runtime baseline
 
 - Backend image is built from `backend/Dockerfile` with `bun install --frozen-lockfile` and Prisma client generation during image build.
