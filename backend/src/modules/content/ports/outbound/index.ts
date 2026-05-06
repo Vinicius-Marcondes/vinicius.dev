@@ -85,6 +85,10 @@ export type PhotoDetailRepositoryRow = PhotoRepositoryRow &
 
 export type PhotoListPage = Readonly<{
   items: readonly PhotoRepositoryRow[];
+  facets?: Readonly<{
+    years: readonly number[];
+    locations: readonly string[];
+  }>;
   page: number;
   pageSize: number;
   totalItems: number;

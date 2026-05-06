@@ -3,7 +3,7 @@ import { PublicShell } from '../public-shell'
 import { HomePage } from '../../pages/home'
 import { ThoughtsFeedPage } from '../../pages/thoughts/feed'
 import { ProjectsCatalogPage } from '../../pages/projects/catalog'
-import { PhotosGalleryPage } from '../../pages/photos/gallery'
+import { PhotosGalleryPage, photosGalleryLoader } from '../../pages/photos/gallery'
 import { ChatRoomPage } from '../../pages/chat/room'
 
 export const publicRoutes: RouteObject = {
@@ -13,7 +13,7 @@ export const publicRoutes: RouteObject = {
     { index: true, element: <HomePage /> },
     { path: 'thoughts', element: <ThoughtsFeedPage /> },
     { path: 'projects', element: <ProjectsCatalogPage /> },
-    { path: 'photos', element: <PhotosGalleryPage /> },
+    { path: 'photos', loader: photosGalleryLoader, element: <PhotosGalleryPage /> },
     { path: 'chat', element: <ChatRoomPage /> },
   ],
 }

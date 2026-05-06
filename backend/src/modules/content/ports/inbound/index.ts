@@ -126,6 +126,10 @@ export type ListPublishedPhotosInput = Readonly<{
 
 export type ListPublishedPhotosOutput = Readonly<{
   items: readonly PublishedPhotoSummary[];
+  facets?: Readonly<{
+    years: readonly number[];
+    locations: readonly string[];
+  }>;
   pageInfo: Readonly<{
     page: number;
     pageSize: number;

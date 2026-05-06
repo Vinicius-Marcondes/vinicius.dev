@@ -1,5 +1,6 @@
 export type { PhotoMonthGroup } from './lib/filters'
-export type { PhotoRecord, PhotoTone } from './model/types'
+export type { PhotoFacets, PhotoPageInfo, PhotoRecord, PhotoTone, PhotosCatalogResult } from './model/types'
+export { listPublishedPhotos } from './api/list-published-photos'
 export { allPhotoLocations, allPhotoYears, photoCamera, photoFixtures } from './lib/fixtures'
 export { filterPhotos, groupPhotosByMonth } from './lib/filters'
-export { toPhotoRecord } from './lib/mappers'
+export { mapPhotosCatalog, toPhotoRecord } from './lib/mappers'
