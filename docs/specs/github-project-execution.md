@@ -61,7 +61,7 @@ Applies to task decomposition, tracker entry setup, tracker status updates, PR l
 ## Acceptance Checklist
 - [ ] `tracker.md` is the canonical execution record for `vinicius.dev` tasks.
 - [ ] Task-definition flow creates tracker entries instead of relying on GitHub Issues or Project items.
-- [ ] Frontend migration tasks are still defined before backend tasks when the analyzer still reports frontend blockers.
+- [ ] Frontend migration tasks are still defined before backend tasks when frontend contract review still reports blockers.
 - [ ] Implementation agents are required to update the tracker at start, blocker, review, and completion or handoff.
 - [ ] Tracker status flow is defined as `Spec-ready -> Todo -> In Progress -> Blocked/In Review -> Done`.
 - [ ] `In Review` includes CI validation status awareness once GitHub Actions workflows exist.
@@ -79,7 +79,7 @@ Applies to task decomposition, tracker entry setup, tracker status updates, PR l
 ## Task-Splitting Notes
 - Do not split implementation tasks until this spec is `Approved`.
 - Use tracker-first task definitions instead of external issue/project setup.
-- Use migration-first tasks when the imported frontend is legacy React: archive legacy frontend, scaffold clean typed app, migrate landing/projects/photos, implement Thoughts/Chat/Admin, rerun analyzer.
+- Use migration-first tasks when the imported frontend is legacy React: archive legacy frontend, scaffold clean typed app, migrate landing/projects/photos, implement Thoughts/Chat/Admin, then rerun structural review.
 - Changes to tracker status semantics should happen in dedicated `spec/` branches.
 
 ## Git Branch Implications

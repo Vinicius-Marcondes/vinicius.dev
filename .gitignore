@@ -31,6 +31,7 @@ pnpm-debug.log*
 
 # Local overrides
 /docker-compose.override.yml
+.agents/
 
 # OS/editor files
 .DS_Store

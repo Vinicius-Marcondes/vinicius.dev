@@ -38,7 +38,7 @@ This harness does not contain implementation code.
 1. Read [ci-cd.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/ci-cd.md) before release automation, deployment automation, or final verification work.
 1. Work only from specs that are in `Approved` or explicitly assigned for spec authoring/review.
 1. Map each task to one spec, one task ID, one branch, one tracker entry, and one acceptance source.
-1. . For execution work, keep `tracker.md` aligned with branch, PR, and merge state.
+1. For execution work, keep `tracker.md` aligned with branch, PR, and merge state.
 
 ## Spec Lifecycle
 - `Draft`: not ready for task splitting
@@ -46,8 +46,8 @@ This harness does not contain implementation code.
 - `Approved`: ready to drive tasks
 - `Tasked`: already split into implementation work
 
-No frontend-facing spec may move to `Tasked` until [frontend-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-structure.md) is approved and frontend intake is complete or explicitly marked not applicable.
-No backend-facing spec may move to `Tasked` until [project-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/project-structure.md) is approved and frontend intake is complete or explicitly marked not applicable.
+No frontend-facing spec may move to `Tasked` until [frontend-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-structure.md) is approved and any required frontend reconciliation is complete or explicitly marked not applicable.
+No backend-facing spec may move to `Tasked` until [project-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/project-structure.md) is approved and any required frontend contract review is complete or explicitly marked not applicable.
 
 ## Canonical Files
 - [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md)
@@ -57,6 +57,7 @@ No backend-facing spec may move to `Tasked` until [project-structure.md](/Users/
 - [github-project-execution.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/github-project-execution.md)
 - [product-scope.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/product-scope.md)
 - [design-system.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/design-system.md)
+- [agent-onboarding-refresh.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/agent-onboarding-refresh.md)
 - [frontend-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-structure.md)
 - [frontend-architecture.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-architecture.md)
 - [frontend-admin-auth-integration.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-admin-auth-integration.md)
@@ -79,4 +80,4 @@ No backend-facing spec may move to `Tasked` until [project-structure.md](/Users/
 - Reference task IDs in branch names, commits, and PR titles.
 - Reference task IDs, source specs, and status updates in `tracker.md`.
 - Do not silently override locked product decisions when adapting specs to an existing frontend.
-- Update the tracker and analyzer report when spec assumptions change.
+- Update the tracker when spec assumptions change.

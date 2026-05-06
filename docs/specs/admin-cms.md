@@ -82,5 +82,5 @@ Admin authentication, CRUD operations, publication controls, featured content se
 - Keep admin draft preview out of Wave 2 task definitions.
 
 ## Git Branch Implications
-- Admin work uses `admin/`, `fe/`, `be/`, or `spec/` branches depending on the change surface.
+- Admin work uses `admin/`, `frontend/`, `backend/`, or `spec/` branches depending on the change surface.
 - Do not mix admin auth tasks with unrelated public frontend work in the same branch.

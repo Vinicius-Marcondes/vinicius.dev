@@ -66,8 +66,6 @@ Entity boundaries, key relationships, state fields, module ownership, and data o
 - [ ] Explicit non-goal: exhaustive schema column names are not required at this spec stage.
 
 ## Dependencies
-- [frontend-intake.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-intake.md)
-- [frontend-analyzer.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer.md)
 - [product-scope.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/product-scope.md)
 - [frontend-architecture.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-architecture.md)
 - [project-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/project-structure.md)

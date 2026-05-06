@@ -89,5 +89,5 @@ Filesystem layout, path conventions, upload ownership, retention assumptions, an
 - Do not split upload behavior tasks before moderation expectations and outbound storage port ownership are approved.
 
 ## Git Branch Implications
-- Storage changes use `infra/`, `be/`, or `data/` branches depending on the layer being changed.
+- Storage changes use `infra/`, `backend/`, or `data/` branches depending on the layer being changed.
 - Because storage decisions are hard to reverse operationally, keep each storage task narrowly scoped.
