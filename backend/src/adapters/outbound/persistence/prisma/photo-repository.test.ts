@@ -54,6 +54,10 @@ describe("prisma photo repository", () => {
     });
 
     expect(page).toEqual({
+      facets: {
+        locations: ["Sao Paulo"],
+        years: [2026],
+      },
       items: [
         {
           caption: "Night street frame.",

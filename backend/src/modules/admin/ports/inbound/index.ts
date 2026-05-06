@@ -128,6 +128,11 @@ export type AdminPhotoCurationItem = Readonly<{
   caption: string | null;
   camera: string | null;
   film: string | null;
+  original?: Readonly<{
+    displayFilename: string | null;
+    mimeType: string | null;
+    byteSize: number | null;
+  }>;
   tags: readonly string[];
   updatedAt: string;
 }>;
@@ -154,6 +159,43 @@ export type ListAdminPhotosOutput = Readonly<{
 
 export interface ListAdminPhotosPort
   extends UseCase<ListAdminPhotosInput, ListAdminPhotosOutput> {}
+
+export type GetAdminPhotoByIdInput = Readonly<{
+  id: string;
+}>;
+
+export type GetAdminPhotoByIdOutput = Readonly<{
+  item: AdminPhotoCurationItem;
+}>;
+
+export interface GetAdminPhotoByIdPort
+  extends UseCase<GetAdminPhotoByIdInput, GetAdminPhotoByIdOutput | null> {}
+
+export type CreateAdminPhotoInput = Readonly<{
+  id: string;
+  title: string;
+  frame: string;
+  date: string;
+  location: string;
+  tags?: readonly string[];
+  tone: "amber" | "cyan" | "mono" | "sunset" | "violet";
+  caption?: string | null;
+  camera?: string | null;
+  film?: string | null;
+  original: Readonly<{
+    path: string;
+    displayFilename: string;
+    mimeType: string;
+    byteSize: number;
+  }>;
+}>;
+
+export type CreateAdminPhotoOutput = Readonly<{
+  item: AdminPhotoCurationItem;
+}>;
+
+export interface CreateAdminPhotoPort
+  extends UseCase<CreateAdminPhotoInput, CreateAdminPhotoOutput> {}
 
 export type UpdateAdminPhotoCurationInput = Readonly<{
   id: string;

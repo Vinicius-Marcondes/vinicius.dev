@@ -299,6 +299,16 @@ const parsePositiveInteger = (value: string | undefined): number | undefined => 
 const inferMediaContentType = (absolutePath: string): string =>
   mediaContentTypeByExtension[extname(absolutePath).toLowerCase()] ?? defaultMediaContentType;
 
+const openPhotoOriginalFromStorage = async (container: BootstrapContainer, id: string) => {
+  const photoMedia = await container.media.repository.findPhotoMediaById(id);
+
+  if (!photoMedia) {
+    return null;
+  }
+
+  return container.media.storage.photos.openOriginal(photoMedia.originalReference);
+};
+
 const parseThoughtQuery = (query: Record<string, string | undefined>) => {
   const type = query.type;
 
@@ -646,11 +656,36 @@ const supportedChatUploadMimeTypes: readonly ChatUploadMimeType[] = [
   "image/png",
   "image/webp",
 ];
+const ADMIN_PHOTO_UPLOAD_MAX_BYTES = 25 * 1024 * 1024;
+const IMAGE_EXTENSION_BY_MIME_TYPE: Record<ChatUploadMimeType, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
 const MAX_CHAT_MESSAGE_BODY_LENGTH = 2000;
 const CHAT_UPLOAD_ROOM_SLUG = "night-shift";
 
 const isSupportedChatUploadMimeType = (value: string): value is ChatUploadMimeType => {
   return supportedChatUploadMimeTypes.includes(value as ChatUploadMimeType);
+};
+
+const buildPhotoOriginalStorageKey = (date: Date, photoId: string, mimeType: ChatUploadMimeType) => {
+  const year = String(date.getUTCFullYear()).padStart(4, "0");
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const safePhotoId = photoId.replaceAll(/[^a-zA-Z0-9_-]/g, "");
+
+  return `${year}/${month}/${safePhotoId}.${IMAGE_EXTENSION_BY_MIME_TYPE[mimeType]}`;
+};
+
+const parseTagsText = (value: string | undefined): readonly string[] => {
+  if (!value) {
+    return [];
+  }
+
+  return value
+    .split(/[,\n]/)
+    .map((tag) => tag.trim())
+    .filter(Boolean);
 };
 
 const hasLeadingBytes = (input: Uint8Array, signature: readonly number[]) => {
@@ -2006,6 +2041,7 @@ const createAdminFamily = (
   const rotateRoomPasswordUseCase = (container.chat as {
     rotateRoomPassword?: RotateChatRoomPasswordPort;
   }).rotateRoomPassword;
+  const getPhotoByIdUseCase = admin.getPhotoById;
 
   const resolveSession = async (c: Context) => {
     const sessionToken = readSessionTokenFromCookie(
@@ -2253,6 +2289,134 @@ const createAdminFamily = (
     return c.json(result);
   });
 
+  adminApp.post("/photos", async (c) => {
+    const session = await resolveSession(c);
+
+    if ("error" in session) {
+      return session.error;
+    }
+
+    const formData = await c.req.formData();
+    const title = getRequiredFormText(formData, "title");
+    const frame = getRequiredFormText(formData, "frame");
+    const date = getRequiredFormText(formData, "date");
+    const location = getRequiredFormText(formData, "location");
+    const tone = getRequiredFormText(formData, "tone");
+    const file = formData.get("file");
+
+    if ("error" in title) {
+      return c.json(title.error, 400);
+    }
+
+    if ("error" in frame) {
+      return c.json(frame.error, 400);
+    }
+
+    if ("error" in date) {
+      return c.json(date.error, 400);
+    }
+
+    if ("error" in location) {
+      return c.json(location.error, 400);
+    }
+
+    if ("error" in tone) {
+      return c.json(tone.error, 400);
+    }
+
+    if (!(file instanceof File) || file.size <= 0) {
+      return c.json({ error: "invalid_upload", field: "file", reason: "missing_file" }, 400);
+    }
+
+    if (
+      tone.value !== "amber" &&
+      tone.value !== "cyan" &&
+      tone.value !== "mono" &&
+      tone.value !== "sunset" &&
+      tone.value !== "violet"
+    ) {
+      return c.json({ error: "invalid_request", field: "tone" }, 400);
+    }
+
+    const parsedDate = new Date(date.value);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return c.json({ error: "invalid_request", field: "date" }, 400);
+    }
+
+    const mimeType = file.type.trim().toLowerCase();
+
+    if (!isSupportedChatUploadMimeType(mimeType)) {
+      return c.json({ error: "invalid_upload", field: "file", reason: "unsupported_mime_type" }, 400);
+    }
+
+    if (file.size > ADMIN_PHOTO_UPLOAD_MAX_BYTES) {
+      return c.json({ error: "invalid_upload", field: "file", reason: "file_too_large" }, 413);
+    }
+
+    const uploadBytes = new Uint8Array(await file.arrayBuffer());
+
+    if (!isChatUploadMimeSignatureValid(mimeType, uploadBytes)) {
+      return c.json(
+        { error: "invalid_upload", field: "file", reason: "mime_signature_mismatch" },
+        400,
+      );
+    }
+
+    const photoStorage = container.media.storage.photos;
+
+    if (!photoStorage.writeOriginal || !photoStorage.deleteOriginal) {
+      return c.json<NotImplementedResponse>(
+        {
+          family: "admin",
+          method: c.req.method,
+          route: c.req.path,
+          service: serviceName,
+          status: "not_implemented",
+        },
+        501,
+      );
+    }
+
+    const photoId = crypto.randomUUID();
+    const storageKey = buildPhotoOriginalStorageKey(parsedDate, photoId, mimeType);
+    const written = await photoStorage.writeOriginal({
+      body: uploadBytes,
+      storageKey,
+    });
+
+    try {
+      const response = await admin.createPhoto.execute({
+        camera: getOptionalFormText(formData, "camera")?.trim() || null,
+        caption: getOptionalFormText(formData, "caption")?.trim() || null,
+        date: date.value,
+        film: getOptionalFormText(formData, "film")?.trim() || null,
+        frame: frame.value,
+        id: photoId,
+        location: location.value,
+        original: {
+          byteSize: written.byteSize,
+          displayFilename: file.name.trim() || "photo",
+          mimeType,
+          path: written.storagePath,
+        },
+        tags: parseTagsText(getOptionalFormText(formData, "tags")),
+        title: title.value,
+        tone: tone.value,
+      });
+
+      return c.json(response, 201);
+    } catch (error) {
+      await photoStorage.deleteOriginal(written.storagePath).catch(() => undefined);
+
+      if (error instanceof InvalidAdminPhotoMetadataDateError) {
+        return c.json({ error: "invalid_request", field: "date" }, 400);
+      }
+
+      throw error;
+    }
+  });
+
   adminApp.get("/photos", async (c) => {
     const session = await resolveSession(c);
 
@@ -2297,6 +2461,87 @@ const createAdminFamily = (
     });
 
     return c.json(response);
+  });
+
+  adminApp.get("/photos/:id", async (c) => {
+    const session = await resolveSession(c);
+
+    if ("error" in session) {
+      return session.error;
+    }
+
+    if (!getPhotoByIdUseCase) {
+      return c.json<NotImplementedResponse>(
+        {
+          family: "admin",
+          method: c.req.method,
+          route: c.req.path,
+          service: serviceName,
+          status: "not_implemented",
+        },
+        501,
+      );
+    }
+
+    const id = c.req.param("id")?.trim();
+
+    if (!id) {
+      return c.json({ error: "invalid_path", field: "id" }, 400);
+    }
+
+    const result = await getPhotoByIdUseCase.execute({ id });
+
+    if (!result) {
+      return c.json({ error: "not_found", resource: "photo" }, 404);
+    }
+
+    return c.json(result);
+  });
+
+  adminApp.get("/photos/:id/original", async (c) => {
+    const session = await resolveSession(c);
+
+    if ("error" in session) {
+      return session.error;
+    }
+
+    if (!getPhotoByIdUseCase) {
+      return c.json<NotImplementedResponse>(
+        {
+          family: "admin",
+          method: c.req.method,
+          route: c.req.path,
+          service: serviceName,
+          status: "not_implemented",
+        },
+        501,
+      );
+    }
+
+    const id = c.req.param("id")?.trim();
+
+    if (!id) {
+      return c.json({ error: "invalid_path", field: "id" }, 400);
+    }
+
+    const photo = await getPhotoByIdUseCase.execute({ id });
+
+    if (!photo) {
+      return c.json({ error: "not_found", resource: "photo" }, 404);
+    }
+
+    const originalMedia = await openPhotoOriginalFromStorage(container, id);
+
+    if (!originalMedia) {
+      return c.json({ error: "not_found", resource: "photo" }, 404);
+    }
+
+    c.header("Cache-Control", "private, no-store");
+
+    return c.body(originalMedia.stream, 200, {
+      "Content-Length": String(originalMedia.byteSize),
+      "Content-Type": inferMediaContentType(originalMedia.absolutePath),
+    });
   });
 
   adminApp.patch("/photos/:id/curation", async (c) => {

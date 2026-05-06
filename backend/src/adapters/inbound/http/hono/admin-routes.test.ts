@@ -245,6 +245,30 @@ const createTestContainer = (
         };
       },
     },
+    createPhoto: {
+      execute: async () => ({
+        item: {
+          camera: "Canon",
+          caption: "Night street frame.",
+          date: "2026-03-22",
+          featured: false,
+          film: "digital",
+          frame: "014",
+          id: "photo_1",
+          location: "Sao Paulo",
+          original: {
+            byteSize: 16,
+            displayFilename: "photo.jpg",
+            mimeType: "image/jpeg",
+          },
+          status: "draft",
+          tags: ["night"],
+          title: "paulista at 02:14",
+          tone: "sunset",
+          updatedAt: "2026-03-22T00:00:00.000Z",
+        },
+      }),
+    },
     updateProjectCuration: {
       execute: async () => null,
     },
@@ -453,7 +477,13 @@ const createTestContainer = (
         }),
       },
       photos: {
+        deleteOriginal: async () => {},
         openOriginal: async () => null,
+        writeOriginal: async (input) => ({
+          byteSize: input.body.byteLength,
+          storageKey: input.storageKey,
+          storagePath: input.storageKey,
+        }),
       },
     },
   },
@@ -485,6 +515,68 @@ describe("admin routes", () => {
         chatFlags: 2,
         draftThoughts: 3,
       },
+    });
+  });
+
+  it("uploads admin photos as draft records", async () => {
+    const app = createHonoHttpAdapter(createTestContainer());
+    const formData = new FormData();
+    formData.set("file", new File([new Uint8Array([0xff, 0xd8, 0xff, 0x00])], "photo.jpg", {
+      type: "image/jpeg",
+    }));
+    formData.set("title", "paulista at 02:14");
+    formData.set("frame", "014");
+    formData.set("date", "2026-03-22");
+    formData.set("location", "Sao Paulo");
+    formData.set("tone", "sunset");
+    formData.set("tags", "night, street");
+
+    const response = await app.request("/api/admin/photos", {
+      body: formData,
+      headers: {
+        cookie: "vinicius.dev-session=session-token-1",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(201);
+    await expect(response.json()).resolves.toMatchObject({
+      item: {
+        featured: false,
+        original: {
+          displayFilename: "photo.jpg",
+          mimeType: "image/jpeg",
+        },
+        status: "draft",
+      },
+    });
+  });
+
+  it("rejects admin photo uploads when the signature does not match the MIME type", async () => {
+    const app = createHonoHttpAdapter(createTestContainer());
+    const formData = new FormData();
+    formData.set("file", new File([new Uint8Array([0x00, 0x01, 0x02])], "photo.jpg", {
+      type: "image/jpeg",
+    }));
+    formData.set("title", "paulista at 02:14");
+    formData.set("frame", "014");
+    formData.set("date", "2026-03-22");
+    formData.set("location", "Sao Paulo");
+    formData.set("tone", "sunset");
+
+    const response = await app.request("/api/admin/photos", {
+      body: formData,
+      headers: {
+        cookie: "vinicius.dev-session=session-token-1",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "invalid_upload",
+      field: "file",
+      reason: "mime_signature_mismatch",
     });
   });
 

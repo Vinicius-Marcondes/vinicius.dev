@@ -156,6 +156,64 @@ describe("prisma admin repository", () => {
     });
   });
 
+  it("returns one photo for admin curation by id with original metadata", async () => {
+    const client = {
+      photo: {
+        findUnique: async () => ({
+          camera: "Canon",
+          caption: "Night street frame.",
+          date: new Date("2026-03-22T00:00:00.000Z"),
+          featured: false,
+          film: "digital",
+          frame: "014",
+          id: "photo_1",
+          location: "Sao Paulo",
+          originalByteSize: 1204,
+          originalDisplayFilename: "photo.jpg",
+          originalMimeType: "image/jpeg",
+          status: "draft",
+          tags: ["night", "street"],
+          title: "paulista at 02:14",
+          tone: "sunset",
+          updatedAt: new Date("2026-04-28T12:00:00.000Z"),
+        }),
+      },
+    } as unknown as PrismaDatabaseClient;
+
+    const repository = createPrismaAdminRepository(client);
+
+    await expect(repository.findPhotoForCurationById("photo_1")).resolves.toEqual({
+      camera: "Canon",
+      caption: "Night street frame.",
+      date: new Date("2026-03-22T00:00:00.000Z"),
+      featured: false,
+      film: "digital",
+      frame: "014",
+      id: "photo_1",
+      location: "Sao Paulo",
+      originalByteSize: 1204,
+      originalDisplayFilename: "photo.jpg",
+      originalMimeType: "image/jpeg",
+      status: "draft",
+      tags: ["night", "street"],
+      title: "paulista at 02:14",
+      tone: "sunset",
+      updatedAt: new Date("2026-04-28T12:00:00.000Z"),
+    });
+  });
+
+  it("returns null when a curation photo id cannot be found", async () => {
+    const client = {
+      photo: {
+        findUnique: async () => null,
+      },
+    } as unknown as PrismaDatabaseClient;
+
+    const repository = createPrismaAdminRepository(client);
+
+    await expect(repository.findPhotoForCurationById("missing")).resolves.toBeNull();
+  });
+
   it("replaces status strip entries and returns ordered rows", async () => {
     const createCalls: Array<Record<string, unknown>> = [];
     const upsertCalls: Array<Record<string, unknown>> = [];

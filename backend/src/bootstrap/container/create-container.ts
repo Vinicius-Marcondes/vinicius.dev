@@ -5,7 +5,9 @@ import {
 } from "@/adapters/outbound/mail";
 import { createFilesystemMediaStorageAdapter } from "@/adapters/outbound/storage/filesystem";
 import {
+  createCreateAdminPhotoUseCase,
   createGetAdminDashboardSummaryUseCase,
+  createGetAdminPhotoByIdUseCase,
   createListAdminPhotosUseCase,
   createListAdminProjectsUseCase,
   createListAdminStatusStripEntriesUseCase,
@@ -17,7 +19,9 @@ import {
   createUpdateAdminThoughtCurationUseCase,
 } from "@/modules/admin/application";
 import type {
+  CreateAdminPhotoPort,
   GetAdminDashboardSummaryPort,
+  GetAdminPhotoByIdPort,
   ListAdminPhotosPort,
   ListAdminProjectsPort,
   ListAdminStatusStripEntriesPort,
@@ -104,7 +108,9 @@ import { loadBootstrapConfig, type BootstrapConfig } from "../config";
 
 export type BootstrapContainer = Readonly<{
   admin?: Readonly<{
+    createPhoto: CreateAdminPhotoPort;
     getDashboardSummary: GetAdminDashboardSummaryPort;
+    getPhotoById?: GetAdminPhotoByIdPort;
     listPhotos: ListAdminPhotosPort;
     listProjects: ListAdminProjectsPort;
     listStatusStripEntries: ListAdminStatusStripEntriesPort;
@@ -211,7 +217,13 @@ export const createContainer = (env: BootstrapEnv = Bun.env): BootstrapContainer
 
   return {
     admin: {
+      createPhoto: createCreateAdminPhotoUseCase({
+        repository: persistence.admin,
+      }),
       getDashboardSummary: createGetAdminDashboardSummaryUseCase({
+        repository: persistence.admin,
+      }),
+      getPhotoById: createGetAdminPhotoByIdUseCase({
         repository: persistence.admin,
       }),
       listPhotos: createListAdminPhotosUseCase({

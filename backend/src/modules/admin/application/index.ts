@@ -1,6 +1,12 @@
 import type {
   AdminDashboardSummaryOutput,
+  CreateAdminPhotoInput,
+  CreateAdminPhotoOutput,
+  CreateAdminPhotoPort,
   GetAdminDashboardSummaryPort,
+  GetAdminPhotoByIdInput,
+  GetAdminPhotoByIdOutput,
+  GetAdminPhotoByIdPort,
   ListAdminPhotosInput,
   ListAdminPhotosOutput,
   ListAdminPhotosPort,
@@ -123,6 +129,11 @@ const mapPhotoItem = (item: AdminPhotoCurationRow) => ({
   frame: item.frame,
   id: item.id,
   location: item.location,
+  original: {
+    byteSize: item.originalByteSize ?? null,
+    displayFilename: item.originalDisplayFilename ?? null,
+    mimeType: item.originalMimeType ?? null,
+  },
   status: item.status,
   tags: [...item.tags],
   title: item.title,
@@ -276,6 +287,57 @@ export const createListAdminPhotosUseCase = ({
         totalItems: result.totalItems,
         totalPages: result.totalPages,
       },
+    };
+  },
+});
+
+export const createGetAdminPhotoByIdUseCase = ({
+  repository,
+}: AdminApplicationDependencies): GetAdminPhotoByIdPort => ({
+  execute: async (
+    input: GetAdminPhotoByIdInput,
+  ): Promise<GetAdminPhotoByIdOutput | null> => {
+    const photo = await repository.findPhotoForCurationById(input.id.trim());
+
+    if (!photo) {
+      return null;
+    }
+
+    return {
+      item: mapPhotoItem(photo),
+    };
+  },
+});
+
+export const createCreateAdminPhotoUseCase = ({
+  repository,
+}: AdminApplicationDependencies): CreateAdminPhotoPort => ({
+  execute: async (input: CreateAdminPhotoInput): Promise<CreateAdminPhotoOutput> => {
+    const date = new Date(input.date);
+
+    if (Number.isNaN(date.getTime())) {
+      throw new InvalidAdminPhotoMetadataDateError();
+    }
+
+    const created = await repository.createPhoto({
+      camera: input.camera ?? null,
+      caption: input.caption ?? null,
+      date,
+      film: input.film ?? null,
+      frame: input.frame.trim(),
+      id: input.id.trim(),
+      location: input.location.trim(),
+      originalByteSize: input.original.byteSize,
+      originalDisplayFilename: input.original.displayFilename.trim() || "photo",
+      originalMimeType: input.original.mimeType,
+      originalPath: input.original.path,
+      tags: input.tags?.map((tag) => tag.trim()).filter(Boolean) ?? [],
+      title: input.title.trim(),
+      tone: input.tone,
+    });
+
+    return {
+      item: mapPhotoItem(created),
     };
   },
 });

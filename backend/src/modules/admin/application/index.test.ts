@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 
 import {
   createGetAdminDashboardSummaryUseCase,
+  createGetAdminPhotoByIdUseCase,
   createListAdminPhotosUseCase,
   createListAdminProjectsUseCase,
   createListAdminStatusStripEntriesUseCase,
@@ -23,10 +24,14 @@ const createRepository = (
   createAdminSession: async () => {
     throw new Error("unused");
   },
+  createPhoto: async () => {
+    throw new Error("unused");
+  },
   createMfaChallenge: async () => {
     throw new Error("unused");
   },
   findAdminSessionByTokenHash: async () => null,
+  findPhotoForCurationById: async () => null,
   findAdminUserByEmail: async () => null,
   findMfaChallengeById: async () => null,
   incrementMfaChallengeAttempts: async () => {},
@@ -499,6 +504,57 @@ describe("admin application", () => {
         id: "missing",
       }),
     ).resolves.toBeNull();
+  });
+
+  it("maps admin photo detail results and forwards not-found as null", async () => {
+    const repository = createRepository({
+      findPhotoForCurationById: async (id) =>
+        id === "missing"
+          ? null
+          : {
+              camera: "Canon",
+              caption: "Night street frame.",
+              date: new Date("2026-03-22T00:00:00.000Z"),
+              featured: false,
+              film: "digital",
+              frame: "014",
+              id,
+              location: "Sao Paulo",
+              originalByteSize: 1204,
+              originalDisplayFilename: "photo.jpg",
+              originalMimeType: "image/jpeg",
+              status: "draft",
+              tags: ["night", "street"],
+              title: "paulista at 02:14",
+              tone: "sunset",
+              updatedAt: now,
+            },
+    });
+    const useCase = createGetAdminPhotoByIdUseCase({ repository });
+
+    await expect(useCase.execute({ id: " photo_1 " })).resolves.toEqual({
+      item: {
+        camera: "Canon",
+        caption: "Night street frame.",
+        date: "2026-03-22",
+        featured: false,
+        film: "digital",
+        frame: "014",
+        id: "photo_1",
+        location: "Sao Paulo",
+        original: {
+          byteSize: 1204,
+          displayFilename: "photo.jpg",
+          mimeType: "image/jpeg",
+        },
+        status: "draft",
+        tags: ["night", "street"],
+        title: "paulista at 02:14",
+        tone: "sunset",
+        updatedAt: "2026-04-28T12:00:00.000Z",
+      },
+    });
+    await expect(useCase.execute({ id: "missing" })).resolves.toBeNull();
   });
 
   it("maps valid photo metadata updates and null metadata results", async () => {
