@@ -11,7 +11,7 @@
 - Base: `docker-compose.yml` (shared and production-safe defaults).
 - Development override: `docker-compose.dev.yml` (source bind mounts and install-on-start workflow).
 
-The development override runs the Vite dev server behind Caddy for `development.viniciuslab.dev`, so `FRONTEND_DEV_ALLOWED_HOSTS` must explicitly include that hostname.
+The development override runs the Vite dev server behind Caddy for `development.viniciuslab.dev`, so `FRONTEND_DEV_ALLOWED_HOSTS` must explicitly include that hostname. The override defaults to `development.viniciuslab.dev` to keep the manual VPS deployment working when an older development env file has not been updated yet.
 
 ## Production runtime baseline
 

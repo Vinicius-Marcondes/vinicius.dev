@@ -9,6 +9,6 @@ services:
   frontend:
     command: sh -c "bun install --frozen-lockfile && bun run dev --host 0.0.0.0 --port ${FRONTEND_PORT:-5173}"
     environment:
-      FRONTEND_DEV_ALLOWED_HOSTS: ${FRONTEND_DEV_ALLOWED_HOSTS:-}
+      FRONTEND_DEV_ALLOWED_HOSTS: ${FRONTEND_DEV_ALLOWED_HOSTS:-development.viniciuslab.dev}
     volumes:
       - .:/app

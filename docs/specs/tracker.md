@@ -184,6 +184,7 @@ Done criteria for `CHAT-010`:
   - Scope: add explicit Vite development host allowlisting for `development.viniciuslab.dev`, pass backend CORS env through compose, and document the development runtime env contract.
   - Local verification: frontend lint/build plus development and production compose config rendering passed on 2026-05-05.
   - PR/Open review: PR [#149](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/149) opened against `develop`.
+  - Follow-up local execution: development compose now defaults the Vite host allowlist to `development.viniciuslab.dev` when the VPS env file omits `FRONTEND_DEV_ALLOWED_HOSTS`.
 
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
