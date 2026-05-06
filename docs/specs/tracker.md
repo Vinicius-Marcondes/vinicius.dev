@@ -39,6 +39,7 @@
 3. Execute `SPEC-032` testing coverage foundation tasks `QA-009` through `QA-013`.
 4. Execute `SPEC-033` photo catalog and admin upload tasks `PHOTO-001` through `PHOTO-004`.
 5. Review `SPEC-034` agent onboarding docs refresh and execute `DOCS-001`.
+6. Review `SPEC-035` admin photo form feedback and, after approval plus admin photo route availability, execute `PHOTO-005`.
 
 ## Current Executable Cluster
 ### Frontend Admin API Integration
@@ -297,6 +298,33 @@ Done criteria for `PHOTO-004`:
 - admin can upload a draft photo, inspect paginated records, edit metadata, publish/unpublish, and feature/unfeature.
 - admin route/action/component tests, frontend lint, and frontend build pass.
 
+### Admin Photo Form Feedback
+- Status: in review; implementation is queued behind spec approval and admin photo route availability.
+- Primary spec: `SPEC-035`.
+- Supporting specs: `photo-catalog-gallery.md`, `design-system.md`, `frontend-structure.md`, `frontend-architecture.md`, `verification.md`, `git-workflow.md`, and `acceptance-criteria.md`.
+- Scope: shared reusable toast provider, branded `/admin/photos/upload` file chooser, selected filename/size display, and success toasts for upload, metadata save, publish/unpublish, and feature/unfeature on `/admin/photos/upload` and `/admin/photos/:id`.
+- Non-scope: `/admin/photos` gallery/list UI changes, public photo gallery behavior, backend API contracts, persistence/media/schema changes, error-toast conversion, and deployment changes.
+
+| Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| In Review | SPEC-035 | SPEC-035 | spec | develop | `spec/SPEC-035-admin-photo-form-feedback` | develop | `docs/specs/admin-photo-form-feedback.md` | [#153](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/153) | — |
+| Blocked | PHOTO-005 | SPEC-035 | admin | develop | `admin/PHOTO-005-admin-photo-form-feedback` | develop | `docs/specs/admin-photo-form-feedback.md` | not opened | Pending `SPEC-035` approval and `/admin/photos/upload` plus `/admin/photos/:id` route availability from `PHOTO-004` on the base branch. |
+
+Done criteria for `SPEC-035`:
+- `docs/specs/admin-photo-form-feedback.md` exists and follows the harness section template.
+- `docs/specs/tracker.md` and `docs/specs/README.md` register the spec and planned implementation task.
+- branch names, dependencies, acceptance source, and verification methods are defined for `PHOTO-005`.
+- the spec records locked UX decisions from the planning conversation and the Vinicius.Dev design skill.
+
+Done criteria for `PHOTO-005`:
+- `/admin/photos/upload` renders a branded file chooser with `choose file` before selection and `change file` plus filename/size after selection.
+- the native upload input remains accessible and preserves accepted image types, required behavior, and local preview.
+- upload success keeps redirecting to `/admin/photos/:id` and shows a bottom-right 4s success toast on the destination route.
+- metadata save, publish/unpublish, and feature/unfeature successes on `/admin/photos/:id` show bottom-right 4s success toasts.
+- success messages are removed from inline text while error messages remain inline near the related form/action.
+- shared toast UI is implemented under `frontend/src/shared/ui`, wired through `frontend/src/app/providers`, and follows the Vinicius.Dev UI kit including timer/progress, `aria-live`, rectangular geometry, existing tokens, no emoji, and reduced-motion support.
+- frontend route/component tests, lint, and build pass.
+
 ### Agent Onboarding Docs Refresh
 - Status: in review.
 - Primary spec: `SPEC-034`.
@@ -331,6 +359,7 @@ Done criteria for `DOCS-001`:
 | SPEC-032 | Testing Coverage Foundation | Cross-layer | Tasked | `verification.md`, `ci-cd.md`, `project-structure.md`, `backend-architecture.md`, `frontend-structure.md`, `frontend-architecture.md`, `git-workflow.md`, `acceptance-criteria.md` | `QA-009`, `QA-010`, `QA-011`, `QA-012`, `QA-013` | yes | yes | Adds the first cross-layer coverage baseline: backend coverage improvements, frontend Vitest coverage, focused Prisma/Postgres CI contracts, and report-only coverage commands. |
 | SPEC-033 | Photo Catalog And Admin Upload | Cross-layer | Tasked | `product-scope.md`, `frontend-structure.md`, `frontend-architecture.md`, `project-structure.md`, `backend-architecture.md`, `data-model.md`, `media-storage.md`, `admin-cms.md`, `verification.md`, `git-workflow.md`, `acceptance-criteria.md` | `PHOTO-001`, `PHOTO-002`, `PHOTO-003`, `PHOTO-004` | yes | yes | Adds draft-first admin photo original uploads, public gallery API integration with real images and facets, and admin photo management. |
 | SPEC-034 | Agent Onboarding Docs Refresh | Docs | In Review | `README.md`, `tracker.md`, `acceptance-criteria.md`, `git-workflow.md`, `frontend-structure.md`, `frontend-architecture.md` | `DOCS-001` | yes | yes | Documentation-only onboarding refresh for `AGENTS.md`, stale spec dependencies, and local Vinicius.Dev frontend skill references. |
+| SPEC-035 | Admin Photo Form Feedback | Frontend/Admin | Review | `photo-catalog-gallery.md`, `design-system.md`, `frontend-structure.md`, `frontend-architecture.md`, `verification.md`, `git-workflow.md`, `acceptance-criteria.md` | `PHOTO-005` | yes | yes | Frontend-only admin photo UX follow-up for branded file selection and shared toast-based save feedback on upload/detail screens. |
 
 ## Tasking Rule
 A spec may only move to `Tasked` when:
