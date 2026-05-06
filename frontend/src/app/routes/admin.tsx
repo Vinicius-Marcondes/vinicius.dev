@@ -7,6 +7,15 @@ import {
   adminLogoutAction,
 } from '../../pages/admin/login'
 import { AdminDashboardPage, adminDashboardLoader } from '../../pages/admin/dashboard'
+import {
+  AdminPhotoDetailPage,
+  AdminPhotoUploadPage,
+  AdminPhotosGalleryPage,
+  adminPhotoDetailAction,
+  adminPhotoDetailLoader,
+  adminPhotoUploadAction,
+  adminPhotosLoader,
+} from '../../pages/admin/photos'
 
 export const adminRoutes: RouteObject = {
   path: '/admin',
@@ -26,6 +35,27 @@ export const adminRoutes: RouteObject = {
       path: 'dashboard',
       loader: adminDashboardLoader,
       element: <AdminDashboardPage />,
+    },
+    {
+      path: 'photos',
+      children: [
+        {
+          index: true,
+          loader: adminPhotosLoader,
+          element: <AdminPhotosGalleryPage />,
+        },
+        {
+          path: 'upload',
+          action: adminPhotoUploadAction,
+          element: <AdminPhotoUploadPage />,
+        },
+        {
+          path: ':id',
+          loader: adminPhotoDetailLoader,
+          action: adminPhotoDetailAction,
+          element: <AdminPhotoDetailPage />,
+        },
+      ],
     },
     {
       path: 'logout',
