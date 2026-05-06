@@ -298,7 +298,7 @@ Done criteria for `PHOTO-004`:
 - admin route/action/component tests, frontend lint, and frontend build pass.
 
 ### Agent Onboarding Docs Refresh
-- Status: in progress for spec authoring and documentation cleanup.
+- Status: in review.
 - Primary spec: `SPEC-034`.
 - Supporting specs: `README.md`, `git-workflow.md`, `frontend-structure.md`, `frontend-architecture.md`, and `acceptance-criteria.md`.
 - Scope: refresh `AGENTS.md`, register the onboarding docs spec, resolve stale spec/skill references discovered by repo scan, and document the Vinicius.Dev frontend creation workflow through the local design skill.
@@ -306,8 +306,8 @@ Done criteria for `PHOTO-004`:
 
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| In Progress | SPEC-034 | SPEC-034 | spec | develop | `spec/SPEC-034-agent-onboarding-refresh` | develop | `docs/specs/agent-onboarding-refresh.md` | not opened | — |
-| Todo | DOCS-001 | SPEC-034 | spec | develop | `spec/DOCS-001-agent-onboarding-docs-refresh` | develop | `docs/specs/agent-onboarding-refresh.md` | not opened | — |
+| In Review | SPEC-034 | SPEC-034 | spec | develop | `spec/SPEC-034-agent-onboarding-refresh` | develop | `docs/specs/agent-onboarding-refresh.md` | [#151](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/151) | — |
+| In Review | DOCS-001 | SPEC-034 | spec | develop | `spec/DOCS-001-agent-onboarding-docs-refresh` | develop | `docs/specs/agent-onboarding-refresh.md` | [#151](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/151) | — |
 
 Done criteria for `SPEC-034`:
 - `docs/specs/agent-onboarding-refresh.md` exists and follows the harness section template.
@@ -330,7 +330,7 @@ Done criteria for `DOCS-001`:
 | SPEC-031 | Security Hardening and Production Readiness | Cross-layer | Tasked | `frontend-structure.md`, `frontend-architecture.md`, `project-structure.md`, `backend-architecture.md`, `chat-room-live-integration.md`, `frontend-admin-auth-integration.md`, `media-storage.md`, `admin-cms.md`, `infra-deployment.md`, `verification.md`, `git-workflow.md`, `acceptance-criteria.md` | `SEC-001`, `SEC-002`, `SEC-003`, `SEC-004`, `SEC-005`, `SEC-006`, `SEC-007`, `SEC-008`, `SEC-009` | yes | yes | Approved remediation spec from the 2026-05-03 security/bug review; implementation queue is registered with first-wave critical tasks unblocked first. |
 | SPEC-032 | Testing Coverage Foundation | Cross-layer | Tasked | `verification.md`, `ci-cd.md`, `project-structure.md`, `backend-architecture.md`, `frontend-structure.md`, `frontend-architecture.md`, `git-workflow.md`, `acceptance-criteria.md` | `QA-009`, `QA-010`, `QA-011`, `QA-012`, `QA-013` | yes | yes | Adds the first cross-layer coverage baseline: backend coverage improvements, frontend Vitest coverage, focused Prisma/Postgres CI contracts, and report-only coverage commands. |
 | SPEC-033 | Photo Catalog And Admin Upload | Cross-layer | Tasked | `product-scope.md`, `frontend-structure.md`, `frontend-architecture.md`, `project-structure.md`, `backend-architecture.md`, `data-model.md`, `media-storage.md`, `admin-cms.md`, `verification.md`, `git-workflow.md`, `acceptance-criteria.md` | `PHOTO-001`, `PHOTO-002`, `PHOTO-003`, `PHOTO-004` | yes | yes | Adds draft-first admin photo original uploads, public gallery API integration with real images and facets, and admin photo management. |
-| SPEC-034 | Agent Onboarding Docs Refresh | Docs | In Progress | `README.md`, `tracker.md`, `acceptance-criteria.md`, `git-workflow.md`, `frontend-structure.md`, `frontend-architecture.md` | `DOCS-001` | yes | yes | Documentation-only onboarding refresh for `AGENTS.md`, stale spec dependencies, and local Vinicius.Dev frontend skill references. |
+| SPEC-034 | Agent Onboarding Docs Refresh | Docs | In Review | `README.md`, `tracker.md`, `acceptance-criteria.md`, `git-workflow.md`, `frontend-structure.md`, `frontend-architecture.md` | `DOCS-001` | yes | yes | Documentation-only onboarding refresh for `AGENTS.md`, stale spec dependencies, and local Vinicius.Dev frontend skill references. |
 
 ## Tasking Rule
 A spec may only move to `Tasked` when:
