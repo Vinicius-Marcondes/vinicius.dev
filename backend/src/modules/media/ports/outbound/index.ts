@@ -3,6 +3,9 @@ export type PhotoMediaRepositoryRow = Readonly<{
   title: string;
   originalReferencePolicy: "backend_media_route" | "filesystem_reference";
   originalReference: string;
+  originalDisplayFilename: string | null;
+  originalMimeType: string | null;
+  originalByteSize: number | null;
   createdAt: Date;
   updatedAt: Date;
 }>;
@@ -31,6 +34,17 @@ export type MediaStorageObject = Readonly<{
   stream: ReadableStream<Uint8Array>;
 }>;
 
+export type PhotoOriginalStorageWriteRequest = Readonly<{
+  body: Uint8Array;
+  storageKey: string;
+}>;
+
+export type PhotoOriginalStorageWriteResult = Readonly<{
+  byteSize: number;
+  storageKey: string;
+  storagePath: string;
+}>;
+
 export type ChatUploadStorageWriteRequest = Readonly<{
   body: Uint8Array;
   storageKey: string;
@@ -43,7 +57,9 @@ export type ChatUploadStorageWriteResult = Readonly<{
 }>;
 
 export interface PhotoMediaStoragePort {
+  deleteOriginal?(storagePath: string): Promise<void>;
   openOriginal(reference: string): Promise<MediaStorageObject | null>;
+  writeOriginal?(input: PhotoOriginalStorageWriteRequest): Promise<PhotoOriginalStorageWriteResult>;
 }
 
 export interface ChatUploadStoragePort {

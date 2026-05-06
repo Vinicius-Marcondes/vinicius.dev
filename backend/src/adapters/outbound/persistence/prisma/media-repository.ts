@@ -13,6 +13,9 @@ import type { PrismaDatabaseClient } from "./prisma-client";
 const mapPhotoMediaRow = (row: {
   createdAt: Date;
   id: string;
+  originalByteSize: number | null;
+  originalDisplayFilename: string | null;
+  originalMimeType: string | null;
   originalPath: string;
   originalReferencePolicy: PhotoOriginalReferencePolicy;
   title: string;
@@ -20,6 +23,9 @@ const mapPhotoMediaRow = (row: {
 }): PhotoMediaRepositoryRow => ({
   createdAt: row.createdAt,
   id: row.id,
+  originalByteSize: row.originalByteSize,
+  originalDisplayFilename: row.originalDisplayFilename,
+  originalMimeType: row.originalMimeType,
   originalReference: row.originalPath,
   originalReferencePolicy: row.originalReferencePolicy,
   title: row.title,
@@ -61,6 +67,9 @@ export const createPrismaMediaRepository = (client: PrismaDatabaseClient): Media
       select: {
         createdAt: true,
         id: true,
+        originalByteSize: true,
+        originalDisplayFilename: true,
+        originalMimeType: true,
         originalPath: true,
         originalReferencePolicy: true,
         title: true,

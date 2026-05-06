@@ -414,6 +414,9 @@ model Photo {
   camera                  String?
   film                    String?
   originalPath            String
+  originalDisplayFilename String?
+  originalMimeType        String?
+  originalByteSize        Int?
   originalReferencePolicy PhotoOriginalReferencePolicy @default(backend_media_route)
   status                  PhotoStatus                  @default(draft)
   featured                Boolean                      @default(false)
