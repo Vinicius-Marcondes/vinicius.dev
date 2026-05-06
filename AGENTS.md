@@ -47,10 +47,10 @@ Only act on specs in `Approved` or specs explicitly assigned for authoring/revie
 Before creating or materially changing frontend UI:
 
 1. Read [frontend-structure.md](docs/specs/frontend-structure.md) and [frontend-architecture.md](docs/specs/frontend-architecture.md).
-2. Use the `viniciusdev-design` skill at [.agents/skills/vinicius.dev-website-guidelines/SKILL.md](.agents/skills/vinicius.dev-website-guidelines/SKILL.md).
-3. Read the skill's [README.md](.agents/skills/vinicius.dev-website-guidelines/README.md), [GUIDELINES.md](.agents/skills/vinicius.dev-website-guidelines/GUIDELINES.md), and [colors_and_type.css](.agents/skills/vinicius.dev-website-guidelines/colors_and_type.css).
-4. Check [preview/interactive-components.html](.agents/skills/vinicius.dev-website-guidelines/preview/interactive-components.html) before implementing forms, modals, toasts, feedback, or interactive controls.
-5. Check [ui_kits/vinicius-dev/](.agents/skills/vinicius.dev-website-guidelines/ui_kits/vinicius-dev/) before building new pages, and reuse or adapt the existing `Hero`, `Nav`, `ChannelBug`, `StatusStrip`, and `Footer` patterns where they fit.
+2. Use the `viniciusdev-design` skill at [.agents/skills/vinicius.dev-website-guidelines/SKILL.md](.agents/skills/vinicius-dev-website-guidelines/SKILL.md).
+3. Read the skill's [README.md](.agents/skills/vinicius-dev-website-guidelines/README.md), [GUIDELINES.md](.agents/skills/vinicius-dev-website-guidelines/GUIDELINES.md), and [colors_and_type.css](.agents/skills/vinicius-dev-website-guidelines/colors_and_type.css).
+4. Check [preview/interactive-components.html](.agents/skills/vinicius-dev-website-guidelines/preview/interactive-components.html) before implementing forms, modals, toasts, feedback, or interactive controls.
+5. Check [ui_kits/vinicius-dev/](.agents/skills/vinicius-dev-website-guidelines/ui_kits/vinicius-dev/) before building new pages, and reuse or adapt the existing `Hero`, `Nav`, `ChannelBug`, `StatusStrip`, and `Footer` patterns where they fit.
 6. Keep brand rules intact: rectangular geometry, existing tokens only, restrained neon, no emoji, no rounded UI, and reduced-motion support for animation.
 
 ## Commands
