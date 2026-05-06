@@ -139,7 +139,6 @@ frontend/
 
 ## Dependencies
 - [README.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/README.md)
-- [frontend-analyzer.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer.md)
 - [product-scope.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/product-scope.md)
 - [design-system.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/design-system.md)
 
@@ -154,5 +153,5 @@ frontend/
 - Avoid bundling broad structural refactors with visual redesign or data-contract changes in the same task.
 
 ## Git Branch Implications
-- Frontend structure changes use `fe/` or `spec/` branches depending on whether code or spec is changing.
+- Frontend structure changes use `frontend/` or `spec/` branches depending on whether code or spec is changing.
 - Tasks that reshape FSD slice boundaries or route shells must be isolated from unrelated backend or design work.

@@ -16,7 +16,7 @@ Spec verification, implementation verification, release gates, and cross-layer r
 
 ## Interfaces and Responsibilities
 - Validate that all spec files exist and align with the tracker.
-- Validate that frontend intake gates are respected.
+- Validate that frontend structure and contract reconciliation gates are respected.
 - Validate that `frontend-structure.md` is referenced by frontend-facing specs and task decomposition.
 - Validate that `project-structure.md` is referenced by backend-facing specs and task decomposition.
 - Validate that `ci-cd.md` is referenced by release automation and verification work.
@@ -25,12 +25,12 @@ Spec verification, implementation verification, release gates, and cross-layer r
 - Validate that tracker-based execution rules are present before implementation starts.
 - Validate that frontend structure rules cover FSD layer discipline, route tree ownership, and public/admin shell separation.
 - Validate that CI/CD rules cover PR validation, branch validation, manual development deployment, and tag-based production deployment.
-- Validate FE-010 reconciliation rules for `/api`, public DTOs, upload/media assumptions, analyzer freshness, and static route fallback.
+- Validate FE-010 reconciliation rules for `/api`, public DTOs, upload/media assumptions, and static route fallback.
 - Define cross-layer scenarios for public browsing, admin, chat, media, auth, and deployment.
 - Define frontend structural scenarios for the six route families and the three canonical frontend interaction flows.
 - Define backend architectural scenarios for `publish thought`, `post chat message`, and `admin login`.
 - Validate that the backend core is described as testable without HTTP or database.
-- Validate that frontend migration gates are respected before backend tasking begins.
+- Validate that frontend contract reconciliation gates are respected before backend tasking begins.
 
 ## Cross-Layer Scenarios
 - Public content DTOs: Thoughts, Projects, Photos, and Status Strip APIs return the migrated frontend shapes without leaking Prisma fields.
@@ -60,7 +60,7 @@ Spec verification, implementation verification, release gates, and cross-layer r
 - deployment/runtime expectations
 - FE-010 API and upload reconciliation checks
 - RSS and sitemap scenarios
-- analyzer and backend boundary validation
+- frontend contract and backend boundary validation
 
 ## Acceptance Checklist
 - [ ] Every spec referenced in the tracker exists.
@@ -69,7 +69,7 @@ Spec verification, implementation verification, release gates, and cross-layer r
 - [ ] `ci-cd.md` exists and is treated as a hard dependency for release automation and final verification.
 - [ ] `git-workflow.md` is referenced by the harness and used by task decomposition.
 - [ ] `github-project-execution.md` is referenced by the harness and used by task decomposition.
-- [ ] Frontend intake is treated as a blocking gate for backend tasking.
+- [ ] Frontend structure and contract reconciliation are treated as blocking gates for backend tasking where applicable.
 - [ ] Frontend-facing specs cannot be task-split without approved structural guidance from `frontend-structure.md`.
 - [ ] Backend-facing specs cannot be task-split without frontend review state.
 - [ ] Backend-facing specs cannot be task-split without approved structural guidance from `project-structure.md`.
@@ -77,7 +77,7 @@ Spec verification, implementation verification, release gates, and cross-layer r
 - [ ] Verification expectations include future frontend structural checks for FSD layers, page public APIs, `app/routes` ownership, shell separation, and the absence of `processes`.
 - [ ] Verification expectations include future architectural-boundary checks without selecting the tool yet.
 - [ ] Verification expectations include the CI/CD trigger matrix, the manual-development-deploy rule, and the tag-based production release rule.
-- [ ] Verification expectations include FE-010 reconciliation for `/api`, public DTOs, upload/media assumptions, analyzer freshness, and frontend static fallback.
+- [ ] Verification expectations include FE-010 reconciliation for `/api`, public DTOs, upload/media assumptions, and frontend static fallback.
 - [ ] Cross-layer scenarios cover server-side filters and pagination for Thoughts, Projects, and Photos.
 - [ ] Cross-layer scenarios cover chat join, send, upload, moderation, room-gated media, and audit retention.
 - [ ] Cross-layer scenarios cover photo original delivery through `/media/photos/:id/original`.
@@ -92,7 +92,6 @@ Spec verification, implementation verification, release gates, and cross-layer r
 
 ## Dependencies
 - [tracker.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/tracker.md)
-- [frontend-intake.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-intake.md)
 - [git-workflow.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/git-workflow.md)
 - [github-project-execution.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/github-project-execution.md)
 - [product-scope.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/product-scope.md)

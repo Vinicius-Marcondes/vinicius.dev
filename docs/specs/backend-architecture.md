@@ -91,8 +91,6 @@ Backend runtime, one application hexagon, module-first core structure, Hono inte
 - [ ] Explicit non-goal: exact file names inside each module may vary as long as the boundary rules and contracts stay intact.
 
 ## Dependencies
-- [frontend-intake.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-intake.md)
-- [frontend-analyzer.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer.md)
 - [product-scope.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/product-scope.md)
 - [frontend-architecture.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-architecture.md)
 - [project-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/project-structure.md)
@@ -109,5 +107,5 @@ Backend runtime, one application hexagon, module-first core structure, Hono inte
 - Backend task briefs should name the core use case and required ports before naming concrete adapters.
 
 ## Git Branch Implications
-- Backend spec or implementation work uses `be/` or `spec/` branches with explicit task IDs.
-- Backend tasks must cite both the analyzer report revision and `project-structure.md` when frontend intake is applicable.
+- Backend spec or implementation work uses `backend/` or `spec/` branches with explicit task IDs.
+- Backend tasks must cite `project-structure.md` and the relevant frontend contract specs when frontend compatibility is applicable.

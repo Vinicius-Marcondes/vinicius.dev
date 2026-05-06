@@ -32,7 +32,7 @@ Frontend runtime, route model, migration gates, data-fetching expectations, shel
 - Define shared layout and token usage patterns.
 - Define API consumption boundaries for content, auth, chat, uploads, and status strip data.
 - Define how the frontend represents filters, featured content, and moderation/admin actions.
-- Reconcile existing frontend assumptions via the analyzer before backend tasking.
+- Reconcile existing frontend assumptions through repo review and the approved frontend specs before backend tasking.
 
 ## Data/Contracts Touched
 - route paths
@@ -55,14 +55,12 @@ Frontend runtime, route model, migration gates, data-fetching expectations, shel
 - [ ] Public and admin shells are defined inside one frontend app.
 - [ ] `frontend-structure.md` is referenced as the structural source of truth for folders, slices, and layer rules.
 - [ ] API boundaries are documented for public content, admin, auth, chat, and uploads.
-- [ ] Frontend assumptions can be reconciled to analyzer findings.
+- [ ] Frontend assumptions can be reconciled to the current implementation and approved specs.
 - [ ] Shared tokens and layout rules align with the design system.
 - [ ] Thoughts, Chat Room, and Admin exist as fully designed screens before backend tasking is considered unblocked.
 - [ ] Explicit non-goal: no frontend implementation is defined here beyond architecture and contracts.
 
 ## Dependencies
-- [frontend-intake.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-intake.md)
-- [frontend-analyzer.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-analyzer.md)
 - [product-scope.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/product-scope.md)
 - [design-system.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/design-system.md)
 - [frontend-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-structure.md)
@@ -73,9 +71,9 @@ Frontend runtime, route model, migration gates, data-fetching expectations, shel
 
 ## Task-Splitting Notes
 - Reconcile imported frontend structure before splitting feature work.
-- If the imported frontend is legacy-shaped, the first frontend tasks are: archive current frontend, scaffold a clean Vite React TypeScript app, establish the `app/routes` tree and shell structure, migrate landing, migrate projects, migrate photos, implement Thoughts, implement Chat Room, implement Admin, then re-run analyzer.
+- If the imported frontend is legacy-shaped, the first frontend tasks are: archive current frontend, scaffold a clean Vite React TypeScript app, establish the `app/routes` tree and shell structure, migrate landing, migrate projects, migrate photos, implement Thoughts, implement Chat Room, implement Admin, then re-run structural review against this spec.
 - Page-level frontend tasks should depend on this spec, [frontend-structure.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/frontend-structure.md), and the relevant product or design spec.
 
 ## Git Branch Implications
-- Frontend architecture changes require `fe/` or `spec/` branches depending on whether the change is code or spec.
+- Frontend architecture changes require `frontend/` or `spec/` branches depending on whether the change is code or spec.
 - Imported frontend reconciliation should be isolated from unrelated backend tasks.
