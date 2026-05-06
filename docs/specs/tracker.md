@@ -185,6 +185,7 @@ Done criteria for `CHAT-010`:
   - Local verification: frontend lint/build plus development and production compose config rendering passed on 2026-05-05.
   - PR/Open review: PR [#149](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/149) opened against `develop`.
   - Follow-up local execution: development compose now defaults the Vite host allowlist to `development.viniciuslab.dev` when the VPS env file omits `FRONTEND_DEV_ALLOWED_HOSTS`.
+  - Follow-up PR/Open review: PR [#150](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/150) opened against `develop`.
 
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
