@@ -430,7 +430,8 @@ export const createPrismaContentRepository = (client: PrismaDatabaseClient): Con
   findPublishedPhotos: async (query: PhotoListQuery): Promise<PhotoListPage> => {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 24;
-    const rows = await client.photo.findMany({
+    const [rows, facetRows] = await Promise.all([
+      client.photo.findMany({
       orderBy: [{ date: "desc" }, { id: "desc" }],
       select: {
         caption: true,
@@ -461,7 +462,18 @@ export const createPrismaContentRepository = (client: PrismaDatabaseClient): Con
           : {}),
         status: PhotoStatus.published,
       },
-    });
+      }),
+      client.photo.findMany({
+        orderBy: [{ date: "desc" }, { id: "desc" }],
+        select: {
+          date: true,
+          location: true,
+        },
+        where: {
+          status: PhotoStatus.published,
+        },
+      }),
+    ]);
 
     const normalizedSearch = query.search?.trim().toLowerCase();
     const filteredRows = normalizedSearch
@@ -479,6 +491,14 @@ export const createPrismaContentRepository = (client: PrismaDatabaseClient): Con
     const startIndex = (page - 1) * pageSize;
 
     return {
+      facets: {
+        locations: Array.from(new Set(facetRows.map((row) => row.location))).sort((left, right) =>
+          left.localeCompare(right),
+        ),
+        years: Array.from(new Set(facetRows.map((row) => row.date.getUTCFullYear()))).sort(
+          (left, right) => right - left,
+        ),
+      },
       items: filteredRows.slice(startIndex, startIndex + pageSize).map(mapPhotoRow),
       page,
       pageSize,

@@ -14,6 +14,7 @@ import type {
   AdminThoughtCurationListQuery,
   AdminThoughtCurationRow,
   AdminUserRepositoryRow,
+  CreateAdminPhotoCommand,
   ReplaceAdminStatusStripEntryInput,
   UpdateAdminPhotoCurationCommand,
   UpdateAdminPhotoMetadataCommand,
@@ -182,6 +183,9 @@ const mapPhotoCurationRow = (row: {
   caption: string | null;
   camera: string | null;
   film: string | null;
+  originalDisplayFilename: string | null;
+  originalMimeType: string | null;
+  originalByteSize: number | null;
   tags: string[];
   updatedAt: Date;
 }): AdminPhotoCurationRow => ({
@@ -193,6 +197,9 @@ const mapPhotoCurationRow = (row: {
   frame: row.frame,
   id: row.id,
   location: row.location,
+  originalByteSize: row.originalByteSize,
+  originalDisplayFilename: row.originalDisplayFilename,
+  originalMimeType: row.originalMimeType,
   status: row.status,
   tags: [...row.tags],
   title: row.title,
@@ -811,6 +818,75 @@ export const createPrismaAdminRepository = (client: PrismaDatabaseClient): Admin
 
     return mapProjectCurationRow(updated);
   },
+  createPhoto: async (input: CreateAdminPhotoCommand): Promise<AdminPhotoCurationRow> => {
+    const created = await client.photo.create({
+      data: {
+        camera: input.camera,
+        caption: input.caption,
+        date: input.date,
+        featured: false,
+        film: input.film,
+        frame: input.frame,
+        id: input.id,
+        location: input.location,
+        originalByteSize: input.originalByteSize,
+        originalDisplayFilename: input.originalDisplayFilename,
+        originalMimeType: input.originalMimeType,
+        originalPath: input.originalPath,
+        status: PhotoStatus.draft,
+        tags: [...input.tags],
+        title: input.title,
+        tone: input.tone,
+      },
+      select: {
+        camera: true,
+        caption: true,
+        date: true,
+        featured: true,
+        film: true,
+        frame: true,
+        id: true,
+        location: true,
+        originalByteSize: true,
+        originalDisplayFilename: true,
+        originalMimeType: true,
+        status: true,
+        tags: true,
+        title: true,
+        tone: true,
+        updatedAt: true,
+      },
+    });
+
+    return mapPhotoCurationRow(created);
+  },
+  findPhotoForCurationById: async (id: string): Promise<AdminPhotoCurationRow | null> => {
+    const row = await client.photo.findUnique({
+      select: {
+        camera: true,
+        caption: true,
+        date: true,
+        featured: true,
+        film: true,
+        frame: true,
+        id: true,
+        location: true,
+        originalByteSize: true,
+        originalDisplayFilename: true,
+        originalMimeType: true,
+        status: true,
+        tags: true,
+        title: true,
+        tone: true,
+        updatedAt: true,
+      },
+      where: {
+        id,
+      },
+    });
+
+    return row ? mapPhotoCurationRow(row) : null;
+  },
   listPhotosForCuration: async (query): Promise<AdminPhotoCurationListPage> => {
     const rows = await client.photo.findMany({
       orderBy: [{ updatedAt: "desc" }],
@@ -823,6 +899,9 @@ export const createPrismaAdminRepository = (client: PrismaDatabaseClient): Admin
         frame: true,
         id: true,
         location: true,
+        originalByteSize: true,
+        originalDisplayFilename: true,
+        originalMimeType: true,
         status: true,
         tags: true,
         title: true,
@@ -865,6 +944,9 @@ export const createPrismaAdminRepository = (client: PrismaDatabaseClient): Admin
         frame: true,
         id: true,
         location: true,
+        originalByteSize: true,
+        originalDisplayFilename: true,
+        originalMimeType: true,
         status: true,
         tags: true,
         title: true,
@@ -949,6 +1031,9 @@ export const createPrismaAdminRepository = (client: PrismaDatabaseClient): Admin
         frame: true,
         id: true,
         location: true,
+        originalByteSize: true,
+        originalDisplayFilename: true,
+        originalMimeType: true,
         status: true,
         tags: true,
         title: true,

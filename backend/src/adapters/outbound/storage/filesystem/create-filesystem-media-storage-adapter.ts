@@ -6,6 +6,8 @@ import type {
   ChatUploadStorageWriteRequest,
   ChatUploadStorageWriteResult,
   MediaStorageObject,
+  PhotoOriginalStorageWriteRequest,
+  PhotoOriginalStorageWriteResult,
   PhotoMediaStoragePort,
 } from "@/modules/media/ports/outbound";
 
@@ -105,10 +107,35 @@ const createPhotoMediaStorage = (photosRoot: string): PhotoMediaStoragePort => {
   const resolvePhotoPath = createSafeStoragePathResolver(photosRoot);
 
   return {
+    deleteOriginal: async (storagePath) => {
+      const { absolutePath } = await resolvePhotoPath(storagePath);
+
+      try {
+        await unlink(absolutePath);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+          throw error;
+        }
+      }
+    },
     openOriginal: async (reference) => {
       const { absolutePath } = await resolvePhotoPath(reference);
 
       return openStorageObject(absolutePath);
+    },
+    writeOriginal: async (
+      input: PhotoOriginalStorageWriteRequest,
+    ): Promise<PhotoOriginalStorageWriteResult> => {
+      const { absolutePath, storagePath } = await resolvePhotoPath(input.storageKey);
+
+      await mkdir(dirname(absolutePath), { recursive: true });
+      await writeFile(absolutePath, input.body);
+
+      return {
+        byteSize: input.body.byteLength,
+        storageKey: input.storageKey,
+        storagePath,
+      };
     },
   };
 };
