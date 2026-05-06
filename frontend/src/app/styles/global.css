@@ -77,6 +77,10 @@ button {
   padding: var(--spacing-6) 0 var(--spacing-8);
 }
 
+.app-shell__body:has(.photo-lightbox) {
+  z-index: 40;
+}
+
 .site-header {
   position: sticky;
   top: 0;
@@ -817,6 +821,10 @@ button {
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
 }
 
+.photos-grid--public {
+  margin-top: var(--spacing-6);
+}
+
 .photo-card {
   display: grid;
   gap: 10px;
@@ -994,11 +1002,11 @@ button {
 
 .photo-lightbox__stage {
   display: grid;
-  grid-template-columns: auto minmax(0, 1040px) auto;
+  grid-template-columns: auto minmax(0, 920px) auto;
   gap: 24px;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 18px 24px;
 }
 
 .photo-lightbox__nav {
@@ -1015,8 +1023,8 @@ button {
 }
 
 .photo-lightbox__frame {
-  width: min(100%, 1040px);
-  max-height: 72vh;
+  width: min(100%, 920px);
+  max-height: 62vh;
   aspect-ratio: 3 / 2;
   overflow: hidden;
   border: 1px solid var(--safelight);
@@ -2121,7 +2129,9 @@ button {
   text-transform: uppercase;
 }
 
-.admin-field input {
+.admin-field input,
+.admin-field select,
+.admin-field textarea {
   width: 100%;
   border: 1px solid var(--surface-border);
   background: var(--bg-0);
@@ -2130,7 +2140,14 @@ button {
   outline: none;
 }
 
-.admin-field input:focus {
+.admin-field textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.admin-field input:focus,
+.admin-field select:focus,
+.admin-field textarea:focus {
   border-color: var(--neon-cyan);
 }
 
@@ -2197,6 +2214,158 @@ button {
 .admin-table__row strong {
   color: var(--fg-0);
   font-weight: 500;
+}
+
+.admin-photo-header,
+.admin-photo-toolbar,
+.admin-photo-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-4);
+}
+
+.admin-photo-header {
+  align-items: flex-start;
+}
+
+.admin-photo-filters {
+  grid-template-columns: minmax(220px, 1fr) repeat(2, minmax(150px, 0.35fr));
+}
+
+.admin-photo-toolbar,
+.admin-photo-pagination,
+.admin-photo-empty,
+.admin-photo-visibility {
+  color: var(--fg-2);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.admin-photo-grid {
+  display: grid;
+  gap: var(--spacing-3);
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+}
+
+.admin-photo-card {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--surface-border-soft);
+  color: inherit;
+  text-decoration: none;
+}
+
+.admin-photo-card:hover {
+  border-color: var(--neon-cyan);
+}
+
+.admin-photo-card__image {
+  display: block;
+  aspect-ratio: 4 / 3;
+  background: var(--bg-0);
+}
+
+.admin-photo-card__image img,
+.admin-photo-detail__media img,
+.admin-photo-upload__preview {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-photo-card__body {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  color: var(--fg-2);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.admin-photo-card__body strong,
+.admin-photo-empty strong {
+  color: var(--fg-0);
+  font-weight: 500;
+}
+
+.admin-photo-empty {
+  display: grid;
+  gap: 8px;
+  border: 1px dashed var(--surface-border);
+  padding: var(--spacing-4);
+}
+
+.admin-photo-pagination button,
+.admin-photo-visibility button,
+.admin-photo-upload button,
+.admin-photo-detail button {
+  min-height: 38px;
+  border: 1px solid var(--surface-border);
+  background: transparent;
+  color: var(--fg-1);
+  padding: 10px 12px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.admin-photo-pagination button:hover:not(:disabled),
+.admin-photo-visibility button:hover:not(:disabled),
+.admin-photo-upload button:hover:not(:disabled),
+.admin-photo-detail button:hover:not(:disabled) {
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+}
+
+.admin-photo-pagination button:disabled,
+.admin-photo-visibility button:disabled,
+.admin-photo-upload button:disabled,
+.admin-photo-detail button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.admin-photo-detail {
+  display: grid;
+  gap: var(--spacing-4);
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+}
+
+.admin-photo-detail__media {
+  align-content: start;
+}
+
+.admin-photo-detail__media img {
+  max-height: 68vh;
+  border: 1px solid var(--surface-border-soft);
+  object-fit: contain;
+  background: var(--bg-0);
+}
+
+.admin-photo-detail__media p {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.admin-photo-visibility {
+  display: grid;
+  gap: var(--spacing-3);
+}
+
+.admin-photo-upload {
+  max-width: 760px;
+}
+
+.admin-photo-upload__preview {
+  max-height: 320px;
+  border: 1px solid var(--surface-border-soft);
 }
 
 .admin-moderation button {
