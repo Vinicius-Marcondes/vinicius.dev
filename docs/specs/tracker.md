@@ -299,7 +299,7 @@ Done criteria for `PHOTO-004`:
 - admin route/action/component tests, frontend lint, and frontend build pass.
 
 ### Admin Photo Form Feedback
-- Status: spec authoring in progress; implementation is queued behind spec approval and admin photo route availability.
+- Status: in review; implementation is queued behind spec approval and admin photo route availability.
 - Primary spec: `SPEC-035`.
 - Supporting specs: `photo-catalog-gallery.md`, `design-system.md`, `frontend-structure.md`, `frontend-architecture.md`, `verification.md`, `git-workflow.md`, and `acceptance-criteria.md`.
 - Scope: shared reusable toast provider, branded `/admin/photos/upload` file chooser, selected filename/size display, and success toasts for upload, metadata save, publish/unpublish, and feature/unfeature on `/admin/photos/upload` and `/admin/photos/:id`.
@@ -307,7 +307,7 @@ Done criteria for `PHOTO-004`:
 
 | Status | Task ID | Spec ID | Layer | Base Branch | Branch Name | Merge Target | Acceptance Source | PR | Blocked Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| In Progress | SPEC-035 | SPEC-035 | spec | develop | `spec/SPEC-035-admin-photo-form-feedback` | develop | `docs/specs/admin-photo-form-feedback.md` | not opened | — |
+| In Review | SPEC-035 | SPEC-035 | spec | develop | `spec/SPEC-035-admin-photo-form-feedback` | develop | `docs/specs/admin-photo-form-feedback.md` | [#153](https://github.com/Vinicius-Marcondes/vinicius.dev/pull/153) | — |
 | Blocked | PHOTO-005 | SPEC-035 | admin | develop | `admin/PHOTO-005-admin-photo-form-feedback` | develop | `docs/specs/admin-photo-form-feedback.md` | not opened | Pending `SPEC-035` approval and `/admin/photos/upload` plus `/admin/photos/:id` route availability from `PHOTO-004` on the base branch. |
 
 Done criteria for `SPEC-035`:
