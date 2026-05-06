@@ -73,6 +73,7 @@ No backend-facing spec may move to `Tasked` until [project-structure.md](/Users/
 - [ci-workflow-maintenance.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/ci-workflow-maintenance.md)
 - [testing-coverage-foundation.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/testing-coverage-foundation.md)
 - [photo-catalog-gallery.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/photo-catalog-gallery.md)
+- [admin-photo-form-feedback.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/admin-photo-form-feedback.md)
 - [verification.md](/Users/vinicius/Projects/vinicius.dev/docs/specs/verification.md)
 
 ## Task Authoring Rules
