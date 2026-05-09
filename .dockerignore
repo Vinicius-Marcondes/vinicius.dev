@@ -1,5 +1,7 @@
 .git
 .codex
+.commandcode
+**/.pi
 
 **/node_modules
 **/dist

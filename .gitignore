@@ -43,3 +43,5 @@ pnpm-debug.log*
 .DS_Store
 .idea/
 .vscode/
+**/.pi
+.commandcode
