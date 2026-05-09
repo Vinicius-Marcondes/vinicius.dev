@@ -3,3 +3,7 @@ export type StatusStripEntry = {
   label: string
   value: string
 }
+
+export type StatusStripEntriesSnapshot = Readonly<{
+  items: readonly StatusStripEntry[]
+}>

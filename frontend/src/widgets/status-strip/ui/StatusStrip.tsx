@@ -11,7 +11,7 @@ const seedEntries: StatusStripEntry[] = [
 
 type StatusStripProps = {
   className?: string
-  entries?: StatusStripEntry[]
+  entries?: readonly StatusStripEntry[]
   label?: string
 }
 

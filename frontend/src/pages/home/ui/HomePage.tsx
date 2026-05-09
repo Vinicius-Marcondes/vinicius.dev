@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import type { StatusStripEntry } from '../../../entities/status-strip'
+import { useLoaderData } from 'react-router-dom'
 import { StatusStrip } from '../../../widgets/status-strip'
 import { Container } from '../../../shared/ui'
+import type { HomeLoaderData } from '../route'
 import { ChannelBug } from './ChannelBug'
 import { ChannelChangeOverlay } from './ChannelChangeOverlay'
 
@@ -11,29 +12,8 @@ const attractPrompts = [
   'select a channel above',
 ] as const
 
-const homeStatusEntries: StatusStripEntry[] = [
-  {
-    accent: 'pink',
-    label: 'Now Building',
-    value: 'frontend migration wave // typed Vite shell',
-  },
-  {
-    label: 'Location',
-    value: 'sao paulo // gmt-3 // after midnight',
-  },
-  {
-    accent: 'cyan',
-    label: 'Current Focus',
-    value: 'home route, shared chrome, and neon tape deck polish',
-  },
-  {
-    accent: 'amber',
-    label: 'Signal',
-    value: 'projects, photos, thoughts, and chat room incoming',
-  },
-]
-
 export function HomePage() {
+  const { statusEntries } = useLoaderData() as HomeLoaderData
   const [attractIndex, setAttractIndex] = useState(0)
   const [isChannelChangeOpen, setIsChannelChangeOpen] = useState(false)
 
@@ -84,7 +64,7 @@ export function HomePage() {
               {attractPrompts[attractIndex]}
             </p>
           </div>
-          <StatusStrip className="home-hero__status" entries={homeStatusEntries} />
+          <StatusStrip className="home-hero__status" entries={statusEntries} />
         </section>
       </Container>
       <ChannelChangeOverlay

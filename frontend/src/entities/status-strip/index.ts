@@ -1,2 +1,3 @@
-export type { StatusStripEntry } from './model/types'
-export { toStatusStripEntry } from './lib/mappers'
+export type { StatusStripEntriesSnapshot, StatusStripEntry } from './model/types'
+export { listStatusStripEntries } from './api/list-status-strip-entries'
+export { mapStatusStripEntries, toStatusStripEntry } from './lib/mappers'
