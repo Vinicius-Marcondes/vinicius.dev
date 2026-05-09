@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useLoaderData } from 'react-router-dom'
+import { Link, useLoaderData } from 'react-router-dom'
 import { StatusStrip } from '../../../widgets/status-strip'
 import { Container } from '../../../shared/ui'
 import type { HomeLoaderData } from '../route'
@@ -9,6 +9,13 @@ const attractPrompts = [
   'press [ any key ] to enter',
   'insert coin to continue',
   'select a channel above',
+] as const
+
+const routeCues = [
+  { label: 'photos', to: '/photos' },
+  { label: 'projects', to: '/projects' },
+  { label: 'thoughts', to: '/thoughts' },
+  { label: 'chat room', to: '/chat' },
 ] as const
 
 export function HomePage() {
@@ -61,6 +68,14 @@ export function HomePage() {
             <p className="home-hero__prompt" key={attractPrompts[attractIndex]}>
               {attractPrompts[attractIndex]}
             </p>
+            <nav className="home-hero__routes" aria-label="Homepage route cues">
+              {routeCues.map((route) => (
+                <Link key={route.to} to={route.to} className="home-hero__route-link glitch-hover">
+                  <span aria-hidden="true">→</span>
+                  {route.label}
+                </Link>
+              ))}
+            </nav>
           </div>
           <StatusStrip className="home-hero__status" entries={statusEntries} />
         </section>

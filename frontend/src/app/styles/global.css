@@ -2041,13 +2041,39 @@ button {
 
 .home-hero__prompt {
   min-height: 1.5em;
-  margin: 52px 0 0;
+  margin: 42px 0 0;
   color: var(--fg-0);
   font-family: var(--font-pixel);
   font-size: clamp(1.25rem, 2.2vw, 1.7rem);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   animation: home-prompt-in 320ms steps(4);
+}
+
+.home-hero__routes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px;
+  margin: 34px 0 0;
+}
+
+.home-hero__route-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 2px;
+  border-bottom: 1px solid var(--line-1);
+  color: var(--fg-2);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.home-hero__route-link:hover {
+  border-color: var(--neon-pink);
+  color: var(--neon-pink);
 }
 
 .home-hero__status {
@@ -2568,6 +2594,15 @@ button {
   .home-hero__prompt {
     margin-top: 40px;
     font-size: 1.15rem;
+  }
+
+  .home-hero__routes {
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .home-hero__route-link {
+    font-size: 10px;
   }
 
   .home-hero__status {

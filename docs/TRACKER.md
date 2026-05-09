@@ -25,7 +25,7 @@
 - Merge Target: develop
 
 ## Current Task
-HOME-002
+HOME-003
 
 ## Task Index
 1. HOME-001 - Wire homepage data loader and status-strip API
@@ -36,7 +36,7 @@ HOME-002
    - Status: Accepted
 3. HOME-003 - Rebuild the homepage route for reference parity
    - Task File: docs/prds/PRD-001/tasks/HOME-003.md
-   - Status: Todo
+   - Status: Accepted
 4. HOME-004 - Polish responsive behavior and verify homepage rollout
    - Task File: docs/prds/PRD-001/tasks/HOME-004.md
    - Status: Todo
@@ -70,17 +70,22 @@ Decision Log:
 - Updated shared navigation/social/marquee config in `shared/config` to map current public routes (`/photos`, `/projects`, `/thoughts`, `/chat`) and shared footer channels.
 - Removed one-off homepage channel-bug wiring so fixed chrome behavior is shell-owned; homepage keeps only route-local hero/channel-change behavior.
 - Aligned shared tokens/motion/effects with vinicius-dev guidelines (Fira Mono body font, CRT glitch timing, and global reduced-motion collapse rule).
-Commit: Pending
+Commit: e554b31 PRD-001 HOME-002: refactor shared public chrome to v2 direction
 Blocked Reason: None
 Requested Decision: None
 
 ### HOME-003 - Rebuild the homepage route for reference parity
 Task File: docs/prds/PRD-001/tasks/HOME-003.md
-Status: Todo
+Status: Accepted
 Evidence:
-- Pending
+- `cd frontend && bun run test` -> passed (22 files, 39 tests).
+- `cd frontend && bun run build` -> passed (`tsc -b && vite build`).
 Decision Log:
-- Pending
+- Started implementation on 2026-05-09.
+- Rebuilt homepage route composition to better match the V2 reference direction while using shell-owned chrome from HOME-002.
+- Added explicit homepage route cues linking to real app routes (`/photos`, `/projects`, `/thoughts`, `/chat`).
+- Kept homepage status strip powered by loader-provided backend-wired data.
+- Added deterministic homepage rendering test covering loader-data consumption and route-cue links.
 Commit: Pending
 Blocked Reason: None
 Requested Decision: None
