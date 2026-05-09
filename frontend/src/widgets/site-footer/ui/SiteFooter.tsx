@@ -14,15 +14,15 @@ export function SiteFooter() {
                   key={item.to}
                   to={item.to}
                   className={({ isActive }) =>
-                    isActive ? 'site-footer__link site-footer__link--active' : 'site-footer__link'
+                    isActive ? 'site-footer__link site-footer__link--active glitch-hover' : 'site-footer__link glitch-hover'
                   }
                 >
                   <span className="site-footer__link-glyph" aria-hidden="true">
                     &gt;
                   </span>
                   <span>
-                    {item.label}
-                    {item.detail ? <span className="site-footer__link-detail">// {item.detail}</span> : null}
+                    [ {item.label}
+                    {item.detail ? <span className="site-footer__link-detail">// {item.detail}</span> : null} ]
                   </span>
                 </SignalLink>
               ))}
@@ -37,10 +37,10 @@ export function SiteFooter() {
                   href={item.href}
                   target="_blank"
                   rel="noreferrer"
-                  className="site-footer__link"
+                  className="site-footer__link glitch-hover"
                 >
                   <span className="site-footer__social-icon" aria-hidden="true">
-                    {item.icon}
+                    ↗
                   </span>
                   <span>{item.label}</span>
                 </SignalLink>

@@ -3,7 +3,6 @@ import { useLoaderData } from 'react-router-dom'
 import { StatusStrip } from '../../../widgets/status-strip'
 import { Container } from '../../../shared/ui'
 import type { HomeLoaderData } from '../route'
-import { ChannelBug } from './ChannelBug'
 import { ChannelChangeOverlay } from './ChannelChangeOverlay'
 
 const attractPrompts = [
@@ -38,7 +37,6 @@ export function HomePage() {
             <span className="home-hero__tick home-hero__tick--bl" />
             <span className="home-hero__tick home-hero__tick--br" />
           </div>
-          <ChannelBug onOpen={() => setIsChannelChangeOpen(true)} />
           <div className="home-hero__inner">
             <p className="home-hero__caption">transmitting from sao paulo // ch.03</p>
             <h1 className="home-hero__title">

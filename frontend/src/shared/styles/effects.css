@@ -16,7 +16,7 @@
 }
 
 .glitch-hover:hover {
-  animation: subtle-glitch 180ms steps(2) 1;
+  animation: subtle-glitch 240ms steps(4) 1;
 }
 
 .fx-crt-title {

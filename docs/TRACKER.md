@@ -25,7 +25,7 @@
 - Merge Target: develop
 
 ## Current Task
-HOME-001
+HOME-002
 
 ## Task Index
 1. HOME-001 - Wire homepage data loader and status-strip API
@@ -33,7 +33,7 @@ HOME-001
    - Status: Accepted
 2. HOME-002 - Refactor shared public chrome to the V2 direction
    - Task File: docs/prds/PRD-001/tasks/HOME-002.md
-   - Status: Todo
+   - Status: Accepted
 3. HOME-003 - Rebuild the homepage route for reference parity
    - Task File: docs/prds/PRD-001/tasks/HOME-003.md
    - Status: Todo
@@ -54,17 +54,22 @@ Decision Log:
 - Added `pages/home/route.ts` loader and wired `/` index route loader ownership in `src/app/routes/public.tsx`.
 - Added `entities/status-strip` API mapper/client for `/api/status-strip` and deterministic tests for API mapping + home loader behavior.
 - Updated `widgets/status-strip` prop typing to accept readonly arrays so loader data can flow without mutation.
-Commit: Pending
+Commit: c81effa PRD-001 HOME-001: wire homepage loader to status-strip API
 Blocked Reason: None
 Requested Decision: None
 
 ### HOME-002 - Refactor shared public chrome to the V2 direction
 Task File: docs/prds/PRD-001/tasks/HOME-002.md
-Status: Todo
+Status: Accepted
 Evidence:
-- Pending
+- `cd frontend && bun run test` -> passed (21 files, 38 tests).
+- `cd frontend && bun run build` -> passed (`tsc -b && vite build`).
 Decision Log:
-- Pending
+- Started implementation on 2026-05-09.
+- Refactored shared public-shell chrome to reusable widgets: fixed top navigation, fixed channel bug, and fixed now-playing marquee in shell/footer/header composition.
+- Updated shared navigation/social/marquee config in `shared/config` to map current public routes (`/photos`, `/projects`, `/thoughts`, `/chat`) and shared footer channels.
+- Removed one-off homepage channel-bug wiring so fixed chrome behavior is shell-owned; homepage keeps only route-local hero/channel-change behavior.
+- Aligned shared tokens/motion/effects with vinicius-dev guidelines (Fira Mono body font, CRT glitch timing, and global reduced-motion collapse rule).
 Commit: Pending
 Blocked Reason: None
 Requested Decision: None
