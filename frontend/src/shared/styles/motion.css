@@ -4,6 +4,28 @@
   }
 }
 
+@keyframes rare-glitch {
+  /* stays still almost all the time */
+  0%, 97.8% {
+    transform: translateX(0);
+  }
+
+  /* sudden jump right */
+  98.0% {
+    transform: translateX(28px);
+  }
+
+  /* quick snap left */
+  98.2% {
+    transform: translateX(-10px);
+  }
+
+  /* back to center */
+  98.4%, 100% {
+    transform: translateX(0);
+  }
+}
+
 @keyframes subtle-glitch {
   0%,
   100% {

@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { HomePage } from './HomePage'
 
 describe('home page', () => {
-  it('renders loader-provided status entries and route cues', async () => {
+  it('renders loader-provided status entries', async () => {
     const router = createMemoryRouter(
       [
         {
@@ -35,14 +35,6 @@ describe('home page', () => {
 
     expect(await screen.findByText('cluster 3')).toBeInTheDocument()
 
-    const photosLink = screen.getByRole('link', { name: /photos/i })
-    const projectsLink = screen.getByRole('link', { name: /projects/i })
-    const thoughtsLink = screen.getByRole('link', { name: /thoughts/i })
-    const chatLink = screen.getByRole('link', { name: /chat room/i })
-
-    expect(photosLink).toHaveAttribute('href', '/photos')
-    expect(projectsLink).toHaveAttribute('href', '/projects')
-    expect(thoughtsLink).toHaveAttribute('href', '/thoughts')
-    expect(chatLink).toHaveAttribute('href', '/chat')
+    expect(screen.queryByRole('link', { name: /photos/i })).toBeNull()
   })
 })

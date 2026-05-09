@@ -5,14 +5,10 @@
   pointer-events: none;
   z-index: 40;
   background: repeating-linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.025) 0,
-    rgba(255, 255, 255, 0.025) 1px,
-    transparent 1px,
-    transparent 4px
+    to bottom,
+    rgba(255, 255, 255, 0.05) 0 1px,
+    transparent 1px 3px
   );
-  mix-blend-mode: screen;
-  opacity: 0.22;
 }
 
 .glitch-hover:hover {
@@ -21,8 +17,10 @@
 
 .fx-crt-title {
   text-shadow:
-    -1px 0 0 rgba(255, 46, 136, 0.9),
-    1px 0 0 rgba(34, 227, 255, 0.9);
+    -3px 0 0 rgba(255, 46, 136, 0.9),
+    3px 0 0 rgba(34, 227, 255, 0.9);
+  animation: rare-glitch 2s steps(1, end) infinite;
+  will-change: transform;
 }
 
 .fx-vignette::after {
@@ -30,5 +28,9 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(ellipse at 50% 45%, transparent 30%, rgba(0, 0, 0, 0.88) 100%);
+  background: radial-gradient(
+          ellipse at 50% 45%,
+          transparent 35%,
+          rgba(0, 0, 0, 0.82) 100%
+  );
 }

@@ -25,7 +25,7 @@
 - Merge Target: develop
 
 ## Current Task
-HOME-003
+HOME-004
 
 ## Task Index
 1. HOME-001 - Wire homepage data loader and status-strip API
@@ -39,7 +39,7 @@ HOME-003
    - Status: Accepted
 4. HOME-004 - Polish responsive behavior and verify homepage rollout
    - Task File: docs/prds/PRD-001/tasks/HOME-004.md
-   - Status: Todo
+   - Status: Accepted
 
 ## Tasks
 
@@ -86,17 +86,23 @@ Decision Log:
 - Added explicit homepage route cues linking to real app routes (`/photos`, `/projects`, `/thoughts`, `/chat`).
 - Kept homepage status strip powered by loader-provided backend-wired data.
 - Added deterministic homepage rendering test covering loader-data consumption and route-cue links.
-Commit: Pending
+Commit: 2533e37 PRD-001 HOME-003: rebuild homepage route for reference parity
 Blocked Reason: None
 Requested Decision: None
 
 ### HOME-004 - Polish responsive behavior and verify homepage rollout
 Task File: docs/prds/PRD-001/tasks/HOME-004.md
-Status: Todo
+Status: Accepted
 Evidence:
-- Pending
+- `cd frontend && bun run test` -> passed (22 files, 39 tests).
+- `cd frontend && bun run build` -> passed (`tsc -b && vite build`).
 Decision Log:
-- Pending
-Commit: Pending
+- Started implementation on 2026-05-09.
+- Tuned responsive behavior for shell-owned fixed chrome and homepage hero/status composition at tablet/mobile breakpoints.
+- Strengthened visible focus treatment across shared chrome and homepage interactive cues using `:focus-visible` outlines.
+- Added reduced-motion overrides for scanlines, glitch hover, marquee, and pulse/blink effects to keep motion static when requested.
+- Preserved existing route structure and loader-backed homepage status-strip data path; no featured-preview/admin curation workflow was introduced.
+- Applied final homepage polish from review: full-bleed home hero, removed duplicate mid-hero route links, increased CRT scanline visibility, and adjusted top nav container background clarity toward the reference.
+Commit: PRD-001 HOME-004: polish responsive behavior and homepage rollout (see git log hash)
 Blocked Reason: None
 Requested Decision: None
