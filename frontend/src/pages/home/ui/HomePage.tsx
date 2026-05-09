@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
-import type { StatusStripEntry } from '../../../entities/status-strip'
+import { useLoaderData } from 'react-router-dom'
 import { StatusStrip } from '../../../widgets/status-strip'
-import { Container } from '../../../shared/ui'
-import { ChannelBug } from './ChannelBug'
+import type { HomeLoaderData } from '../route'
 import { ChannelChangeOverlay } from './ChannelChangeOverlay'
 
 const attractPrompts = [
@@ -11,29 +10,8 @@ const attractPrompts = [
   'select a channel above',
 ] as const
 
-const homeStatusEntries: StatusStripEntry[] = [
-  {
-    accent: 'pink',
-    label: 'Now Building',
-    value: 'frontend migration wave // typed Vite shell',
-  },
-  {
-    label: 'Location',
-    value: 'sao paulo // gmt-3 // after midnight',
-  },
-  {
-    accent: 'cyan',
-    label: 'Current Focus',
-    value: 'home route, shared chrome, and neon tape deck polish',
-  },
-  {
-    accent: 'amber',
-    label: 'Signal',
-    value: 'projects, photos, thoughts, and chat room incoming',
-  },
-]
-
 export function HomePage() {
+  const { statusEntries } = useLoaderData() as HomeLoaderData
   const [attractIndex, setAttractIndex] = useState(0)
   const [isChannelChangeOpen, setIsChannelChangeOpen] = useState(false)
 
@@ -47,7 +25,7 @@ export function HomePage() {
 
   return (
     <>
-      <Container className="home-page">
+      <div className="home-page">
         <section className="home-hero fx-vignette">
           <div className="home-hero__sky" aria-hidden="true" />
           <div className="home-hero__horizon" aria-hidden="true" />
@@ -58,7 +36,6 @@ export function HomePage() {
             <span className="home-hero__tick home-hero__tick--bl" />
             <span className="home-hero__tick home-hero__tick--br" />
           </div>
-          <ChannelBug onOpen={() => setIsChannelChangeOpen(true)} />
           <div className="home-hero__inner">
             <p className="home-hero__caption">transmitting from sao paulo // ch.03</p>
             <h1 className="home-hero__title">
@@ -84,9 +61,9 @@ export function HomePage() {
               {attractPrompts[attractIndex]}
             </p>
           </div>
-          <StatusStrip className="home-hero__status" entries={homeStatusEntries} />
+          <StatusStrip className="home-hero__status" entries={statusEntries} />
         </section>
-      </Container>
+      </div>
       <ChannelChangeOverlay
         key={isChannelChangeOpen ? 'open' : 'closed'}
         open={isChannelChangeOpen}

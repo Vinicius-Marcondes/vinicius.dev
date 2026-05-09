@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Press+Start+2P&family=VT323&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Fira+Mono:wght@400;500;700&display=swap');
 
 :root {
-  --bg-0: #05040a;
-  --bg-1: #0b0912;
-  --bg-2: #140f1f;
+  --bg-0: #07060b;
+  --bg-1: #0d0b14;
+  --bg-2: #151122;
   --bg-3: #1e1730;
   --fg-0: #f5ecff;
   --fg-1: #dccdff;
@@ -24,21 +24,21 @@
   --line-1: rgba(216, 198, 255, 0.14);
   --line-2: rgba(216, 198, 255, 0.28);
   --line-neon: rgba(255, 46, 136, 0.58);
-  --font-display: 'Press Start 2P', 'VT323', ui-monospace, monospace;
-  --font-pixel: 'VT323', 'Press Start 2P', ui-monospace, monospace;
-  --font-body: 'IBM Plex Mono', 'SFMono-Regular', ui-monospace, monospace;
+  --font-display: 'Press Start 2P', ui-monospace, monospace;
+  --font-pixel: 'VT323', ui-monospace, monospace;
+  --font-body: 'Fira Mono', ui-monospace, Menlo, Consolas, monospace;
   --fs-display-xl: clamp(2.8rem, 9vw, 6.25rem);
   --fs-display-lg: clamp(2rem, 6vw, 3.3rem);
   --fs-display-md: clamp(1.5rem, 4vw, 2.3rem);
   --fs-pixel-lg: clamp(1.35rem, 3vw, 2rem);
   --fs-body-lg: 18px;
-  --fs-body: 15px;
+  --fs-body: 14px;
   --fs-body-sm: 13px;
   --fs-caption: 11px;
   --lh-tight: 1.05;
   --lh-body: 1.6;
   --tracking-wide: 0.08em;
-  --tracking-caps: 0.18em;
+  --tracking-caps: 0.16em;
   --spacing-1: 4px;
   --spacing-2: 8px;
   --spacing-3: 12px;
@@ -53,7 +53,7 @@
   --surface-bg-strong: rgba(7, 6, 11, 0.94);
   --surface-border: var(--line-2);
   --surface-border-soft: var(--line-1);
-  --glow-pink: 0 0 0 1px rgba(255, 46, 136, 0.44), 0 0 26px rgba(255, 46, 136, 0.18);
-  --glow-cyan: 0 0 0 1px rgba(34, 227, 255, 0.4), 0 0 20px rgba(34, 227, 255, 0.14);
+  --glow-pink: 0 0 0 1px var(--neon-pink), 0 0 24px rgba(255, 46, 136, 0.55);
+  --glow-cyan: 0 0 0 1px var(--neon-cyan), 0 0 20px rgba(34, 227, 255, 0.45);
   --shell-max-width: 1160px;
 }

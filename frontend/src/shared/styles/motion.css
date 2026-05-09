@@ -4,6 +4,28 @@
   }
 }
 
+@keyframes rare-glitch {
+  /* stays still almost all the time */
+  0%, 97.8% {
+    transform: translateX(0);
+  }
+
+  /* sudden jump right */
+  98.0% {
+    transform: translateX(28px);
+  }
+
+  /* quick snap left */
+  98.2% {
+    transform: translateX(-10px);
+  }
+
+  /* back to center */
+  98.4%, 100% {
+    transform: translateX(0);
+  }
+}
+
 @keyframes subtle-glitch {
   0%,
   100% {
@@ -12,5 +34,25 @@
 
   50% {
     transform: translate(1px, -1px);
+  }
+}
+
+@keyframes now-playing-marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

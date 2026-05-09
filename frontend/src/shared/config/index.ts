@@ -6,30 +6,32 @@ type NavigationItem = {
 
 type SocialItem = {
   href: string
-  icon: string
   label: string
 }
 
 export const publicNavigation: readonly NavigationItem[] = [
-  { label: 'Photos', to: '/photos' },
-  { label: 'Projects', to: '/projects' },
-  { label: 'Thoughts', to: '/thoughts' },
-  { detail: 'auth', label: 'Chat Room', to: '/chat' },
+  { label: 'photos', to: '/photos' },
+  { label: 'projects', to: '/projects' },
+  { label: 'thoughts', to: '/thoughts' },
+  { detail: 'auth', label: 'chat room', to: '/chat' },
 ] as const
 
-export const footerNavigation: readonly NavigationItem[] = [
-  { label: 'Photos', to: '/photos' },
-  { label: 'Projects', to: '/projects' },
-  { label: 'Thoughts', to: '/thoughts' },
-  { detail: 'auth', label: 'Chat Room', to: '/chat' },
-] as const
+export const footerNavigation: readonly NavigationItem[] = [...publicNavigation]
 
 export const socialNavigation: readonly SocialItem[] = [
-  { href: 'https://instagram.com', icon: 'IG', label: 'Instagram' },
-  { href: 'https://x.com', icon: 'X', label: 'X.com' },
-  { href: 'https://github.com/Vinicius-Marcondes', icon: 'GH', label: 'GitHub' },
-  { href: 'https://linkedin.com', icon: 'IN', label: 'LinkedIn' },
-  { href: 'https://reddit.com', icon: 'RD', label: 'Reddit' },
+  { href: 'https://instagram.com', label: 'instagram' },
+  { href: 'https://x.com', label: 'x.com' },
+  { href: 'https://github.com/Vinicius-Marcondes', label: 'github' },
+  { href: 'https://linkedin.com', label: 'linkedin' },
+  { href: 'https://reddit.com', label: 'reddit' },
+] as const
+
+export const nowPlayingItems = [
+  '► now playing // home route status strip online',
+  'runtime 00:24:11',
+  'sao paulo // gmt-3 // late shift',
+  'projects, photos, thoughts, and chat room',
+  'vinicius.dev // channel 03',
 ] as const
 
 export const adminNavigation = [
