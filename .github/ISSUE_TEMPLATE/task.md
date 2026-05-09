@@ -6,14 +6,14 @@ labels: []
 assignees: []
 ---
 
-> `docs/specs/tracker.md` is the canonical task record. Use this template only when you intentionally want an additional GitHub issue.
+> `docs/TRACKER.md` is the canonical task record. Use this template only when you intentionally want an additional GitHub issue.
 
 ## Summary
 Short description of the task.
 
-## Source Spec
-- Spec ID:
-- Spec file:
+## Source PRD
+- PRD ID:
+- PRD file:
 - Acceptance source:
 
 ## Git
@@ -27,13 +27,13 @@ Short description of the task.
 - Current status:
 
 ## Dependencies
-- Blocking tasks/specs:
+- Blocking tasks/PRDs:
 
 ## Done Criteria
 - [ ]
 - [ ]
 
 ## Reporting Rules
-- Update `docs/specs/tracker.md` when starting.
-- Update `docs/specs/tracker.md` immediately if blocked.
-- Update `docs/specs/tracker.md` when handing off or completing.
+- Update `docs/TRACKER.md` when starting.
+- Update `docs/TRACKER.md` immediately if blocked.
+- Update `docs/TRACKER.md` when handing off or completing.

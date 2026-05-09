@@ -12,9 +12,8 @@ on:
       - ready_for_review
     paths:
       - backend/**
-      - docs/specs/backend-architecture.md
-      - docs/specs/project-structure.md
-      - docs/specs/verification.md
+      - docs/rules/architecture.md
+      - docs/rules/product-and-platform.md
       - .github/workflows/backend-boundary-architecture.yml
   push:
     branches:
@@ -22,9 +21,8 @@ on:
       - main
     paths:
       - backend/**
-      - docs/specs/backend-architecture.md
-      - docs/specs/project-structure.md
-      - docs/specs/verification.md
+      - docs/rules/architecture.md
+      - docs/rules/product-and-platform.md
       - .github/workflows/backend-boundary-architecture.yml
 
 permissions:

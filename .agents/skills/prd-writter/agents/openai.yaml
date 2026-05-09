@@ -1,0 +1,4 @@
+interface:
+  display_name: "PRD Writter"
+  short_description: "Draft supervised PRDs for vinicius.dev"
+  default_prompt: "Use $prd-writter to plan a concise PRD for a vinicius.dev feature."

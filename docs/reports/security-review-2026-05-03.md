@@ -266,10 +266,10 @@ No missing indexes identified beyond what is already defined in `schema.prisma`.
 
 ## Out of scope / deferred
 
-- Physical file deletion for moderated uploads is spec-deferred (`docs/specs/media-storage.md:18`, tracker.md).
+- Physical file deletion for moderated uploads is deferred by the media policy in `docs/rules/product-and-platform.md`.
 - Admin CRUD endpoints (create/update thoughts, projects, photos) — spec deferred, not yet implemented; no review scope.
-- MFA email delivery implementation — spec-acknowledged as infrastructure task (tracker.md "Cross-Cutting Risks").
-- CI/CD pipeline hardening — out of scope per tracker.md note on production deployment.
+- MFA email delivery implementation — acknowledged as a platform/security concern in `docs/rules/product-and-platform.md`.
+- CI/CD pipeline hardening — out of scope for this review and governed by `docs/rules/product-and-platform.md`.
 
 ---
 

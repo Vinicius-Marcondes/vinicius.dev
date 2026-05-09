@@ -1,0 +1,4 @@
+interface:
+  display_name: "Task Splitter"
+  short_description: "Split vinicius.dev PRDs into tasks"
+  default_prompt: "Use $task-splitter to split a vinicius.dev PRD into supervised task files."

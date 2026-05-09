@@ -6,12 +6,12 @@ This file provides guidance to AI coding agents working in this repository. Read
 
 - Never read inside `node_modules`.
 - Never run `git push origin master`.
-- Before any Git command, read [docs/specs/git-workflow.md](docs/specs/git-workflow.md).
+- Before any Git command, read [docs/rules/git-workflow.md](docs/rules/git-workflow.md).
 - Do not rewrite shared history or revert user changes unless the user explicitly asks for that operation.
 
 ## Repository overview
 
-`vinicius.dev` is a personal site driven by a spec harness in [docs/specs/](docs/specs/). Treat the harness as the source of truth before creating tasks, branches, or implementation changes.
+`vinicius.dev` is a personal site driven by a supervised PRD workflow in [docs/rules/](docs/rules/). Treat those rules plus the active [docs/TRACKER.md](docs/TRACKER.md) file as the source of truth before creating tasks, branches, or implementation changes.
 
 Current repo areas:
 
@@ -19,22 +19,28 @@ Current repo areas:
 - [backend/](backend/) - Bun + Hono + Prisma + Postgres service using a hexagonal layout with modules at the core and adapters at the edge.
 - [infra/](infra/) - Caddy and deployment-facing infrastructure docs/config.
 - [.github/workflows/](.github/workflows/) - CI validation and tag-based production deployment workflows.
-- [docs/specs/](docs/specs/) - canonical specs, tracker, acceptance rules, Git workflow, and verification policy.
-- [.agents/skills/](.agents/skills/) - local agent skills, including the Vinicius.Dev design system skill.
+- [docs/rules/](docs/rules/) - canonical workflow, Git, PRD/tracker, architecture, product, and platform rules.
+- [docs/prds/](docs/prds/) - PRD folders and task files.
+- [.agents/skills/](.agents/skills/) - local agent skills, including PRD writing, task splitting, and the Vinicius.Dev design system skill.
 - [scripts/](scripts/) - repo-root GitHub Project/task helper scripts.
 
-## Source of truth: the spec harness
+## Source of truth: supervised PRD workflow
 
-Always start at [docs/specs/README.md](docs/specs/README.md). The order to read is fixed there:
+Always start with [docs/rules/AGENTS.md](docs/rules/AGENTS.md). The normal reading order is:
 
-1. [tracker.md](docs/specs/tracker.md) - gate statuses, global decisions, and approved work.
-2. [git-workflow.md](docs/specs/git-workflow.md) - mandatory branching/review rules. Read this before any Git command.
-3. [frontend-structure.md](docs/specs/frontend-structure.md) before frontend, admin UI, or frontend verification work.
-4. [frontend-architecture.md](docs/specs/frontend-architecture.md) before frontend route, loader/action, or shell work.
-5. [project-structure.md](docs/specs/project-structure.md) before backend, data, media, infra, or backend verification work.
-6. [ci-cd.md](docs/specs/ci-cd.md) before release/deployment automation or final verification.
+1. [supervised-workflow.md](docs/rules/supervised-workflow.md) - PRD execution, task statuses, review modes, blockers, and acceptance.
+2. [git-workflow.md](docs/rules/git-workflow.md) - required before any Git command.
+3. [prd-and-tracker.md](docs/rules/prd-and-tracker.md) - PRD folders, task files, and `docs/TRACKER.md`.
+4. [architecture.md](docs/rules/architecture.md) - frontend, backend, API, and repository structure rules.
+5. [product-and-platform.md](docs/rules/product-and-platform.md) - product, data, media, admin, infra, CI, deployment, security, and testing rules.
+6. [docs/TRACKER.md](docs/TRACKER.md) - active PRD execution tracker, when present.
 
-Only act on specs in `Approved` or specs explicitly assigned for authoring/review. Do not silently override locked product decisions when adapting specs to existing code.
+Only execute tasks listed by the active `docs/TRACKER.md`. Do not change task boundaries without asking Vinicius first. Do not silently override locked product decisions when adapting PRDs to existing code.
+
+## Planning skills
+
+- Use `prd-writter` when the user asks to create or plan a PRD.
+- Use `task-splitter` when the user asks to split an approved PRD into task files and `docs/TRACKER.md`.
 
 ## Locked stack
 
@@ -46,7 +52,7 @@ Only act on specs in `Approved` or specs explicitly assigned for authoring/revie
 
 Before creating or materially changing frontend UI:
 
-1. Read [frontend-structure.md](docs/specs/frontend-structure.md) and [frontend-architecture.md](docs/specs/frontend-architecture.md).
+1. Read [architecture.md](docs/rules/architecture.md) and [product-and-platform.md](docs/rules/product-and-platform.md).
 2. Use the `viniciusdev-design` skill at [.agents/skills/vinicius.dev-website-guidelines/SKILL.md](.agents/skills/vinicius-dev-website-guidelines/SKILL.md).
 3. Read the skill's [README.md](.agents/skills/vinicius-dev-website-guidelines/README.md), [GUIDELINES.md](.agents/skills/vinicius-dev-website-guidelines/GUIDELINES.md), and [colors_and_type.css](.agents/skills/vinicius-dev-website-guidelines/colors_and_type.css).
 4. Check [preview/interactive-components.html](.agents/skills/vinicius-dev-website-guidelines/preview/interactive-components.html) before implementing forms, modals, toasts, feedback, or interactive controls.
@@ -91,7 +97,7 @@ Run commands from each package directory unless noted.
 
 ### CI
 
-Workflow files live under [.github/workflows/](.github/workflows/). For CI policy and intended behavior, read [docs/specs/ci-cd.md](docs/specs/ci-cd.md) and [docs/specs/ci-workflow-maintenance.md](docs/specs/ci-workflow-maintenance.md).
+Workflow files live under [.github/workflows/](.github/workflows/). For CI policy and intended behavior, read [docs/rules/product-and-platform.md](docs/rules/product-and-platform.md).
 
 ## Architecture notes
 
@@ -115,24 +121,25 @@ Workflow files live under [.github/workflows/](.github/workflows/). For CI polic
 
 ### Data model and media
 
-Read [docs/specs/data-model.md](docs/specs/data-model.md) and [docs/specs/media-storage.md](docs/specs/media-storage.md) before adding Prisma models, upload paths, media delivery, or moderation logic. Schema lives at [backend/prisma/schema.prisma](backend/prisma/schema.prisma); generated client lives at [backend/generated/prisma/](backend/generated/prisma/).
+Read [product-and-platform.md](docs/rules/product-and-platform.md) before adding Prisma models, upload paths, media delivery, or moderation logic. Schema lives at [backend/prisma/schema.prisma](backend/prisma/schema.prisma); generated client lives at [backend/generated/prisma/](backend/generated/prisma/).
 
 ## Git and GitHub workflow
 
-Full rules live in [docs/specs/git-workflow.md](docs/specs/git-workflow.md). Summary:
+Full rules live in [docs/rules/git-workflow.md](docs/rules/git-workflow.md). Summary:
 
-- `main` is stable; `develop` is the integration branch. Every task gets its own branch.
-- Branch pattern: `type/TASK-ID-short-slug`. Approved prefixes: `spec/`, `frontend/`, `backend/`, `data/`, `admin/`, `infra/`, `hotfix/`.
-- Spec and implementation branches base off `develop`; hotfixes branch off `main` and merge back into both.
+- `main` is stable; `develop` is the integration branch.
+- Use one implementation branch per PRD, such as `feature/PRD-004-photo-catalog-admin-upload`.
+- PRD implementation branches base off `develop`; hotfixes branch off `main`.
 - No self-merge. Every branch needs review. Use merge commits for integration, not squash/rebase.
 - Reverts revert commits or merge commits; never rewrite shared history.
-- Commit messages and PR titles must include the task ID. Commits must be signed off with `git commit -s -m "..."`.
-- Every executable task maps to one spec, one task ID, one branch, one tracker entry, and one acceptance source.
-- GitHub Issues and Project items are optional for normal task tracking unless the active task/spec explicitly requires them.
-- PR descriptions must include the source spec, acceptance source, base branch, merge target, and verification performed.
+- Every accepted task gets its own signed commit with `git commit -s`.
+- Commit subjects include both PRD ID and task ID, such as `PRD-004 PHOTO-001: implement public photo catalog list`.
+- `docs/TRACKER.md` tracks task acceptance only, not PR or merge state.
+- GitHub Issues and Project items are optional for normal task tracking unless the active PRD or task explicitly requires them.
+- PR descriptions should be generated from `docs/TRACKER.md` and include accepted tasks, commits, evidence, and known limitations.
 
 ## Authoring conventions
 
-- Spec docs follow the section template in [docs/specs/acceptance-criteria.md](docs/specs/acceptance-criteria.md).
-- When spec assumptions change, update [docs/specs/tracker.md](docs/specs/tracker.md) in the same task.
-- Keep doc-only changes separate from runtime code changes unless a spec explicitly ties them together.
+- PRDs, task files, and the live tracker follow [docs/rules/prd-and-tracker.md](docs/rules/prd-and-tracker.md).
+- When implementation assumptions change, update `docs/TRACKER.md` in the same accepted task commit.
+- Keep doc-only changes separate from runtime code changes unless a PRD explicitly ties them together.
