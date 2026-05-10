@@ -1,4 +1,7 @@
+export type AdminDashboardPanelAccent = 'pink' | 'cyan' | 'lime' | 'amber'
+
 export type AdminDashboardPanel = Readonly<{
+  accent: AdminDashboardPanelAccent
   detail: string
   label: string
   value: string
@@ -7,6 +10,7 @@ export type AdminDashboardPanel = Readonly<{
 export type AdminDashboardQueueItem = Readonly<{
   id: string
   action: string
+  actions: readonly string[]
   channel: string
   title: string
 }>
@@ -26,4 +30,3 @@ export type AdminDashboardViewModel = Readonly<{
   queues: readonly AdminDashboardQueueItem[]
   roomAccess: AdminDashboardRoomAccess | null
 }>
-

@@ -28,6 +28,7 @@ const loaderArgs = (request: Request): Parameters<typeof adminDashboardLoader>[0
 
 describe('admin dashboard route', () => {
   it('maps summary and room access loader data', async () => {
+    const request = new Request('http://localhost/admin/dashboard')
     mocks.getAdminDashboardSummary.mockResolvedValueOnce({
       moderationCommands: [],
       panels: {
@@ -52,24 +53,34 @@ describe('admin dashboard route', () => {
       },
     })
 
-    const result = await adminDashboardLoader(loaderArgs(new Request('http://localhost/admin/dashboard')))
+    const result = await adminDashboardLoader(loaderArgs(request))
     expect(result).toMatchObject({
       roomAccess: {
         currentPassword: 'night-runner-42',
       },
     })
-    expect((result as unknown as { panels: ReadonlyArray<{ label: string; value: string }> }).panels[0]).toMatchObject({
+    expect(
+      (result as unknown as { panels: ReadonlyArray<{ label: string; value: string }> }).panels[0],
+    ).toMatchObject({
       label: 'draft thoughts',
       value: '02',
     })
+    expect(mocks.getAdminDashboardSummary).toHaveBeenCalledWith(request.signal)
+    expect(mocks.getChatRoomAccess).toHaveBeenCalledWith('night-shift', request.signal)
   })
 
-  it('redirects unauthorized sessions and tolerates missing room access', async () => {
+  it('redirects unauthorized dashboard sessions to admin login', async () => {
     mocks.getAdminDashboardSummary.mockRejectedValueOnce(new ApiRequestError(401, { error: 'denied' }))
     mocks.getChatRoomAccess.mockResolvedValueOnce(null)
-    const redirectResponse = await adminDashboardLoader(loaderArgs(new Request('http://localhost/admin/dashboard')))
-    expect((redirectResponse as Response).headers.get('location')).toBe('/admin/login')
 
+    const redirectResponse = await adminDashboardLoader(
+      loaderArgs(new Request('http://localhost/admin/dashboard')),
+    )
+
+    expect((redirectResponse as Response).headers.get('location')).toBe('/admin/login')
+  })
+
+  it('tolerates missing room access while preserving dashboard loader data', async () => {
     mocks.getAdminDashboardSummary.mockResolvedValueOnce({
       moderationCommands: [],
       panels: {
@@ -84,10 +95,15 @@ describe('admin dashboard route', () => {
       },
     })
     mocks.getChatRoomAccess.mockRejectedValueOnce(new ApiRequestError(404, { error: 'not_found' }))
-    await expect(
-      adminDashboardLoader(loaderArgs(new Request('http://localhost/admin/dashboard'))),
-    ).resolves.toMatchObject({
-      roomAccess: null,
+
+    const result = await adminDashboardLoader(loaderArgs(new Request('http://localhost/admin/dashboard')))
+
+    expect(result).toMatchObject({ roomAccess: null })
+    expect(
+      (result as unknown as { panels: ReadonlyArray<{ label: string; value: string }> }).panels[0],
+    ).toMatchObject({
+      label: 'draft thoughts',
+      value: '00',
     })
   })
 })

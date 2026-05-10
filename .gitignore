@@ -21,6 +21,7 @@ coverage/
 
 # Local media
 backend/media/
+references/
 
 # Logs
 *.log
@@ -45,3 +46,7 @@ pnpm-debug.log*
 .vscode/
 **/.pi
 .commandcode
+
+# Archive
+docs/prds
+docs/reports

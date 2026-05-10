@@ -5,6 +5,10 @@ import { adminNavigation } from '../../../shared/config'
 export function AdminShell() {
   return (
     <div className="app-shell app-shell--admin">
+      <div className="admin-shell__channel-bug" aria-hidden="true">
+        <span className="admin-shell__channel-dot" />
+        <span>CH. 01</span>
+      </div>
       <header className="admin-shell__header">
         <Container>
           <div className="admin-shell__inner">
@@ -18,14 +22,14 @@ export function AdminShell() {
                   key={item.to}
                   to={item.to}
                   className={({ isActive }) =>
-                    isActive ? 'signal-link is-active' : 'signal-link'
+                    isActive ? 'is-active glitch-hover' : 'glitch-hover'
                   }
                 >
                   {item.label}
                 </SignalLink>
               ))}
               <Form method="post" action="/admin/logout">
-                <ActionButton type="submit">logout</ActionButton>
+                <ActionButton className="glitch-hover" type="submit">logout</ActionButton>
               </Form>
             </nav>
           </div>

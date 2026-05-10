@@ -41,21 +41,25 @@ describe('admin dashboard mapper', () => {
     ).toEqual({
       panels: [
         {
+          accent: 'pink',
           detail: 'two notes and one essay waiting for polish',
           label: 'draft thoughts',
           value: '02',
         },
         {
+          accent: 'cyan',
           detail: 'home previews are manually pinned',
           label: 'featured slots',
           value: '03',
         },
         {
+          accent: 'lime',
           detail: 'metadata only; originals live on the VPS later',
           label: 'photo records',
           value: '12',
         },
         {
+          accent: 'amber',
           detail: 'moderation queue for backend contracts',
           label: 'chat flags',
           value: '04',
@@ -64,6 +68,7 @@ describe('admin dashboard mapper', () => {
       queues: [
         {
           action: 'publish / edit',
+          actions: ['publish', 'edit'],
           channel: 'TH-01',
           id: 'thought_1',
           title: 'Night Cable Interfaces',
