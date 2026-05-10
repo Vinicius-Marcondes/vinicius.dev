@@ -25,7 +25,7 @@
 - Merge Target: develop
 
 ## Current Task
-CI-001
+CI-002
 
 ## Task Index
 1. CI-001 - Repair chat media test fixture
@@ -33,7 +33,7 @@ CI-001
    - Status: Accepted
 2. CI-002 - Pin branch validation Bun version
    - Task File: docs/prds/PRD-003/tasks/CI-002.md
-   - Status: Todo
+   - Status: Accepted
 3. CI-003 - Run full local validation sweep
    - Task File: docs/prds/PRD-003/tasks/CI-003.md
    - Status: Todo
@@ -63,11 +63,24 @@ Requested Decision: None
 
 ### CI-002 - Pin branch validation Bun version
 Task File: docs/prds/PRD-003/tasks/CI-002.md
-Status: Todo
+Status: Accepted
 Evidence:
-- Pending
+- Started CI-002 only; confirmed `.github/workflows/pr-validation.yml` declares `BUN_VERSION: 1.3.11` and `frontend/package.json` declares `packageManager: bun@1.3.11`.
+- Inspected `.github/workflows/branch-validation.yml`: trigger remains `push` to `develop` and `main`; workflow now declares `BUN_VERSION: 1.3.11`; both frontend and backend `oven-sh/setup-bun@v2` steps use `bun-version: ${{ env.BUN_VERSION }}`.
+- Inspected `.github/workflows/branch-validation.yml`: frontend command coverage remains `bun install --frozen-lockfile`, `bun run lint`, `bun run build`, and `bun run test`.
+- Inspected `.github/workflows/branch-validation.yml`: backend command coverage remains `bun install --frozen-lockfile`, `bun run prisma:generate`, `bun run typecheck`, `bun run test`, and `bun run verify`.
+- `cd frontend && bun run lint` - passed.
+- `cd frontend && bun run build` - passed: `tsc -b && vite build`.
+- `cd frontend && bun run test` - passed: 22 test files, 44 tests.
+- `cd backend && bun run typecheck` - passed.
+- `cd backend && bun run test` - sandbox run failed on two WebSocket route tests with `EADDRINUSE` while `Bun.serve` tried to bind local test ports 38711 and 38712.
+- `cd backend && bun run test` - unsandboxed rerun passed: 225 tests, 0 failed.
+- `cd backend && bun run verify` - sandbox run reached media verification but failed on the same WebSocket local-port binding issue.
+- `cd backend && bun run verify` - unsandboxed rerun passed, including persistence, media, public route/content, admin/auth/chat/media integration, and deploy/readiness checks.
 Decision Log:
-- Pending
+- Added workflow-level `BUN_VERSION: 1.3.11` to `.github/workflows/branch-validation.yml` to match PR validation style and frontend package metadata.
+- Applied the pin to both branch-validation `oven-sh/setup-bun@v2` steps without changing branch triggers or validation commands.
+- Treated the backend sandbox `EADDRINUSE` failures as environment-specific local server binding failures because the same required commands passed outside the sandbox and PRD-003 already documents this backend test behavior.
 Commit: Pending
 Blocked Reason: None
 Requested Decision: None
