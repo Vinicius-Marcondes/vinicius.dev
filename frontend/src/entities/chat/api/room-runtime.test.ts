@@ -28,8 +28,18 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+const getRequestHeader = (headers: HeadersInit | undefined, name: string) =>
+  headers instanceof Headers ? headers.get(name) : (headers as Record<string, string> | undefined)?.[name]
+
 describe('chat runtime API helpers', () => {
   it('builds participant, message, send, and protected media requests', async () => {
+    const protectedMediaBlob = new Blob(['image'], { type: 'image/png' })
+    const protectedMediaResponse = {
+      blob: vi.fn(async () => protectedMediaBlob),
+      headers: new Headers(),
+      ok: true,
+      status: 200,
+    } satisfies Pick<Response, 'blob' | 'headers' | 'ok' | 'status'>
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(
         new Response(JSON.stringify({ items: [] }), {
@@ -49,11 +59,7 @@ describe('chat runtime API helpers', () => {
           status: 200,
         }),
       )
-      .mockResolvedValueOnce(
-        new Response(new Blob(['image']), {
-          status: 200,
-        }),
-      )
+      .mockResolvedValueOnce(protectedMediaResponse)
     const createObjectUrl = vi.fn(() => 'blob:chat-image')
     vi.stubGlobal('fetch', fetchMock)
     vi.stubGlobal('URL', {
@@ -72,8 +78,9 @@ describe('chat runtime API helpers', () => {
       '/api/chat/rooms/night-shift/messages',
       '/api/chat/uploads/upload_1/media',
     ])
-    expect((fetchMock.mock.calls[0]?.[1]?.headers as Headers).get('x-chat-room-session-id')).toBe('session_1')
-    expect(createObjectUrl).toHaveBeenCalled()
+    expect(getRequestHeader(fetchMock.mock.calls[0]?.[1]?.headers, 'x-chat-room-session-id')).toBe('session_1')
+    expect(getRequestHeader(fetchMock.mock.calls[3]?.[1]?.headers, 'x-chat-room-session-id')).toBe('session_1')
+    expect(createObjectUrl).toHaveBeenCalledWith(protectedMediaBlob)
   })
 
   it('opens live sockets with the approved subprotocol auth contract', () => {

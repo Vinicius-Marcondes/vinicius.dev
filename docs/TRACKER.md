@@ -13,94 +13,83 @@
 - For `Review Mode: Agent`, verify, accept, commit, and continue when appropriate.
 
 ## PRD
-- ID: PRD-002
-- Title: Admin Dashboard Control Deck Restyle
+- ID: PRD-003
+- Title: CI Validation Reliability
 - Status: Active
-- PRD File: docs/prds/PRD-002/PRD-002.md
-- Summary: Restyle `/admin/dashboard` to match the control-deck reference while preserving backend-connected dashboard behavior and admin photo workflows.
+- PRD File: docs/prds/PRD-003/PRD-003.md
+- Summary: Fix recurring GitHub Actions validation failures by stabilizing the frontend chat media test fixture, aligning branch validation with the pinned Bun runtime, and preserving the existing PR, branch, and tag-only production validation contract.
 
 ## Git
-- Branch: feature/PRD-002-admin-dashboard-control-deck-restyle
+- Branch: feature/PRD-003-ci-validation-reliability
 - Base: develop
 - Merge Target: develop
 
 ## Current Task
-DASH-004
+CI-001
 
 ## Task Index
-1. DASH-001 - Lock dashboard behavior tests
-   - Task File: docs/prds/PRD-002/tasks/DASH-001.md
+1. CI-001 - Repair chat media test fixture
+   - Task File: docs/prds/PRD-003/tasks/CI-001.md
    - Status: Accepted
-2. DASH-002 - Map reference structure into dashboard components
-   - Task File: docs/prds/PRD-002/tasks/DASH-002.md
-   - Status: Accepted
-3. DASH-003 - Apply control-deck visual style
-   - Task File: docs/prds/PRD-002/tasks/DASH-003.md
-   - Status: Accepted
-4. DASH-004 - Verify admin photo regressions and final rollout
-   - Task File: docs/prds/PRD-002/tasks/DASH-004.md
-   - Status: Accepted
+2. CI-002 - Pin branch validation Bun version
+   - Task File: docs/prds/PRD-003/tasks/CI-002.md
+   - Status: Todo
+3. CI-003 - Run full local validation sweep
+   - Task File: docs/prds/PRD-003/tasks/CI-003.md
+   - Status: Todo
+4. CI-004 - Confirm remote CI acceptance
+   - Task File: docs/prds/PRD-003/tasks/CI-004.md
+   - Status: Todo
 
 ## Tasks
 
-### DASH-001 - Lock dashboard behavior tests
-Task File: docs/prds/PRD-002/tasks/DASH-001.md
+### CI-001 - Repair chat media test fixture
+Task File: docs/prds/PRD-003/tasks/CI-001.md
 Status: Accepted
 Evidence:
-- 2026-05-10: `cd frontend && bun run test -- AdminDashboardPage.test.tsx route.test.ts` -> passed. Vitest reported 5 files passed, 19 tests passed, duration 797ms.
-- 2026-05-10: Coordinator rerun `cd frontend && bun run test -- AdminDashboardPage.test.tsx route.test.ts` -> passed. Vitest reported 5 files passed, 19 tests passed, duration 696ms.
+- Started CI-001 only; inspected `frontend/src/entities/chat/api/room-runtime.ts` and `frontend/src/entities/chat/api/room-runtime.test.ts`.
+- `cd frontend && bun run test -- room-runtime.test.ts` - failed once after adding a media-session-header assertion because the media request uses a plain header record instead of a `Headers` instance; adjusted the test assertion without changing runtime code.
+- `cd frontend && bun run test -- room-runtime.test.ts` - passed: 1 test file, 2 tests.
+- `cd frontend && bun run lint` - passed.
+- `cd frontend && bun run build` - passed: `tsc -b && vite build`.
+- `cd frontend && bun run test` - passed: 22 test files, 44 tests.
 Decision Log:
-- 2026-05-10: Started DASH-001 on current branch; scope limited to dashboard behavior tests and minimal accessibility/testability fixes if required.
-- 2026-05-10: Expanded dashboard page tests for backend-provided panel values, content queue rows, room access fields, generated-empty state, pending rotation, successful rotation with revoked-session count, and rotation failure feedback.
-- 2026-05-10: Split route tests so unauthorized redirect to `/admin/login` and missing room access tolerance are preserved as explicit cases.
-- 2026-05-10: No production component changes were required; current labeled fields and disabled button state supported reliable accessible tests.
+- Keep the change scoped to the chat runtime test fixture because `getChatAttachmentObjectUrl` already consumes `response.blob()` and does not require a real `Response` instance for the success path.
+- Replaced the protected-media `new Response(new Blob(...))` fixture with a runner-stable object exposing `blob()`, `headers`, `ok`, and `status`.
+- Preserved protected media URL coverage, verified the chat room session header on the media request, and verified `URL.createObjectURL` receives the returned blob while `getChatAttachmentObjectUrl` surfaces the object URL.
 Commit: Pending
 Blocked Reason: None
 Requested Decision: None
 
-### DASH-002 - Map reference structure into dashboard components
-Task File: docs/prds/PRD-002/tasks/DASH-002.md
-Status: Accepted
+### CI-002 - Pin branch validation Bun version
+Task File: docs/prds/PRD-003/tasks/CI-002.md
+Status: Todo
 Evidence:
-- 2026-05-10: `cd frontend && bun run build` -> passed. `tsc -b && vite build` completed with 132 modules transformed and production assets emitted under `dist/`.
-- 2026-05-10: `cd frontend && bun run test -- AdminDashboardPage.test.tsx route.test.ts` -> passed. Vitest reported 5 files passed, 19 tests passed, duration 1.05s.
-- 2026-05-10: `cd frontend && bun run test -- mappers.test.ts` -> passed. Vitest reported 1 file passed, 1 test passed, duration 301ms.
+- Pending
 Decision Log:
-- 2026-05-10: Started DASH-002 on current branch; scope limited to structural React mapping, stable tests, and minimal CSS scaffolding before DASH-003 visual styling.
-- 2026-05-10: Mapped the reference control-deck composition into dashboard-local React components: compact page header, stat cards, content queue panel, now-playing panel, and chat room access panel.
-- 2026-05-10: Preserved the existing `/admin/dashboard` loader/view model boundary, static fallback queue behavior, generated-empty room access state, and `rotateChatRoomPassword('night-shift', {})` mutation flow.
-- 2026-05-10: Added structured stat accent and queue action metadata in the dashboard view model so the React structure can render reference-like cards and queue rows without changing backend DTOs or route ownership.
-- 2026-05-10: Added only dashboard-scoped CSS scaffolding for the structural grid, panels, queue rows, info fields, live indicator, and rotation control; final visual parity remains DASH-003 scope.
+- Pending
 Commit: Pending
 Blocked Reason: None
 Requested Decision: None
 
-### DASH-003 - Apply control-deck visual style
-Task File: docs/prds/PRD-002/tasks/DASH-003.md
-Status: Accepted
+### CI-003 - Run full local validation sweep
+Task File: docs/prds/PRD-003/tasks/CI-003.md
+Status: Todo
 Evidence:
-- 2026-05-10: `cd frontend && bun run test -- AdminDashboardPage.test.tsx route.test.ts` -> passed. Vitest reported 5 files passed, 19 tests passed, duration 1.01s.
-- 2026-05-10: `cd frontend && bun run build` -> passed. `tsc -b && vite build` completed with 132 modules transformed and production assets emitted under `dist/`.
+- Pending
 Decision Log:
-- 2026-05-10: Started DASH-003 on current branch under the session waiver for Human review; scope is limited to final dashboard/admin shell visual treatment while preserving DASH-002 behavior.
-- 2026-05-10: Interrupted the original DASH-003 worker after its focused Vitest command appeared to stall; no lingering Vitest/Bun test process remained when checked.
-- 2026-05-10: Kept the partial visual implementation after review because the changes were coherent and scoped to admin shell/dashboard styling.
-- 2026-05-10: Applied the session-only human-review waiver from Vinicius and accepted DASH-003 after coordinator verification passed.
+- Pending
 Commit: Pending
 Blocked Reason: None
 Requested Decision: None
 
-### DASH-004 - Verify admin photo regressions and final rollout
-Task File: docs/prds/PRD-002/tasks/DASH-004.md
-Status: Accepted
+### CI-004 - Confirm remote CI acceptance
+Task File: docs/prds/PRD-003/tasks/CI-004.md
+Status: Todo
 Evidence:
-- 2026-05-10: `cd frontend && bun run test -- AdminDashboardPage.test.tsx route.test.ts AdminPhotosGalleryPage.test.tsx` -> passed. Vitest reported 6 files passed, 22 tests passed, duration 768ms.
-- 2026-05-10: `cd frontend && bun run lint` -> passed. ESLint completed with exit code 0 and no diagnostics.
-- 2026-05-10: `cd frontend && bun run build` -> passed. `tsc -b && vite build` completed with 132 modules transformed and production assets emitted under `dist/`.
+- Pending
 Decision Log:
-- 2026-05-10: Started DASH-004 on current branch; scope limited to admin photo regression verification, dashboard regression coverage, frontend lint/build, and small fixes only if current behavior regressed.
-- 2026-05-10: Existing admin photo tests already covered private gallery cards, upload navigation, protected originals, upload accepted MIME types, upload draft action, detail metadata editor, publish/draft controls, feature/unfeature controls, route filters, pagination input, upload redirect, and detail metadata/curation actions.
-- 2026-05-10: No test maintenance or style regression fixes were required, and no backend, schema, media storage, auth, or deployment files were changed.
+- Pending
 Commit: Pending
 Blocked Reason: None
 Requested Decision: None
