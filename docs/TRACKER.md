@@ -13,114 +13,85 @@
 - For `Review Mode: Agent`, verify, accept, commit, and continue when appropriate.
 
 ## PRD
-- ID: PRD-003
-- Title: CI Validation Reliability
+- ID: PRD-004
+- Title: Admin Gallery Reference Restyle
 - Status: Active
-- PRD File: docs/prds/PRD-003/PRD-003.md
-- Summary: Fix recurring GitHub Actions validation failures by stabilizing the frontend chat media test fixture, aligning branch validation with the pinned Bun runtime, and preserving the existing PR, branch, and tag-only production validation contract.
+- PRD File: docs/prds/PRD-004/PRD-004.md
+- Summary: Restyle `/admin/photos` to match `references/vinicius.dev.v2/gallery.html` while preserving backend-connected listing, filtering, pagination, protected originals, upload navigation, and existing detail/edit workflows.
 
 ## Git
-- Branch: feature/PRD-003-ci-validation-reliability
+- Branch: feature/PRD-004-admin-gallery-reference-restyle
 - Base: develop
 - Merge Target: develop
 
 ## Current Task
-CI-004
+GAL-001
 
 ## Task Index
-1. CI-001 - Repair chat media test fixture
-   - Task File: docs/prds/PRD-003/tasks/CI-001.md
+1. GAL-001 - Rebuild Admin Gallery Frame
+   - Task File: docs/prds/PRD-004/tasks/GAL-001.md
    - Status: Accepted
-2. CI-002 - Pin branch validation Bun version
-   - Task File: docs/prds/PRD-003/tasks/CI-002.md
-   - Status: Accepted
-3. CI-003 - Run full local validation sweep
-   - Task File: docs/prds/PRD-003/tasks/CI-003.md
-   - Status: Accepted
-4. CI-004 - Confirm remote CI acceptance
-   - Task File: docs/prds/PRD-003/tasks/CI-004.md
-   - Status: Blocked
+2. GAL-002 - Restyle Gallery Cards And Presentation Controls
+   - Task File: docs/prds/PRD-004/tasks/GAL-002.md
+   - Status: Todo
+3. GAL-003 - Preserve Photo Admin Workflow Regressions
+   - Task File: docs/prds/PRD-004/tasks/GAL-003.md
+   - Status: Todo
+4. GAL-004 - Final Gallery Visual Acceptance
+   - Task File: docs/prds/PRD-004/tasks/GAL-004.md
+   - Status: Todo
 
 ## Tasks
 
-### CI-001 - Repair chat media test fixture
-Task File: docs/prds/PRD-003/tasks/CI-001.md
+### GAL-001 - Rebuild Admin Gallery Frame
+Task File: docs/prds/PRD-004/tasks/GAL-001.md
 Status: Accepted
 Evidence:
-- Started CI-001 only; inspected `frontend/src/entities/chat/api/room-runtime.ts` and `frontend/src/entities/chat/api/room-runtime.test.ts`.
-- `cd frontend && bun run test -- room-runtime.test.ts` - failed once after adding a media-session-header assertion because the media request uses a plain header record instead of a `Headers` instance; adjusted the test assertion without changing runtime code.
-- `cd frontend && bun run test -- room-runtime.test.ts` - passed: 1 test file, 2 tests.
-- `cd frontend && bun run lint` - passed.
-- `cd frontend && bun run build` - passed: `tsc -b && vite build`.
-- `cd frontend && bun run test` - passed: 22 test files, 44 tests.
+- Started GAL-001 after reading required repo rules, task file, PRD, tracker, reference HTML, and design-system skill files.
+- Updated `frontend/src/pages/admin/photos/ui/AdminPhotosGalleryPage.tsx` to match the reference page frame while preserving `useLoaderData`, `useSearchParams`, `updateQuery`, `goToPage`, upload navigation, loader-provided records, and backend URL-driven controls.
+- Updated `frontend/src/pages/admin/photos/ui/AdminPhotosGalleryPage.test.tsx` to verify loader-backed rendering, upload/detail navigation, query-backed filters resetting `page=1`, and pagination query behavior.
+- Updated `frontend/src/app/styles/global.css` with scoped admin gallery frame styles for the header, upload action, filters bar, records panel, empty state, and pagination.
+- `cd frontend && bun run test -- AdminPhotosGalleryPage.test.tsx` passed: 1 test file passed, 5 tests passed.
+- `cd frontend && bun run lint` passed with exit code 0.
+- Vinicius accepted GAL-001 after review: "looks like it is still working fine, GAL-001 Accepted".
 Decision Log:
-- Keep the change scoped to the chat runtime test fixture because `getChatAttachmentObjectUrl` already consumes `response.blob()` and does not require a real `Response` instance for the success path.
-- Replaced the protected-media `new Response(new Blob(...))` fixture with a runner-stable object exposing `blob()`, `headers`, `ok`, and `status`.
-- Preserved protected media URL coverage, verified the chat room session header on the media request, and verified `URL.createObjectURL` receives the returned blob while `getChatAttachmentObjectUrl` surfaces the object URL.
-Commit: a911fd1 PRD-003 CI-001: repair chat media test fixture
+- Scope held to GAL-001 page frame only: header, upload action, filters bar, and records panel. Card presentation remains limited to preserving existing backend-connected gallery rendering for GAL-002.
+- Omitted reference-only view toggle, hover overlays, fake mutations, delete, and client-side filtering because they are explicitly outside GAL-001 scope.
+- Kept the upload action implemented through existing `ActionButton` and `/admin/photos/upload` navigation.
+- Human review completed and GAL-001 accepted by Vinicius before starting GAL-002.
+Commit: 1e42be3 PRD-004 GAL-001: rebuild admin gallery frame
 Blocked Reason: None
 Requested Decision: None
 
-### CI-002 - Pin branch validation Bun version
-Task File: docs/prds/PRD-003/tasks/CI-002.md
-Status: Accepted
+### GAL-002 - Restyle Gallery Cards And Presentation Controls
+Task File: docs/prds/PRD-004/tasks/GAL-002.md
+Status: Todo
 Evidence:
-- Started CI-002 only; confirmed `.github/workflows/pr-validation.yml` declares `BUN_VERSION: 1.3.11` and `frontend/package.json` declares `packageManager: bun@1.3.11`.
-- Inspected `.github/workflows/branch-validation.yml`: trigger remains `push` to `develop` and `main`; workflow now declares `BUN_VERSION: 1.3.11`; both frontend and backend `oven-sh/setup-bun@v2` steps use `bun-version: ${{ env.BUN_VERSION }}`.
-- Inspected `.github/workflows/branch-validation.yml`: frontend command coverage remains `bun install --frozen-lockfile`, `bun run lint`, `bun run build`, and `bun run test`.
-- Inspected `.github/workflows/branch-validation.yml`: backend command coverage remains `bun install --frozen-lockfile`, `bun run prisma:generate`, `bun run typecheck`, `bun run test`, and `bun run verify`.
-- `cd frontend && bun run lint` - passed.
-- `cd frontend && bun run build` - passed: `tsc -b && vite build`.
-- `cd frontend && bun run test` - passed: 22 test files, 44 tests.
-- `cd backend && bun run typecheck` - passed.
-- `cd backend && bun run test` - sandbox run failed on two WebSocket route tests with `EADDRINUSE` while `Bun.serve` tried to bind local test ports 38711 and 38712.
-- `cd backend && bun run test` - unsandboxed rerun passed: 225 tests, 0 failed.
-- `cd backend && bun run verify` - sandbox run reached media verification but failed on the same WebSocket local-port binding issue.
-- `cd backend && bun run verify` - unsandboxed rerun passed, including persistence, media, public route/content, admin/auth/chat/media integration, and deploy/readiness checks.
+- Pending
 Decision Log:
-- Added workflow-level `BUN_VERSION: 1.3.11` to `.github/workflows/branch-validation.yml` to match PR validation style and frontend package metadata.
-- Applied the pin to both branch-validation `oven-sh/setup-bun@v2` steps without changing branch triggers or validation commands.
-- Treated the backend sandbox `EADDRINUSE` failures as environment-specific local server binding failures because the same required commands passed outside the sandbox and PRD-003 already documents this backend test behavior.
-Commit: 2bab514 PRD-003 CI-002: pin branch validation Bun version
-Blocked Reason: None
-Requested Decision: None
-
-### CI-003 - Run full local validation sweep
-Task File: docs/prds/PRD-003/tasks/CI-003.md
-Status: Accepted
-Evidence:
-- Started CI-003 only; updated `Current Task` from CI-002 to CI-003 and kept CI-004 Todo.
-- `cd frontend && bun run lint` - passed.
-- `cd frontend && bun run build` - passed: `tsc -b && vite build`, 132 modules transformed, production build completed.
-- `cd frontend && bun run test` - passed: 22 test files, 44 tests.
-- `cd backend && bun run typecheck` - passed.
-- `cd backend && bun run test` - sandbox run failed only on the two WebSocket route tests when `Bun.serve` could not bind local test ports 38711 and 38712, both reporting `EADDRINUSE`.
-- `cd backend && bun run test` - unsandboxed rerun passed: 225 tests, 0 failed, 667 expectations.
-- `cd backend && bun run verify` - sandbox run reached persistence verification; Prisma migration status could not reach the configured local Postgres database from the sandbox and was skipped by the script, then media verification failed on the same WebSocket `Bun.serve` local-port binding issue for ports 38711 and 38712.
-- `cd backend && bun run verify` - unsandboxed rerun passed: persistence verification, media verification, public routes/content verification, admin/auth/chat/media integration verification, and deploy/readiness checks.
-Decision Log:
-- No validation command was weakened, removed, or replaced to make the local sweep pass.
-- Treated the backend sandbox failures as environment-specific local server/database access limitations because the same required backend commands passed outside the sandbox and no implementation files changed.
-- CI-003 acceptance is based on the deterministic required command sequence passing locally with the documented sandbox reruns; CI-004 remains Todo and was not started.
-Commit: 324ff10 PRD-003 CI-003: record local validation sweep
-Blocked Reason: None
-Requested Decision: None
-
-### CI-004 - Confirm remote CI acceptance
-Task File: docs/prds/PRD-003/tasks/CI-004.md
-Status: Blocked
-Evidence:
-- Started CI-004 only; Review Mode is Human and this task is stopped uncommitted for coordinator/Vinicius review.
-- Current local branch confirmed as `feature/PRD-003-ci-validation-reliability`; local HEAD is `324ff10`.
-- `gh pr list --state all --head feature/PRD-003-ci-validation-reliability --json number,url,state,headRefName,baseRefName,title,updatedAt,isDraft,statusCheckRollup` - returned `[]`; no GitHub PR exists for this branch in open, closed, or merged state.
-- `gh api repos/Vinicius-Marcondes/vinicius.dev/git/ref/heads/feature%2FPRD-003-ci-validation-reliability --jq '{ref: .ref, sha: .object.sha, url: .url}'` - failed with `HTTP 404 Not Found`; the PRD branch is not present as a remote GitHub branch ref.
-- `gh run list --workflow pr-validation.yml --branch feature/PRD-003-ci-validation-reliability --limit 10 --json databaseId,displayTitle,event,headBranch,headSha,status,conclusion,createdAt,updatedAt,url,workflowName` - returned `[]`; no remote `pr-validation` run exists for the PRD branch.
-- Inspected `.github/workflows/production-deploy.yml`: production deployment triggers are limited to `push` tags matching `v*` and `workflow_dispatch` with a required `tag` input; both `preflight` and `deploy-production` jobs also guard execution to pushed `refs/tags/v*` or manual dispatch. Normal branch pushes do not trigger production deployment.
-- Post-merge `branch-validation` on `develop` was not marked complete because there is no PRD branch PR, no remote branch ref, and no PRD merge to `develop`; the relevant post-merge `develop` run does not exist yet.
-Decision Log:
-- Remote PR validation acceptance cannot proceed in the current state because CI-004 is not allowed to push the branch or open a PR, and GitHub has no remote branch ref, PR, or `pr-validation` run to inspect.
-- Production deployment trigger policy is confirmed as tag-only plus manual dispatch; no workflow change was needed.
-- Develop branch-validation acceptance remains pending post-merge by task rule and was not treated as complete.
+- Pending
 Commit: Pending
-Blocked Reason: No pushed PRD branch, PR, or remote `pr-validation` run exists for `feature/PRD-003-ci-validation-reliability`, so the required GitHub PR validation evidence cannot be confirmed inside CI-004 without performing excluded push/PR actions.
-Requested Decision: Vinicius/coordinator should decide whether to separately push/open the PRD branch and rerun CI-004 after GitHub Actions completes, or explicitly accept the documented pending remote PR/develop validation state as an exception.
+Blocked Reason: None
+Requested Decision: None
+
+### GAL-003 - Preserve Photo Admin Workflow Regressions
+Task File: docs/prds/PRD-004/tasks/GAL-003.md
+Status: Todo
+Evidence:
+- Pending
+Decision Log:
+- Pending
+Commit: Pending
+Blocked Reason: None
+Requested Decision: None
+
+### GAL-004 - Final Gallery Visual Acceptance
+Task File: docs/prds/PRD-004/tasks/GAL-004.md
+Status: Todo
+Evidence:
+- Pending
+Decision Log:
+- Pending
+Commit: Pending
+Blocked Reason: None
+Requested Decision: None

@@ -2869,6 +2869,242 @@ button {
   grid-template-columns: minmax(220px, 1fr) repeat(2, minmax(150px, 0.35fr));
 }
 
+.admin-photo-gallery {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.admin-photo-gallery__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-6);
+  margin-bottom: var(--spacing-4);
+}
+
+.admin-photo-gallery__eyebrow {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--fg-3);
+}
+
+.admin-photo-gallery__title {
+  margin: 0 0 10px;
+  color: var(--fg-0);
+  font-family: var(--font-pixel);
+  font-size: 40px;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: lowercase;
+}
+
+.admin-photo-gallery__subtitle {
+  max-width: 480px;
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 12px;
+}
+
+.app-shell--admin .admin-photo-gallery__upload.action-button {
+  flex-shrink: 0;
+  min-height: 42px;
+  margin-top: 4px;
+  padding: 11px 22px;
+  border-color: var(--neon-pink);
+  background: var(--bg-1);
+  box-shadow: 4px 4px 0 0 var(--neon-pink);
+  color: var(--fg-0);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  white-space: nowrap;
+}
+
+.app-shell--admin .admin-photo-gallery__upload.action-button:hover {
+  border-color: var(--neon-pink);
+  background: var(--neon-pink);
+  box-shadow: 4px 4px 0 0 var(--neon-pink);
+  color: var(--bg-0);
+}
+
+.app-shell--admin .admin-photo-gallery__upload.action-button:active {
+  box-shadow: none;
+  transform: translate(4px, 4px);
+}
+
+.admin-photo-gallery__filters.screen-frame,
+.admin-photo-gallery__records.screen-frame {
+  overflow: visible;
+  border-color: var(--line-2);
+  background: var(--bg-1);
+}
+
+.admin-photo-gallery__filters.screen-frame::before,
+.admin-photo-gallery__records.screen-frame::before {
+  content: none;
+}
+
+.admin-photo-gallery__filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-3);
+  padding: 20px 24px;
+}
+
+.admin-photo-gallery__records.screen-frame {
+  padding: 0;
+}
+
+.admin-photo-gallery__panel-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--fg-3);
+  letter-spacing: 0.2em;
+}
+
+.admin-photo-gallery__panel-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line-1);
+}
+
+.admin-photo-gallery__records-header .admin-photo-gallery__panel-label::after {
+  content: none;
+}
+
+.admin-photo-gallery__filters-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) repeat(2, minmax(150px, 180px));
+  gap: var(--spacing-3);
+  align-items: end;
+}
+
+.admin-photo-gallery__filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-photo-gallery__filter-field label {
+  color: var(--fg-2);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.admin-photo-gallery__input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line-2);
+  background: var(--bg-0);
+  transition:
+    border-color 120ms steps(1),
+    box-shadow 120ms steps(1);
+}
+
+.admin-photo-gallery__input-wrap:focus-within {
+  border-color: var(--neon-cyan);
+  box-shadow: var(--glow-cyan);
+}
+
+.admin-photo-gallery__input-prompt {
+  flex-shrink: 0;
+  padding: 0 8px 0 12px;
+  color: var(--fg-3);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.admin-photo-gallery__input-wrap:focus-within .admin-photo-gallery__input-prompt {
+  color: var(--neon-cyan);
+}
+
+.admin-photo-gallery__input-wrap input,
+.admin-photo-gallery__select-wrap select {
+  width: 100%;
+  min-height: 36px;
+  border: 0;
+  background: transparent;
+  color: var(--fg-0);
+  font-size: 13px;
+  outline: none;
+}
+
+.admin-photo-gallery__input-wrap input {
+  padding: 9px 12px 9px 0;
+}
+
+.admin-photo-gallery__input-wrap input::placeholder {
+  color: var(--fg-3);
+}
+
+.admin-photo-gallery__select-wrap {
+  position: relative;
+  border: 1px solid var(--line-2);
+  background: var(--bg-0);
+  transition:
+    border-color 120ms steps(1),
+    box-shadow 120ms steps(1);
+}
+
+.admin-photo-gallery__select-wrap::after {
+  content: '▾';
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  color: var(--fg-3);
+  font-size: 12px;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.admin-photo-gallery__select-wrap:focus-within {
+  border-color: var(--neon-cyan);
+  box-shadow: var(--glow-cyan);
+}
+
+.admin-photo-gallery__input-wrap input:focus-visible,
+.admin-photo-gallery__select-wrap select:focus-visible,
+.admin-photo-pagination button:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 2px;
+}
+
+.admin-photo-gallery__select-wrap select {
+  padding: 9px 32px 9px 12px;
+  appearance: none;
+  color-scheme: dark;
+  cursor: pointer;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.admin-photo-gallery__records {
+  display: grid;
+}
+
+.admin-photo-gallery__records-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-4);
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line-1);
+}
+
+.admin-photo-gallery__records-count {
+  color: var(--fg-3);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.admin-photo-gallery__records-count span {
+  color: var(--fg-2);
+}
+
 .admin-photo-toolbar,
 .admin-photo-pagination,
 .admin-photo-empty,
@@ -2881,26 +3117,32 @@ button {
 
 .admin-photo-grid {
   display: grid;
-  gap: var(--spacing-3);
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: var(--spacing-4);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 20px;
 }
 
 .admin-photo-card {
   display: grid;
   overflow: hidden;
-  border: 1px solid var(--surface-border-soft);
+  border: 1px solid var(--line-2);
+  background: var(--bg-1);
   color: inherit;
   text-decoration: none;
+  transition:
+    background-color 80ms steps(1),
+    border-color 120ms steps(1);
 }
 
 .admin-photo-card:hover {
-  border-color: var(--neon-cyan);
+  border-color: var(--line-2);
+  background: var(--bg-2);
 }
 
 .admin-photo-card__image {
   display: block;
   aspect-ratio: 4 / 3;
-  background: var(--bg-0);
+  background: var(--bg-2);
 }
 
 .admin-photo-card__image img,
@@ -2914,11 +3156,11 @@ button {
 
 .admin-photo-card__body {
   display: grid;
-  gap: 6px;
-  padding: 12px;
-  color: var(--fg-2);
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  gap: 5px;
+  padding: 14px 16px;
+  color: var(--fg-3);
+  font-size: 11px;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -2930,9 +3172,19 @@ button {
 
 .admin-photo-empty {
   display: grid;
-  gap: 8px;
-  border: 1px dashed var(--surface-border);
-  padding: var(--spacing-4);
+  justify-items: center;
+  gap: var(--spacing-3);
+  min-height: 220px;
+  padding: var(--spacing-8) var(--spacing-5);
+  border-bottom: 1px solid var(--line-1);
+  text-align: center;
+}
+
+.admin-photo-empty__glyph {
+  color: var(--fg-3);
+  font-family: var(--font-pixel);
+  font-size: 64px;
+  line-height: 1;
 }
 
 .admin-photo-pagination button,
@@ -2962,7 +3214,7 @@ button {
 .admin-photo-upload button:disabled,
 .admin-photo-detail button:disabled {
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: 0.35;
 }
 
 .admin-photo-detail {
@@ -3037,6 +3289,10 @@ button {
     padding-top: 108px;
   }
 
+  .admin-photo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .admin-dashboard-page__stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -3055,6 +3311,23 @@ button {
 }
 
 @media (max-width: 880px) {
+  .admin-photo-gallery__header {
+    flex-direction: column;
+    gap: var(--spacing-4);
+  }
+
+  .app-shell--admin .admin-photo-gallery__upload.action-button {
+    align-self: flex-start;
+  }
+
+  .admin-photo-gallery__filters-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-photo-gallery__filter-field:first-child {
+    grid-column: 1 / -1;
+  }
+
   .admin-shell__inner {
     grid-template-columns: 1fr;
     align-items: flex-start;
@@ -3112,6 +3385,26 @@ button {
 @media (max-width: 760px) {
   .layout-container {
     width: min(calc(100% - 20px), var(--shell-max-width));
+  }
+
+  .admin-photo-gallery__filters-row,
+  .admin-photo-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-photo-gallery__filters.screen-frame {
+    padding: 16px;
+  }
+
+  .admin-photo-gallery__records-header,
+  .admin-photo-pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-photo-grid {
+    gap: var(--spacing-3);
+    padding: 12px;
   }
 
   .app-shell__body,

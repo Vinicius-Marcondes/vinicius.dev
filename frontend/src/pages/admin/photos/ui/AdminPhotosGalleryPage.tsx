@@ -46,51 +46,77 @@ export function AdminPhotosGalleryPage() {
   }
 
   return (
-    <Stack gap={20}>
-      <div className="admin-photo-header">
+    <Stack className="admin-photo-gallery" gap={16}>
+      <div className="admin-photo-gallery__header">
         <div>
-          <InlineLabel>photo catalog</InlineLabel>
-          <h2 className="page-heading fx-crt-title">private gallery</h2>
-          <p className="page-copy">Browse drafts and published originals before opening a frame for curation.</p>
+          <InlineLabel className="admin-photo-gallery__eyebrow">// photo catalog</InlineLabel>
+          <h2 className="admin-photo-gallery__title">private gallery</h2>
+          <p className="admin-photo-gallery__subtitle">
+            Browse drafts and published originals before opening a frame for curation.
+          </p>
         </div>
-        <ActionButton to="/admin/photos/upload">upload photo</ActionButton>
+        <ActionButton className="admin-photo-gallery__upload glitch-hover" to="/admin/photos/upload">
+          <span aria-hidden="true">►</span>
+          upload photo
+        </ActionButton>
       </div>
 
-      <ScreenFrame className="admin-panel">
-        <InlineLabel>filters</InlineLabel>
-        <div className="admin-status-editor admin-photo-filters">
-          <label className="admin-field">
-            <span>search</span>
-            <input
-              value={data.filters.search}
-              onChange={(event) => updateQuery({ search: event.target.value })}
-              placeholder="title, frame, location"
-            />
-          </label>
-          <label className="admin-field">
-            <span>status</span>
-            <select value={data.filters.status} onChange={(event) => updateQuery({ status: event.target.value })}>
-              <option value="all">all</option>
-              <option value="draft">draft</option>
-              <option value="published">published</option>
-            </select>
-          </label>
-          <label className="admin-field">
-            <span>featured</span>
-            <select value={data.filters.featured} onChange={(event) => updateQuery({ featured: event.target.value })}>
-              <option value="all">all</option>
-              <option value="featured">featured</option>
-              <option value="not_featured">not featured</option>
-            </select>
-          </label>
+      <ScreenFrame className="admin-panel admin-photo-gallery__filters">
+        <InlineLabel className="admin-photo-gallery__panel-label">// filters</InlineLabel>
+        <div className="admin-photo-gallery__filters-row">
+          <div className="admin-photo-gallery__filter-field">
+            <label htmlFor="admin-photo-search">search</label>
+            <div className="admin-photo-gallery__input-wrap">
+              <span aria-hidden="true" className="admin-photo-gallery__input-prompt">
+                &gt;
+              </span>
+              <input
+                id="admin-photo-search"
+                value={data.filters.search}
+                onChange={(event) => updateQuery({ search: event.target.value })}
+                placeholder="title, frame, location"
+              />
+            </div>
+          </div>
+          <div className="admin-photo-gallery__filter-field">
+            <label htmlFor="admin-photo-status">status</label>
+            <div className="admin-photo-gallery__select-wrap">
+              <select
+                id="admin-photo-status"
+                value={data.filters.status}
+                onChange={(event) => updateQuery({ status: event.target.value })}
+              >
+                <option value="all">all</option>
+                <option value="draft">draft</option>
+                <option value="published">published</option>
+              </select>
+            </div>
+          </div>
+          <div className="admin-photo-gallery__filter-field">
+            <label htmlFor="admin-photo-featured">featured</label>
+            <div className="admin-photo-gallery__select-wrap">
+              <select
+                id="admin-photo-featured"
+                value={data.filters.featured}
+                onChange={(event) => updateQuery({ featured: event.target.value })}
+              >
+                <option value="all">all</option>
+                <option value="featured">featured</option>
+                <option value="not_featured">not featured</option>
+              </select>
+            </div>
+          </div>
         </div>
       </ScreenFrame>
 
-      <ScreenFrame className="admin-panel">
-        <div className="admin-photo-toolbar">
-          <InlineLabel>records</InlineLabel>
-          <span>
-            page {data.pageInfo.page} / {data.pageInfo.totalPages} // {data.pageInfo.totalItems} total
+      <ScreenFrame className="admin-panel admin-photo-gallery__records">
+        <div className="admin-photo-gallery__records-header">
+          <InlineLabel className="admin-photo-gallery__panel-label">// records</InlineLabel>
+          <span className="admin-photo-gallery__records-count">
+            <span>
+              page {data.pageInfo.page} / {data.pageInfo.totalPages}
+            </span>{' '}
+            // <span>{data.pageInfo.totalItems}</span> total
           </span>
         </div>
 
@@ -121,14 +147,17 @@ export function AdminPhotosGalleryPage() {
           </div>
         ) : (
           <div className="admin-photo-empty">
-            <strong>no photos found</strong>
+            <span className="admin-photo-empty__glyph" aria-hidden="true">
+              ░
+            </span>
+            <strong>no records match filters</strong>
             <span>Adjust the filters or upload a new draft.</span>
           </div>
         )}
 
         <nav className="admin-photo-pagination" aria-label="Admin photos pagination">
           <button type="button" disabled={data.pageInfo.page <= 1} onClick={() => goToPage(data.pageInfo.page - 1)}>
-            previous
+            ← previous
           </button>
           <span aria-live="polite">
             page {data.pageInfo.page} / {data.pageInfo.totalPages}
@@ -138,7 +167,7 @@ export function AdminPhotosGalleryPage() {
             disabled={data.pageInfo.page >= data.pageInfo.totalPages}
             onClick={() => goToPage(data.pageInfo.page + 1)}
           >
-            next
+            next →
           </button>
         </nav>
       </ScreenFrame>
