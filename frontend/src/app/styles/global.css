@@ -2253,6 +2253,17 @@ button {
   content: none;
 }
 
+.app-shell--admin .screen-frame:has(.admin-photo-gallery) {
+  overflow: visible;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.app-shell--admin .screen-frame:has(.admin-photo-gallery)::before {
+  content: none;
+}
+
 .app-shell--admin .signal-link,
 .app-shell--admin .action-button {
   min-height: 30px;
@@ -2870,7 +2881,7 @@ button {
 }
 
 .admin-photo-gallery {
-  max-width: 1120px;
+  width: min(100%, 1408px);
   margin: 0 auto;
 }
 
@@ -3729,5 +3740,16 @@ button {
 
   .admin-shell__channel-bug {
     right: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }

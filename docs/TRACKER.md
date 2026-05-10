@@ -25,7 +25,7 @@
 - Merge Target: develop
 
 ## Current Task
-GAL-003
+GAL-004
 
 ## Task Index
 1. GAL-001 - Rebuild Admin Gallery Frame
@@ -36,10 +36,10 @@ GAL-003
    - Status: Accepted
 3. GAL-003 - Preserve Photo Admin Workflow Regressions
    - Task File: docs/prds/PRD-004/tasks/GAL-003.md
-   - Status: Active
+   - Status: Accepted
 4. GAL-004 - Final Gallery Visual Acceptance
    - Task File: docs/prds/PRD-004/tasks/GAL-004.md
-   - Status: Todo
+   - Status: Accepted
 
 ## Tasks
 
@@ -99,17 +99,39 @@ Evidence:
 Decision Log:
 - Kept GAL-003 scoped to deterministic route/action test hardening because the existing upload and detail screens remained compatible with the GAL-001/GAL-002 gallery restyle.
 - Did not change backend contracts, entity API helper semantics, upload validation, auth behavior, media delivery, or gallery visual features.
-Commit: Pending
+Commit: be56609 PRD-004 GAL-003: harden admin photo regressions
 Blocked Reason: None
 Requested Decision: None
 
 ### GAL-004 - Final Gallery Visual Acceptance
 Task File: docs/prds/PRD-004/tasks/GAL-004.md
-Status: Todo
+Status: Accepted
 Evidence:
-- Pending
+- Started GAL-004 after GAL-003 was accepted and committed.
+- Read `docs/rules/AGENTS.md`, `supervised-workflow.md`, `prd-and-tracker.md`, `architecture.md`, `product-and-platform.md`, PRD-004, GAL-004, the active tracker, `references/vinicius.dev.v2/gallery.html`, and the Vinicius.Dev design-system skill files before reviewing the final UI.
+- Reviewed `frontend/src/pages/admin/photos/ui/AdminPhotosGalleryPage.tsx` and the scoped admin gallery CSS in `frontend/src/app/styles/global.css` for backend-connected behavior, reference parity, focus states, rectangular geometry, no emoji, no glassmorphism, approved token usage, and no fake production actions.
+- Added the required `prefers-reduced-motion: reduce` rule to `frontend/src/app/styles/global.css` so animations/transitions collapse for reduced-motion users.
+- Desktop visual pass completed in Chrome at `localhost:5173/admin/photos` against the reference: admin shell, header/upload action, filters, records panel, grid cards, list mode, badges, protected original images, and pagination matched the intended reference structure closely enough for human review.
+- Keyboard focus spot-check completed in Chrome: upload navigation, search input, status select, featured select, grid/list controls, and photo links showed visible cyan focus treatment.
+- Responsive CSS reviewed for the existing `1024px`, `880px`, `760px`, and `520px` breakpoints covering two-column/one-column gallery, stacked header, stacked filters, stacked records header, and list-card mobile layout.
+- `cd frontend && bun run test -- AdminPhotosGalleryPage.test.tsx route.test.ts` passed: 5 test files passed, 20 tests passed.
+- `cd frontend && bun run test` passed: 22 test files passed, 48 tests passed.
+- `cd frontend && bun run lint` passed with exit code 0.
+- `cd frontend && bun run build` passed: `tsc -b && vite build`, 132 modules transformed.
+- Vinicius provided screenshot feedback that the actual gallery top area still had an extra outer frame and spacing compared with the target reference.
+- Updated `frontend/src/app/styles/global.css` so the admin shell `ScreenFrame` that contains `.admin-photo-gallery` becomes transparent and unframed, matching the reference where only the filters and records panels are boxed.
+- Updated `.admin-photo-gallery` to use a `1408px` content band so the header, upload action, filters, and records panels align more closely with the target screenshot.
+- Reran `cd frontend && bun run test -- AdminPhotosGalleryPage.test.tsx route.test.ts`: 5 test files passed, 20 tests passed.
+- Reran `cd frontend && bun run lint`: passed with exit code 0.
+- Reran `cd frontend && bun run test`: 22 test files passed, 48 tests passed.
+- Reran `cd frontend && bun run build`: `tsc -b && vite build`, 132 modules transformed.
+- Vinicius accepted GAL-004 after screenshot-driven layout correction: "that is fine, task accepted".
 Decision Log:
-- Pending
-Commit: Pending
+- Kept runtime scope to the final acceptance pass; no backend, route, schema, upload, or detail redesign changes were made.
+- Did not change `AdminPhotosGalleryPage.tsx` because the current markup already preserved loader data, URL-backed filters/pagination, protected originals, upload navigation, detail navigation, and presentation-only grid/list state.
+- Used a global reduced-motion rule because the Vinicius.Dev design system requires the sitewide motion collapse pattern and the GAL-004 acceptance criteria explicitly include reduced-motion behavior.
+- Treated the screenshot mismatch as a shell/layout issue rather than a gallery behavior issue; fixed it with a gallery-specific `:has(.admin-photo-gallery)` shell-frame override so dashboard and other admin screens keep their existing shell framing.
+- Human review completed and GAL-004 accepted by Vinicius.
+Commit: ec618c4 PRD-004 GAL-004: finalize gallery visual acceptance
 Blocked Reason: None
 Requested Decision: None
