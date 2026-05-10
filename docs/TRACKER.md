@@ -25,7 +25,7 @@
 - Merge Target: develop
 
 ## Current Task
-GAL-002
+GAL-003
 
 ## Task Index
 1. GAL-001 - Rebuild Admin Gallery Frame
@@ -36,7 +36,7 @@ GAL-002
    - Status: Accepted
 3. GAL-003 - Preserve Photo Admin Workflow Regressions
    - Task File: docs/prds/PRD-004/tasks/GAL-003.md
-   - Status: Todo
+   - Status: Active
 4. GAL-004 - Final Gallery Visual Acceptance
    - Task File: docs/prds/PRD-004/tasks/GAL-004.md
    - Status: Todo
@@ -79,17 +79,26 @@ Decision Log:
 - Added a grid/list toggle as local React state only; it does not persist, mutate query params, or change the backend/API contract.
 - Kept the hover overlay honest by making the card itself the only action path to the existing detail/edit route; no delete, inline feature, inline edit, bulk action, fake mutation, or client-side filtering was added.
 - Human review completed and GAL-002 accepted by Vinicius before starting GAL-003.
-Commit: Pending
+Commit: 540d6d0 PRD-004 GAL-002: restyle gallery cards
 Blocked Reason: None
 Requested Decision: None
 
 ### GAL-003 - Preserve Photo Admin Workflow Regressions
 Task File: docs/prds/PRD-004/tasks/GAL-003.md
-Status: Todo
+Status: Accepted
 Evidence:
-- Pending
+- Started GAL-003 after Vinicius accepted GAL-002 and GAL-002 was committed.
+- Updated `frontend/src/pages/admin/photos/route.test.ts` to harden deterministic workflow coverage for admin photo query parsing into `listAdminPhotos`, including `search`, `status`, `featured=featured`, `featured=not_featured`, and `page`.
+- Added route coverage for unauthorized `/admin/photos` gallery loader redirects to `/admin/login`, preserving the existing detail unauthorized redirect coverage.
+- Expanded upload action assertions to verify `uploadAdminPhoto` receives the existing upload payload shape before redirecting to `/admin/photos/photo_1`.
+- Expanded detail action assertions to verify metadata edits call `updateAdminPhotoMetadata` with parsed tags and existing metadata fields, and curation edits call `updateAdminPhotoCuration` for publish and feature updates.
+- Preserved gallery/detail protected original URL coverage in `frontend/src/pages/admin/photos/ui/AdminPhotosGalleryPage.test.tsx`.
+- No upload/detail UI redesign or shared style changes were needed.
+- `cd frontend && bun run test -- AdminPhotosGalleryPage.test.tsx route.test.ts` passed after changes: 5 test files passed, 20 tests passed.
+- `cd frontend && bun run lint` passed with exit code 0.
 Decision Log:
-- Pending
+- Kept GAL-003 scoped to deterministic route/action test hardening because the existing upload and detail screens remained compatible with the GAL-001/GAL-002 gallery restyle.
+- Did not change backend contracts, entity API helper semantics, upload validation, auth behavior, media delivery, or gallery visual features.
 Commit: Pending
 Blocked Reason: None
 Requested Decision: None

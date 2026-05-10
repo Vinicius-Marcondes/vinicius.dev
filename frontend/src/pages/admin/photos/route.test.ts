@@ -58,21 +58,23 @@ const photoItem = {
   updatedAt: '2026-04-28T12:00:00.000Z',
 } as const
 
+const listResponse = {
+  items: [photoItem],
+  pageInfo: {
+    page: 2,
+    pageSize: 20,
+    totalItems: 21,
+    totalPages: 2,
+  },
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
 })
 
 describe('admin photo routes', () => {
-  it('loads private gallery filters from the URL', async () => {
-    mocks.listAdminPhotos.mockResolvedValueOnce({
-      items: [photoItem],
-      pageInfo: {
-        page: 2,
-        pageSize: 20,
-        totalItems: 21,
-        totalPages: 2,
-      },
-    })
+  it('maps private gallery query values into listAdminPhotos', async () => {
+    mocks.listAdminPhotos.mockResolvedValueOnce(listResponse)
 
     const result = await adminPhotosLoader(
       routeArgs(new Request('http://localhost/admin/photos?status=draft&featured=featured&search=night&page=2')),
@@ -95,6 +97,40 @@ describe('admin photo routes', () => {
       },
       items: [photoItem],
     })
+
+    mocks.listAdminPhotos.mockResolvedValueOnce(listResponse)
+
+    const hiddenResult = await adminPhotosLoader(
+      routeArgs(
+        new Request('http://localhost/admin/photos?status=published&featured=not_featured&search=%20street%20&page=3'),
+      ),
+    )
+
+    expect(mocks.listAdminPhotos).toHaveBeenLastCalledWith(
+      {
+        featured: false,
+        page: 3,
+        search: 'street',
+        status: 'published',
+      },
+      expect.any(AbortSignal),
+    )
+    expect(hiddenResult).toMatchObject({
+      filters: {
+        featured: 'not_featured',
+        search: 'street',
+        status: 'published',
+      },
+      items: [photoItem],
+    })
+  })
+
+  it('redirects unauthorized gallery loads to admin login', async () => {
+    mocks.listAdminPhotos.mockRejectedValueOnce(new ApiRequestError(401, { error: 'denied' }))
+
+    const result = await adminPhotosLoader(routeArgs(new Request('http://localhost/admin/photos')))
+
+    expect((result as Response).headers.get('location')).toBe('/admin/login')
   })
 
   it('loads a private photo detail and protected original URL', async () => {
@@ -144,10 +180,22 @@ describe('admin photo routes', () => {
       } as unknown as Request),
     )
 
+    expect(mocks.uploadAdminPhoto).toHaveBeenCalledWith({
+      camera: undefined,
+      caption: undefined,
+      date: photoItem.date,
+      file,
+      film: undefined,
+      frame: photoItem.frame,
+      location: photoItem.location,
+      tags: [],
+      title: photoItem.title,
+      tone: photoItem.tone,
+    })
     expect((result as Response).headers.get('location')).toBe('/admin/photos/photo_1')
   })
 
-  it('submits detail metadata and curation actions', async () => {
+  it('submits detail metadata actions through the existing handler', async () => {
     mocks.updateAdminPhotoMetadata.mockResolvedValueOnce({ item: photoItem })
     const metadata = new FormData()
     metadata.set('intent', 'update_metadata')
@@ -157,6 +205,10 @@ describe('admin photo routes', () => {
     metadata.set('date', photoItem.date)
     metadata.set('location', photoItem.location)
     metadata.set('tone', photoItem.tone)
+    metadata.set('tags', 'night, street, ')
+    metadata.set('caption', photoItem.caption)
+    metadata.set('camera', photoItem.camera)
+    metadata.set('film', photoItem.film)
 
     await expect(
       adminPhotoDetailAction(
@@ -173,6 +225,21 @@ describe('admin photo routes', () => {
       status: 'success',
     })
 
+    expect(mocks.updateAdminPhotoMetadata).toHaveBeenCalledWith({
+      camera: photoItem.camera,
+      caption: photoItem.caption,
+      date: photoItem.date,
+      film: photoItem.film,
+      frame: photoItem.frame,
+      id: photoItem.id,
+      location: photoItem.location,
+      tags: ['night', 'street'],
+      title: photoItem.title,
+      tone: photoItem.tone,
+    })
+  })
+
+  it('submits detail curation actions through the existing handler', async () => {
     mocks.updateAdminPhotoCuration.mockResolvedValueOnce({ item: photoItem })
     const curation = new FormData()
     curation.set('intent', 'update_curation')
@@ -192,6 +259,39 @@ describe('admin photo routes', () => {
     ).resolves.toMatchObject({
       intent: 'update_curation',
       status: 'success',
+    })
+
+    expect(mocks.updateAdminPhotoCuration).toHaveBeenLastCalledWith({
+      featured: undefined,
+      id: photoItem.id,
+      status: 'published',
+    })
+
+    mocks.updateAdminPhotoCuration.mockResolvedValueOnce({ item: photoItem })
+    const feature = new FormData()
+    feature.set('intent', 'update_curation')
+    feature.set('photoId', photoItem.id)
+    feature.set('featured', 'true')
+
+    await expect(
+      adminPhotoDetailAction(
+        routeArgs(
+          new Request('http://localhost/admin/photos/photo_1', {
+            body: feature,
+            method: 'POST',
+          }),
+          { id: photoItem.id },
+        ),
+      ),
+    ).resolves.toMatchObject({
+      intent: 'update_curation',
+      status: 'success',
+    })
+
+    expect(mocks.updateAdminPhotoCuration).toHaveBeenLastCalledWith({
+      featured: true,
+      id: photoItem.id,
+      status: undefined,
     })
   })
 })
