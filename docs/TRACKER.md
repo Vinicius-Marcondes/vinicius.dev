@@ -39,7 +39,7 @@ CI-004
    - Status: Accepted
 4. CI-004 - Confirm remote CI acceptance
    - Task File: docs/prds/PRD-003/tasks/CI-004.md
-   - Status: Blocked
+   - Status: Accepted
 
 ## Tasks
 
@@ -108,19 +108,22 @@ Requested Decision: None
 
 ### CI-004 - Confirm remote CI acceptance
 Task File: docs/prds/PRD-003/tasks/CI-004.md
-Status: Blocked
+Status: Accepted
 Evidence:
-- Started CI-004 only; Review Mode is Human and this task is stopped uncommitted for coordinator/Vinicius review.
-- Current local branch confirmed as `feature/PRD-003-ci-validation-reliability`; local HEAD is `324ff10`.
-- `gh pr list --state all --head feature/PRD-003-ci-validation-reliability --json number,url,state,headRefName,baseRefName,title,updatedAt,isDraft,statusCheckRollup` - returned `[]`; no GitHub PR exists for this branch in open, closed, or merged state.
-- `gh api repos/Vinicius-Marcondes/vinicius.dev/git/ref/heads/feature%2FPRD-003-ci-validation-reliability --jq '{ref: .ref, sha: .object.sha, url: .url}'` - failed with `HTTP 404 Not Found`; the PRD branch is not present as a remote GitHub branch ref.
-- `gh run list --workflow pr-validation.yml --branch feature/PRD-003-ci-validation-reliability --limit 10 --json databaseId,displayTitle,event,headBranch,headSha,status,conclusion,createdAt,updatedAt,url,workflowName` - returned `[]`; no remote `pr-validation` run exists for the PRD branch.
-- Inspected `.github/workflows/production-deploy.yml`: production deployment triggers are limited to `push` tags matching `v*` and `workflow_dispatch` with a required `tag` input; both `preflight` and `deploy-production` jobs also guard execution to pushed `refs/tags/v*` or manual dispatch. Normal branch pushes do not trigger production deployment.
-- Post-merge `branch-validation` on `develop` was not marked complete because there is no PRD branch PR, no remote branch ref, and no PRD merge to `develop`; the relevant post-merge `develop` run does not exist yet.
+- Started CI-004 after Vinicius confirmed the PRD branch was ready for remote CI follow-up.
+- PR #157 `PRD-003: CI validation reliability` was merged into `develop` at merge commit `19a0f48a4a152724dfba0a8b1df3ee319a2a68ec` on 2026-05-10.
+- GitHub PR validation run `25632152737` (`https://github.com/Vinicius-Marcondes/vinicius.dev/actions/runs/25632152737`) completed with conclusion `success` for head SHA `a417f7c7259c1c967635ff5e56e65e02c1a7f5ed`.
+- PR validation job `frontend validation` completed with conclusion `success`; steps included frontend dependency install, lint, build, and tests.
+- PR validation job `backend verify` completed with conclusion `success`; steps included backend dependency install, Prisma generation, typecheck, tests, and backend verification.
+- PR validation job `backend DB contracts` completed with conclusion `success`; steps included Postgres service initialization, migrations, Prisma generation, and DB contract tests.
+- Inspected `.github/workflows/production-deploy.yml`: production deployment triggers are limited to `push` tags matching `v*` and `workflow_dispatch` with a required `tag` input; both `preflight` and `deploy-production` jobs guard execution to pushed `refs/tags/v*` or manual dispatch. Normal branch pushes do not trigger production deployment.
+- GitHub branch-validation run `25632171393` (`https://github.com/Vinicius-Marcondes/vinicius.dev/actions/runs/25632171393`) ran on `develop` for merge commit `19a0f48a4a152724dfba0a8b1df3ee319a2a68ec`, completed with conclusion `success`, and recorded run number `54`.
+- Branch-validation job `Frontend Validation` completed with conclusion `success`; steps included dependency install, lint, build, and tests.
+- Branch-validation job `Backend Validation` completed with conclusion `success`; steps included dependency install, Prisma generation, typecheck, tests, and verify policy checks.
 Decision Log:
-- Remote PR validation acceptance cannot proceed in the current state because CI-004 is not allowed to push the branch or open a PR, and GitHub has no remote branch ref, PR, or `pr-validation` run to inspect.
-- Production deployment trigger policy is confirmed as tag-only plus manual dispatch; no workflow change was needed.
-- Develop branch-validation acceptance remains pending post-merge by task rule and was not treated as complete.
+- Remote PR validation, production deployment trigger policy, and post-merge `develop` branch-validation evidence are all now present and passing.
+- No implementation, workflow, release, or deployment changes were made during CI-004.
+- PRD status remains `Active` until Vinicius explicitly accepts the full PRD implementation.
 Commit: Pending
-Blocked Reason: No pushed PRD branch, PR, or remote `pr-validation` run exists for `feature/PRD-003-ci-validation-reliability`, so the required GitHub PR validation evidence cannot be confirmed inside CI-004 without performing excluded push/PR actions.
-Requested Decision: Vinicius/coordinator should decide whether to separately push/open the PRD branch and rerun CI-004 after GitHub Actions completes, or explicitly accept the documented pending remote PR/develop validation state as an exception.
+Blocked Reason: None
+Requested Decision: None
