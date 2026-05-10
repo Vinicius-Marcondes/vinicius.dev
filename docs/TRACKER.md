@@ -25,7 +25,7 @@
 - Merge Target: develop
 
 ## Current Task
-CI-002
+CI-003
 
 ## Task Index
 1. CI-001 - Repair chat media test fixture
@@ -36,7 +36,7 @@ CI-002
    - Status: Accepted
 3. CI-003 - Run full local validation sweep
    - Task File: docs/prds/PRD-003/tasks/CI-003.md
-   - Status: Todo
+   - Status: Accepted
 4. CI-004 - Confirm remote CI acceptance
    - Task File: docs/prds/PRD-003/tasks/CI-004.md
    - Status: Todo
@@ -87,11 +87,21 @@ Requested Decision: None
 
 ### CI-003 - Run full local validation sweep
 Task File: docs/prds/PRD-003/tasks/CI-003.md
-Status: Todo
+Status: Accepted
 Evidence:
-- Pending
+- Started CI-003 only; updated `Current Task` from CI-002 to CI-003 and kept CI-004 Todo.
+- `cd frontend && bun run lint` - passed.
+- `cd frontend && bun run build` - passed: `tsc -b && vite build`, 132 modules transformed, production build completed.
+- `cd frontend && bun run test` - passed: 22 test files, 44 tests.
+- `cd backend && bun run typecheck` - passed.
+- `cd backend && bun run test` - sandbox run failed only on the two WebSocket route tests when `Bun.serve` could not bind local test ports 38711 and 38712, both reporting `EADDRINUSE`.
+- `cd backend && bun run test` - unsandboxed rerun passed: 225 tests, 0 failed, 667 expectations.
+- `cd backend && bun run verify` - sandbox run reached persistence verification; Prisma migration status could not reach the configured local Postgres database from the sandbox and was skipped by the script, then media verification failed on the same WebSocket `Bun.serve` local-port binding issue for ports 38711 and 38712.
+- `cd backend && bun run verify` - unsandboxed rerun passed: persistence verification, media verification, public routes/content verification, admin/auth/chat/media integration verification, and deploy/readiness checks.
 Decision Log:
-- Pending
+- No validation command was weakened, removed, or replaced to make the local sweep pass.
+- Treated the backend sandbox failures as environment-specific local server/database access limitations because the same required backend commands passed outside the sandbox and no implementation files changed.
+- CI-003 acceptance is based on the deterministic required command sequence passing locally with the documented sandbox reruns; CI-004 remains Todo and was not started.
 Commit: Pending
 Blocked Reason: None
 Requested Decision: None
