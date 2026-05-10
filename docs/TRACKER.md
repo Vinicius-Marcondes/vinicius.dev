@@ -25,7 +25,7 @@
 - Merge Target: develop
 
 ## Current Task
-CI-003
+CI-004
 
 ## Task Index
 1. CI-001 - Repair chat media test fixture
@@ -39,7 +39,7 @@ CI-003
    - Status: Accepted
 4. CI-004 - Confirm remote CI acceptance
    - Task File: docs/prds/PRD-003/tasks/CI-004.md
-   - Status: Todo
+   - Status: Blocked
 
 ## Tasks
 
@@ -57,7 +57,7 @@ Decision Log:
 - Keep the change scoped to the chat runtime test fixture because `getChatAttachmentObjectUrl` already consumes `response.blob()` and does not require a real `Response` instance for the success path.
 - Replaced the protected-media `new Response(new Blob(...))` fixture with a runner-stable object exposing `blob()`, `headers`, `ok`, and `status`.
 - Preserved protected media URL coverage, verified the chat room session header on the media request, and verified `URL.createObjectURL` receives the returned blob while `getChatAttachmentObjectUrl` surfaces the object URL.
-Commit: Pending
+Commit: a911fd1 PRD-003 CI-001: repair chat media test fixture
 Blocked Reason: None
 Requested Decision: None
 
@@ -81,7 +81,7 @@ Decision Log:
 - Added workflow-level `BUN_VERSION: 1.3.11` to `.github/workflows/branch-validation.yml` to match PR validation style and frontend package metadata.
 - Applied the pin to both branch-validation `oven-sh/setup-bun@v2` steps without changing branch triggers or validation commands.
 - Treated the backend sandbox `EADDRINUSE` failures as environment-specific local server binding failures because the same required commands passed outside the sandbox and PRD-003 already documents this backend test behavior.
-Commit: Pending
+Commit: 2bab514 PRD-003 CI-002: pin branch validation Bun version
 Blocked Reason: None
 Requested Decision: None
 
@@ -102,17 +102,25 @@ Decision Log:
 - No validation command was weakened, removed, or replaced to make the local sweep pass.
 - Treated the backend sandbox failures as environment-specific local server/database access limitations because the same required backend commands passed outside the sandbox and no implementation files changed.
 - CI-003 acceptance is based on the deterministic required command sequence passing locally with the documented sandbox reruns; CI-004 remains Todo and was not started.
-Commit: Pending
+Commit: 324ff10 PRD-003 CI-003: record local validation sweep
 Blocked Reason: None
 Requested Decision: None
 
 ### CI-004 - Confirm remote CI acceptance
 Task File: docs/prds/PRD-003/tasks/CI-004.md
-Status: Todo
+Status: Blocked
 Evidence:
-- Pending
+- Started CI-004 only; Review Mode is Human and this task is stopped uncommitted for coordinator/Vinicius review.
+- Current local branch confirmed as `feature/PRD-003-ci-validation-reliability`; local HEAD is `324ff10`.
+- `gh pr list --state all --head feature/PRD-003-ci-validation-reliability --json number,url,state,headRefName,baseRefName,title,updatedAt,isDraft,statusCheckRollup` - returned `[]`; no GitHub PR exists for this branch in open, closed, or merged state.
+- `gh api repos/Vinicius-Marcondes/vinicius.dev/git/ref/heads/feature%2FPRD-003-ci-validation-reliability --jq '{ref: .ref, sha: .object.sha, url: .url}'` - failed with `HTTP 404 Not Found`; the PRD branch is not present as a remote GitHub branch ref.
+- `gh run list --workflow pr-validation.yml --branch feature/PRD-003-ci-validation-reliability --limit 10 --json databaseId,displayTitle,event,headBranch,headSha,status,conclusion,createdAt,updatedAt,url,workflowName` - returned `[]`; no remote `pr-validation` run exists for the PRD branch.
+- Inspected `.github/workflows/production-deploy.yml`: production deployment triggers are limited to `push` tags matching `v*` and `workflow_dispatch` with a required `tag` input; both `preflight` and `deploy-production` jobs also guard execution to pushed `refs/tags/v*` or manual dispatch. Normal branch pushes do not trigger production deployment.
+- Post-merge `branch-validation` on `develop` was not marked complete because there is no PRD branch PR, no remote branch ref, and no PRD merge to `develop`; the relevant post-merge `develop` run does not exist yet.
 Decision Log:
-- Pending
+- Remote PR validation acceptance cannot proceed in the current state because CI-004 is not allowed to push the branch or open a PR, and GitHub has no remote branch ref, PR, or `pr-validation` run to inspect.
+- Production deployment trigger policy is confirmed as tag-only plus manual dispatch; no workflow change was needed.
+- Develop branch-validation acceptance remains pending post-merge by task rule and was not treated as complete.
 Commit: Pending
-Blocked Reason: None
-Requested Decision: None
+Blocked Reason: No pushed PRD branch, PR, or remote `pr-validation` run exists for `feature/PRD-003-ci-validation-reliability`, so the required GitHub PR validation evidence cannot be confirmed inside CI-004 without performing excluded push/PR actions.
+Requested Decision: Vinicius/coordinator should decide whether to separately push/open the PRD branch and rerun CI-004 after GitHub Actions completes, or explicitly accept the documented pending remote PR/develop validation state as an exception.
