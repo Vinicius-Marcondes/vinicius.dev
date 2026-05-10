@@ -25,7 +25,7 @@
 - Merge Target: develop
 
 ## Current Task
-GAL-001
+GAL-002
 
 ## Task Index
 1. GAL-001 - Rebuild Admin Gallery Frame
@@ -33,7 +33,7 @@ GAL-001
    - Status: Accepted
 2. GAL-002 - Restyle Gallery Cards And Presentation Controls
    - Task File: docs/prds/PRD-004/tasks/GAL-002.md
-   - Status: Todo
+   - Status: Accepted
 3. GAL-003 - Preserve Photo Admin Workflow Regressions
    - Task File: docs/prds/PRD-004/tasks/GAL-003.md
    - Status: Todo
@@ -59,17 +59,26 @@ Decision Log:
 - Omitted reference-only view toggle, hover overlays, fake mutations, delete, and client-side filtering because they are explicitly outside GAL-001 scope.
 - Kept the upload action implemented through existing `ActionButton` and `/admin/photos/upload` navigation.
 - Human review completed and GAL-001 accepted by Vinicius before starting GAL-002.
-Commit: 1e42be3 PRD-004 GAL-001: rebuild admin gallery frame
+Commit: e673f27 PRD-004 GAL-001: rebuild admin gallery frame
 Blocked Reason: None
 Requested Decision: None
 
 ### GAL-002 - Restyle Gallery Cards And Presentation Controls
 Task File: docs/prds/PRD-004/tasks/GAL-002.md
-Status: Todo
+Status: Accepted
 Evidence:
-- Pending
+- Started GAL-002 after Vinicius accepted GAL-001 and GAL-001 was committed.
+- Updated `frontend/src/pages/admin/photos/ui/AdminPhotosGalleryPage.tsx` to restyle loader-backed records as reference-style cards with rectangular image frames, CRT hover overlay, title/meta blocks, status badges, optional featured badge, file-size display, and a local presentation-only grid/list toggle.
+- Preserved `useLoaderData`, URL-backed filter/pagination helpers, `getAdminPhotoOriginalUrl(photo.id)`, upload navigation to `/admin/photos/upload`, and detail navigation to `/admin/photos/:id` with `state.from`.
+- Updated `frontend/src/pages/admin/photos/ui/AdminPhotosGalleryPage.test.tsx` to assert protected original URLs, upload/detail navigation, `state.from`, local grid/list toggle state, unchanged query state, URL-backed filters, and pagination behavior.
+- Updated `frontend/src/app/styles/global.css` with scoped admin gallery card, badge, hover overlay, empty-state, pagination, and grid/list presentation styles.
+- `cd frontend && bun run test -- AdminPhotosGalleryPage.test.tsx` passed: 1 test file passed, 5 tests passed.
+- `cd frontend && bun run lint` passed with exit code 0.
+- Vinicius accepted GAL-002 after review: "GAl-002 is fine, continue with GAL-003".
 Decision Log:
-- Pending
+- Added a grid/list toggle as local React state only; it does not persist, mutate query params, or change the backend/API contract.
+- Kept the hover overlay honest by making the card itself the only action path to the existing detail/edit route; no delete, inline feature, inline edit, bulk action, fake mutation, or client-side filtering was added.
+- Human review completed and GAL-002 accepted by Vinicius before starting GAL-003.
 Commit: Pending
 Blocked Reason: None
 Requested Decision: None

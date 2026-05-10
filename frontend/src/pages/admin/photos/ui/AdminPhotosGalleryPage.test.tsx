@@ -53,22 +53,44 @@ afterEach(() => {
 
 describe('admin photo split screens', () => {
   it('renders private gallery cards and upload navigation', async () => {
+    const user = userEvent.setup()
     const router = createMemoryRouter([
       {
         element: <AdminPhotosGalleryPage />,
         loader: ({ request }) => createGalleryLoaderData(request),
         path: '/admin/photos',
       },
+      {
+        element: <div>photo detail route</div>,
+        path: '/admin/photos/:id',
+      },
     ], {
-      initialEntries: ['/admin/photos'],
+      initialEntries: ['/admin/photos?page=2&status=draft'],
     })
 
     render(<RouterProvider router={router} />)
 
     expect(await screen.findByRole('heading', { name: 'private gallery' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /upload photo/i })).toHaveAttribute('href', '/admin/photos/upload')
-    expect(screen.getByRole('link', { name: /paulista at 02:14/i })).toHaveAttribute('href', '/admin/photos/photo_1')
+    const photoLink = screen.getByRole('link', { name: /paulista at 02:14/i })
+    expect(photoLink).toHaveAttribute('href', '/admin/photos/photo_1')
     expect(screen.getByAltText('paulista at 02:14')).toHaveAttribute('src', '/api/admin/photos/photo_1/original')
+
+    const gridView = screen.getByRole('button', { name: /grid view/i })
+    const listView = screen.getByRole('button', { name: /list view/i })
+    expect(gridView).toHaveAttribute('aria-pressed', 'true')
+    expect(listView).toHaveAttribute('aria-pressed', 'false')
+
+    await user.click(listView)
+
+    expect(gridView).toHaveAttribute('aria-pressed', 'false')
+    expect(listView).toHaveAttribute('aria-pressed', 'true')
+    expect(router.state.location.search).toBe('?page=2&status=draft')
+
+    await user.click(photoLink)
+
+    expect(router.state.location.pathname).toBe('/admin/photos/photo_1')
+    expect(router.state.location.state).toEqual({ from: '/admin/photos?page=2&status=draft' })
   })
 
   it('keeps filters backed by query string state and resets page', async () => {
