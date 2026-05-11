@@ -1,10 +1,11 @@
-import { useEffect, useState, type ChangeEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent, type KeyboardEvent } from 'react'
 import { Form, useActionData, useNavigation } from 'react-router-dom'
 import { ActionButton, InlineLabel, ScreenFrame, Stack } from '../../../../shared/ui'
 import type { PhotoTone } from '../../../../entities/photo'
 import type { AdminPhotosActionData } from '../model/types'
 
 const tones: PhotoTone[] = ['amber', 'cyan', 'mono', 'sunset', 'violet']
+const acceptedFileTypes = ['image/jpeg', 'image/png', 'image/webp']
 
 function formatFileSize(size: number) {
   if (size < 1024) {
@@ -21,29 +22,99 @@ function formatFileSize(size: number) {
 export function AdminPhotoUploadPage() {
   const actionData = useActionData() as AdminPhotosActionData | undefined
   const navigation = useNavigation()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const previewObjectUrlRef = useRef<string | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [selectedFile, setSelectedFile] = useState<{ name: string; size: number } | null>(null)
+  const [isDragActive, setIsDragActive] = useState(false)
+  const [tagChips, setTagChips] = useState<string[]>([])
+  const [tagDraft, setTagDraft] = useState('')
   const isSubmitting = navigation.state === 'submitting'
+  const serializedTags = [...tagChips, tagDraft.trim()].filter(Boolean).join(', ')
 
   useEffect(() => {
     return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl)
+      if (previewObjectUrlRef.current) {
+        URL.revokeObjectURL(previewObjectUrlRef.current)
       }
     }
-  }, [previewUrl])
+  }, [])
 
-  const handlePreview = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+  const setFilePreview = useCallback((file: File | null) => {
+    if (previewObjectUrlRef.current) {
+      URL.revokeObjectURL(previewObjectUrlRef.current)
+      previewObjectUrlRef.current = null
+    }
+
     setSelectedFile(file ? { name: file.name, size: file.size } : null)
 
-    setPreviewUrl((current) => {
-      if (current) {
-        URL.revokeObjectURL(current)
-      }
+    if (!file) {
+      setPreviewUrl(null)
+      return
+    }
 
-      return file ? URL.createObjectURL(file) : null
-    })
+    const nextPreviewUrl = URL.createObjectURL(file)
+    previewObjectUrlRef.current = nextPreviewUrl
+    setPreviewUrl(nextPreviewUrl)
+  }, [])
+
+  const handlePreview = (event: ChangeEvent<HTMLInputElement>) => {
+    setFilePreview(event.target.files?.[0] ?? null)
+  }
+
+  const handleDragOver = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault()
+    if (event.dataTransfer.types.includes('Files')) {
+      setIsDragActive(true)
+    }
+  }
+
+  const handleDragLeave = () => {
+    setIsDragActive(false)
+  }
+
+  const handleDrop = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault()
+    setIsDragActive(false)
+
+    const file = Array.from(event.dataTransfer.files).find((item) => acceptedFileTypes.includes(item.type))
+    const input = fileInputRef.current
+
+    if (!file || !input) {
+      return
+    }
+
+    const transfer = new DataTransfer()
+    transfer.items.add(file)
+    input.files = transfer.files
+    setFilePreview(file)
+  }
+
+  const addTag = useCallback((value: string) => {
+    const nextTag = value.replace(',', '').trim()
+
+    if (!nextTag) {
+      return
+    }
+
+    setTagChips((current) => (current.includes(nextTag) ? current : [...current, nextTag]))
+    setTagDraft('')
+  }, [])
+
+  const handleTagKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if ((event.key === 'Enter' || event.key === ',') && tagDraft.trim()) {
+      event.preventDefault()
+      addTag(tagDraft)
+    }
+
+    if (event.key === 'Backspace' && !tagDraft && tagChips.length > 0) {
+      event.preventDefault()
+      setTagChips((current) => current.slice(0, -1))
+    }
+  }
+
+  const removeTag = (tagToRemove: string) => {
+    setTagChips((current) => current.filter((tag) => tag !== tagToRemove))
   }
 
   return (
@@ -70,12 +141,23 @@ export function AdminPhotoUploadPage() {
               <h3 id="photo-upload-media" className="sr-only">
                 upload media
               </h3>
-              <label className="admin-photo-upload__drop-zone">
+              <label
+                className={
+                  isDragActive
+                    ? 'admin-photo-upload__drop-zone admin-photo-upload__drop-zone--active'
+                    : 'admin-photo-upload__drop-zone'
+                }
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
                 <input
+                  ref={fileInputRef}
                   name="file"
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
                   aria-label="file"
+                  aria-describedby="photo-upload-file-hint"
                   onChange={handlePreview}
                   required
                 />
@@ -95,7 +177,9 @@ export function AdminPhotoUploadPage() {
                       ▒
                     </span>
                     <span className="admin-photo-upload__drop-label">drop image here</span>
-                    <span className="admin-photo-upload__drop-hint">// jpeg · png · webp</span>
+                    <span id="photo-upload-file-hint" className="admin-photo-upload__drop-hint">
+                      // jpeg · png · webp
+                    </span>
                   </span>
                 )}
               </label>
@@ -108,7 +192,12 @@ export function AdminPhotoUploadPage() {
                 </span>
               </div>
 
-              {actionData?.intent === 'upload_photo' ? (
+              {isSubmitting ? (
+                <p className="admin-photo-upload__status" role="status">
+                  <span aria-hidden="true">►</span>
+                  processing draft...
+                </p>
+              ) : actionData?.intent === 'upload_photo' ? (
                 <p
                   className={
                     actionData.status === 'error'
@@ -194,15 +283,31 @@ export function AdminPhotoUploadPage() {
               <div className="admin-photo-upload__section">
                 <div className="admin-photo-upload__section-label">// tags &amp; caption</div>
                 <div className="admin-photo-upload__field-stack">
-                  <label className="admin-photo-upload__field">
-                    <span className="admin-photo-upload__field-label">
+                  <div className="admin-photo-upload__field">
+                    <label className="admin-photo-upload__field-label" htmlFor="photo-upload-tags">
                       tags <span className="admin-photo-upload__optional">// comma list</span>
-                    </span>
+                    </label>
                     <span className="admin-photo-upload__input-wrap admin-photo-upload__input-wrap--tags">
-                      <input name="tags" placeholder="street, night" />
+                      <input type="hidden" name="tags" value={serializedTags} />
+                      {tagChips.map((tag) => (
+                        <span key={tag} className="admin-photo-upload__tag-chip">
+                          {tag}
+                          <button type="button" aria-label={`remove ${tag} tag`} onClick={() => removeTag(tag)}>
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                      <input
+                        id="photo-upload-tags"
+                        value={tagDraft}
+                        placeholder={tagChips.length > 0 ? 'add more' : 'street, night'}
+                        onBlur={() => addTag(tagDraft)}
+                        onChange={(event) => setTagDraft(event.target.value)}
+                        onKeyDown={handleTagKeyDown}
+                      />
                     </span>
                     <span className="admin-photo-upload__hint">// saved as comma-delimited tags</span>
-                  </label>
+                  </div>
 
                   <label className="admin-photo-upload__field">
                     <span className="admin-photo-upload__field-label">caption</span>

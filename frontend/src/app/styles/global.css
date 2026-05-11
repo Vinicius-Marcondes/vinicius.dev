@@ -3569,7 +3569,8 @@ button {
 }
 
 .admin-photo-upload__drop-zone:hover,
-.admin-photo-upload__drop-zone:focus-within {
+.admin-photo-upload__drop-zone:focus-within,
+.admin-photo-upload__drop-zone--active {
   border-color: var(--neon-cyan);
   box-shadow: var(--glow-cyan);
 }
@@ -3856,6 +3857,7 @@ button {
 .admin-photo-upload__tag-chip {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   min-height: 24px;
   border: 1px solid var(--line-2);
   background: var(--bg-2);
@@ -3863,6 +3865,28 @@ button {
   padding: 3px 8px;
   font-size: 11px;
   letter-spacing: 0.08em;
+}
+
+.admin-photo-upload__tag-chip button {
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg-3);
+  cursor: pointer;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.admin-photo-upload__tag-chip button:hover:not(:disabled),
+.admin-photo-upload__tag-chip button:focus-visible {
+  color: var(--neon-pink);
+}
+
+.admin-photo-upload__tag-chip button:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 2px;
 }
 
 .admin-photo-upload__hint {

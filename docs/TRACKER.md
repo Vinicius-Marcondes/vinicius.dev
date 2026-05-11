@@ -25,7 +25,7 @@
 - Merge Target: develop
 
 ## Current Task
-UPL-001
+UPL-002
 
 ## Task Index
 1. UPL-001 - Build Reference Upload Screen
@@ -33,7 +33,7 @@ UPL-001
    - Status: Accepted
 2. UPL-002 - Preserve Upload Contract Interactions
    - Task File: docs/prds/PRD-005/tasks/UPL-002.md
-   - Status: Todo
+   - Status: Accepted
 3. UPL-003 - Add Upload Regression Coverage
    - Task File: docs/prds/PRD-005/tasks/UPL-003.md
    - Status: Todo
@@ -65,18 +65,32 @@ Decision Log:
 - Added an admin shell frame exemption for the upload route to match the open reference layout while preserving framed drop-zone and metadata panels.
 - Scoped the header spacing override to `:has(.admin-photo-upload__header)` so other admin screens keep their existing shell layout.
 - Vinicius accepted UPL-001 after visual review and follow-up fixes for the outer page frame and header spacing.
-Commit: Pending
+Commit: 154f98d PRD-005 UPL-001: build reference upload screen
 Blocked Reason: None
 Requested Decision: None
 
 ### UPL-002 - Preserve Upload Contract Interactions
 Task File: docs/prds/PRD-005/tasks/UPL-002.md
-Status: Todo
+Status: Accepted
 Evidence:
-- Pending
+- Started UPL-002 after reading required repo rules, PRD-005, tracker, task file, and Vinicius.Dev design-system guidance.
+- Updated `frontend/src/pages/admin/photos/ui/AdminPhotoUploadPage.tsx` so file selection and replacement keep preview/file metadata in sync with the native production `file` input and revoke object URLs on replacement and unmount.
+- Added drag/drop handling that accepts only the existing upload MIME types and writes the dropped file back to the same production file input via `DataTransfer`.
+- Preserved the React Router `<Form method="post" encType="multipart/form-data">`, hidden `intent=upload_photo`, and existing field names: `file`, `title`, `frame`, `date`, `location`, `tone`, `tags`, `caption`, `camera`, and `film`.
+- Kept the tone selector radio-backed with only the supported values: `amber`, `cyan`, `mono`, `sunset`, and `violet`.
+- Added keyboard-accessible tag chips backed by a hidden `tags` field that serializes the submitted value as backend-compatible comma-delimited text.
+- Mapped React Router submitting state into the upload status area while keeping upload action errors rendered only when `actionData.intent === 'upload_photo'`.
+- Updated `frontend/src/app/styles/global.css` for drag-active drop-zone styling and accessible tag-chip removal controls.
+- Updated `frontend/src/pages/admin/photos/ui/AdminPhotosGalleryPage.test.tsx` to cover form attributes/field names, selected-file preview, replacement metadata, object URL cleanup, tone exclusivity/values, and comma-delimited tag submission.
+- `cd frontend && bun run test -- src/pages/admin/photos/ui/AdminPhotosGalleryPage.test.tsx` passed: 1 test file passed, 5 tests passed.
+- `cd frontend && bun run lint` passed with exit code 0.
+- `cd frontend && bun run build` passed: `tsc -b && vite build`, 132 modules transformed.
 Decision Log:
-- Pending
-Commit: Pending
+- Scope stayed limited to UPL-002 interaction behavior, scoped upload styles, focused test coverage, and tracker execution state.
+- Drag/drop was implemented because it can update the same native file input used by the production form; standard keyboard/file-picker selection remains available.
+- Tags use a hidden submitted `tags` input plus visible keyboard chips so enhanced entry does not change the backend comma-delimited contract.
+- No backend action, endpoint, Prisma, storage, auth, gallery, or detail editor behavior was changed.
+Commit: b2c253e PRD-005 UPL-002: preserve upload contract interactions
 Blocked Reason: None
 Requested Decision: None
 
