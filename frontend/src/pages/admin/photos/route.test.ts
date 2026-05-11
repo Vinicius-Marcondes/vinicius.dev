@@ -68,6 +68,35 @@ const listResponse = {
   },
 }
 
+const createUploadRequest = (fields: Map<string, string | File>) =>
+  ({
+    formData: async () => ({
+      get: (field: string) => fields.get(field) ?? null,
+    }),
+    signal: new AbortController().signal,
+    url: 'http://localhost/admin/photos/upload',
+  }) as unknown as Request
+
+const createUploadFields = (file?: File) => {
+  const fields = new Map<string, string | File>([
+    ['intent', 'upload_photo'],
+    ['title', photoItem.title],
+    ['frame', photoItem.frame],
+    ['date', photoItem.date],
+    ['location', photoItem.location],
+    ['tone', photoItem.tone],
+  ])
+
+  if (file) {
+    fields.set('file', file)
+  }
+
+  return fields
+}
+
+const createJpegFile = () =>
+  new File([new Uint8Array([0xff, 0xd8, 0xff])], 'photo.jpg', { type: 'image/jpeg' })
+
 beforeEach(() => {
   vi.clearAllMocks()
 })
@@ -159,40 +188,62 @@ describe('admin photo routes', () => {
 
   it('redirects successful uploads to the new detail page', async () => {
     mocks.uploadAdminPhoto.mockResolvedValueOnce({ item: photoItem })
-    const file = new File([new Uint8Array([0xff, 0xd8, 0xff])], 'photo.jpg', { type: 'image/jpeg' })
-    const fields = new Map<string, string | File>([
-      ['intent', 'upload_photo'],
-      ['title', photoItem.title],
-      ['frame', photoItem.frame],
-      ['date', photoItem.date],
-      ['location', photoItem.location],
-      ['tone', photoItem.tone],
-      ['file', file],
-    ])
+    const file = createJpegFile()
+    const fields = createUploadFields(file)
+    fields.set('tags', 'night, street, ')
+    fields.set('caption', photoItem.caption)
+    fields.set('camera', photoItem.camera)
+    fields.set('film', photoItem.film)
 
     const result = await adminPhotoUploadAction(
-      routeArgs({
-        formData: async () => ({
-          get: (field: string) => fields.get(field) ?? null,
-        }),
-        signal: new AbortController().signal,
-        url: 'http://localhost/admin/photos/upload',
-      } as unknown as Request),
+      routeArgs(createUploadRequest(fields)),
     )
 
     expect(mocks.uploadAdminPhoto).toHaveBeenCalledWith({
-      camera: undefined,
-      caption: undefined,
+      camera: photoItem.camera,
+      caption: photoItem.caption,
       date: photoItem.date,
       file,
-      film: undefined,
+      film: photoItem.film,
       frame: photoItem.frame,
       location: photoItem.location,
-      tags: [],
+      tags: ['night', 'street'],
       title: photoItem.title,
       tone: photoItem.tone,
     })
     expect((result as Response).headers.get('location')).toBe('/admin/photos/photo_1')
+  })
+
+  it('returns upload validation errors before calling the backend', async () => {
+    const fields = createUploadFields()
+
+    await expect(adminPhotoUploadAction(routeArgs(createUploadRequest(fields)))).resolves.toMatchObject({
+      field: 'file',
+      intent: 'upload_photo',
+      message: 'image file is required.',
+      status: 'error',
+    })
+    expect(mocks.uploadAdminPhoto).not.toHaveBeenCalled()
+
+    const invalidTone = createUploadFields(createJpegFile())
+    invalidTone.set('tone', 'blue')
+
+    await expect(adminPhotoUploadAction(routeArgs(createUploadRequest(invalidTone)))).resolves.toMatchObject({
+      field: 'metadata',
+      intent: 'upload_photo',
+      message: 'title, frame, date, location, and tone are required.',
+      status: 'error',
+    })
+    expect(mocks.uploadAdminPhoto).not.toHaveBeenCalled()
+  })
+
+  it('redirects unauthorized uploads to admin login', async () => {
+    mocks.uploadAdminPhoto.mockRejectedValueOnce(new ApiRequestError(401, { error: 'denied' }))
+    const fields = createUploadFields(createJpegFile())
+
+    const result = await adminPhotoUploadAction(routeArgs(createUploadRequest(fields)))
+
+    expect((result as Response).headers.get('location')).toBe('/admin/login')
   })
 
   it('submits detail metadata actions through the existing handler', async () => {

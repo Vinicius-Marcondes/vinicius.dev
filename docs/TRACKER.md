@@ -25,7 +25,7 @@
 - Merge Target: develop
 
 ## Current Task
-UPL-002
+UPL-003
 
 ## Task Index
 1. UPL-001 - Build Reference Upload Screen
@@ -36,7 +36,7 @@ UPL-002
    - Status: Accepted
 3. UPL-003 - Add Upload Regression Coverage
    - Task File: docs/prds/PRD-005/tasks/UPL-003.md
-   - Status: Todo
+   - Status: Accepted
 4. UPL-004 - Final Visual Review And PRD Verification
    - Task File: docs/prds/PRD-005/tasks/UPL-004.md
    - Status: Todo
@@ -90,17 +90,25 @@ Decision Log:
 - Drag/drop was implemented because it can update the same native file input used by the production form; standard keyboard/file-picker selection remains available.
 - Tags use a hidden submitted `tags` input plus visible keyboard chips so enhanced entry does not change the backend comma-delimited contract.
 - No backend action, endpoint, Prisma, storage, auth, gallery, or detail editor behavior was changed.
-Commit: b2c253e PRD-005 UPL-002: preserve upload contract interactions
+Commit: 440d46a PRD-005 UPL-002: preserve upload contract interactions
 Blocked Reason: None
 Requested Decision: None
 
 ### UPL-003 - Add Upload Regression Coverage
 Task File: docs/prds/PRD-005/tasks/UPL-003.md
-Status: Todo
+Status: Accepted
 Evidence:
-- Pending
+- Updated `frontend/src/pages/admin/photos/ui/AdminPhotosGalleryPage.test.tsx` to assert the upload restyle still exposes accessible production controls, required file/core metadata fields, accepted file types, supported `tone` radio values, tag/caption/camera/film controls, submit behavior, selected-file preview, file info, replace-file metadata, and object URL cleanup.
+- Updated `frontend/src/pages/admin/photos/route.test.ts` to assert successful upload actions call `uploadAdminPhoto` with the production payload, including parsed comma-delimited tags and optional metadata, then redirect to the created photo detail route.
+- Added upload action regression coverage for file-required validation, unsupported tone metadata validation, and unauthorized upload redirect to `/admin/login`.
+- Preserved existing gallery/detail coverage for listing, filters, pagination, protected original URLs, upload/detail navigation, metadata save, publish/unpublish, and feature/unfeature behavior.
+- `cd frontend && bun run test -- src/pages/admin/photos/ui/AdminPhotosGalleryPage.test.tsx src/pages/admin/photos/route.test.ts` passed: 2 test files passed, 14 tests passed.
+- `cd frontend && bun run lint` passed with exit code 0.
+- `cd frontend && bun run build` passed: `tsc -b && vite build`, 132 modules transformed.
 Decision Log:
-- Pending
+- Scope stayed limited to UPL-003-owned regression tests and tracker execution state.
+- Used a focused `request.formData()` stub for upload route-action tests because the action reads only form data, and it avoids cross-runtime `File` coercion issues when constructing full `Request` objects in the Vitest environment.
+- Corrected the accepted UPL-002 tracker commit entry from the stale local hash to the actual local commit `440d46a` observed on the PRD branch.
 Commit: Pending
 Blocked Reason: None
 Requested Decision: None

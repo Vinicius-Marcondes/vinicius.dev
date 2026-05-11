@@ -179,6 +179,7 @@ describe('admin photo split screens', () => {
     expect(await screen.findByRole('heading', { name: 'upload original' })).toBeInTheDocument()
     const fileInput = screen.getByLabelText('file')
     expect(fileInput).toHaveAttribute('accept', 'image/jpeg,image/png,image/webp')
+    expect(fileInput).toBeRequired()
 
     const form = screen.getByRole('button', { name: 'upload draft' }).closest('form')
     expect(form).toHaveAttribute('method', 'post')
@@ -187,6 +188,15 @@ describe('admin photo split screens', () => {
     ;['file', 'title', 'frame', 'date', 'location', 'tone', 'tags', 'caption', 'camera', 'film'].forEach((name) => {
       expect(form?.querySelector(`[name="${name}"]`)).toBeInTheDocument()
     })
+    expect(screen.getByLabelText(/title/i)).toBeRequired()
+    expect(screen.getByLabelText(/date/i)).toBeRequired()
+    expect(screen.getByLabelText(/frame/i)).toBeRequired()
+    expect(screen.getByLabelText(/location/i)).toBeRequired()
+    expect(screen.getByLabelText(/tags/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/caption/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/camera/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/film/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'upload draft' })).toHaveAttribute('type', 'submit')
 
     const firstFile = new File(['first photo'], 'first.webp', { type: 'image/webp' })
     await user.upload(fileInput, firstFile)
@@ -206,6 +216,7 @@ describe('admin photo split screens', () => {
 
     const toneInputs = screen.getAllByRole('radio') as HTMLInputElement[]
     expect(toneInputs.map((input) => input.value)).toEqual(['amber', 'cyan', 'mono', 'sunset', 'violet'])
+    expect(toneInputs.map((input) => input.name)).toEqual(['tone', 'tone', 'tone', 'tone', 'tone'])
     expect(toneInputs.find((input) => input.value === 'amber')).toBeChecked()
     await user.click(toneInputs.find((input) => input.value === 'cyan')!)
     expect(toneInputs.find((input) => input.value === 'cyan')).toBeChecked()
