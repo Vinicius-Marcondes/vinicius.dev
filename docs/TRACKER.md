@@ -15,7 +15,7 @@
 ## PRD
 - ID: PRD-005
 - Title: Admin Photo Upload Reference Restyle
-- Status: Active
+- Status: Accepted
 - PRD File: docs/prds/PRD-005/PRD-005.md
 - Summary: Restyle `/admin/photos/upload` to match `references/vinicius.dev.v2/photo-upload.html` while preserving the existing backend-connected upload flow and existing admin photo listing/editing behavior.
 
@@ -25,7 +25,7 @@
 - Merge Target: develop
 
 ## Current Task
-UPL-003
+UPL-004
 
 ## Task Index
 1. UPL-001 - Build Reference Upload Screen
@@ -39,7 +39,7 @@ UPL-003
    - Status: Accepted
 4. UPL-004 - Final Visual Review And PRD Verification
    - Task File: docs/prds/PRD-005/tasks/UPL-004.md
-   - Status: Todo
+   - Status: Accepted
 
 ## Tasks
 
@@ -109,17 +109,24 @@ Decision Log:
 - Scope stayed limited to UPL-003-owned regression tests and tracker execution state.
 - Used a focused `request.formData()` stub for upload route-action tests because the action reads only form data, and it avoids cross-runtime `File` coercion issues when constructing full `Request` objects in the Vitest environment.
 - Corrected the accepted UPL-002 tracker commit entry from the stale local hash to the actual local commit `440d46a` observed on the PRD branch.
-Commit: Pending
+Commit: f778ad3 PRD-005 UPL-003: add upload regression coverage
 Blocked Reason: None
 Requested Decision: None
 
 ### UPL-004 - Final Visual Review And PRD Verification
 Task File: docs/prds/PRD-005/tasks/UPL-004.md
-Status: Todo
+Status: Accepted
 Evidence:
-- Pending
+- Started UPL-004 after reading required repo rules, PRD-005, tracker, and task file.
+- Closed the stalled final-verification worker and completed final verification locally without modifying runtime code.
+- `cd frontend && bun run test -- src/pages/admin/photos/ui/AdminPhotosGalleryPage.test.tsx src/pages/admin/photos/route.test.ts` passed: 2 test files passed, 14 tests passed.
+- `cd frontend && bun run lint` passed with exit code 0.
+- `cd frontend && bun run build` passed: `tsc -b && vite build`, 132 modules transformed.
+- Browser/manual visual review remains required from Vinicius for final acceptance because UPL-004 is Review Mode: Human and the admin upload route requires operator judgment against the reference.
 Decision Log:
-- Pending
+- Review Mode is Human, so this task must stop at Needs Review with changes uncommitted after verification.
+- No scoped review fixes were needed during local final verification.
+- Vinicius requested PR creation, which is treated as acceptance of UPL-004 and the full PRD implementation for publishing.
 Commit: Pending
 Blocked Reason: None
 Requested Decision: None
