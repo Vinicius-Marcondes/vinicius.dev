@@ -2242,6 +2242,16 @@ button {
   padding: 48px 0 96px;
 }
 
+.app-shell--admin:has(.admin-photo-upload__header) .admin-shell__header .layout-container {
+  width: 100%;
+  max-width: none;
+  padding-inline: 54px;
+}
+
+.app-shell--admin:has(.admin-photo-upload__header) .admin-shell__inner {
+  padding-right: 88px;
+}
+
 .app-shell--admin .screen-frame:has(.admin-dashboard-page) {
   overflow: visible;
   padding: 0;
@@ -2261,6 +2271,17 @@ button {
 }
 
 .app-shell--admin .screen-frame:has(.admin-photo-gallery)::before {
+  content: none;
+}
+
+.app-shell--admin .screen-frame:has(.admin-photo-upload__header) {
+  overflow: visible;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.app-shell--admin .screen-frame:has(.admin-photo-upload__header)::before {
   content: none;
 }
 
@@ -3449,13 +3470,588 @@ button {
   gap: var(--spacing-3);
 }
 
-.admin-photo-upload {
-  max-width: 760px;
+.screen-frame.admin-photo-upload {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.screen-frame.admin-photo-upload::before {
+  content: none;
+}
+
+.admin-photo-upload__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: min(100%, 1120px);
+  margin: 0 auto 40px;
+  gap: var(--spacing-6);
+}
+
+.admin-photo-upload__eyebrow {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--fg-3);
+}
+
+.admin-photo-upload__title {
+  margin: 0 0 10px;
+  color: var(--fg-0);
+  font-family: var(--font-pixel);
+  font-size: 40px;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: lowercase;
+}
+
+.admin-photo-upload__subtitle {
+  max-width: 440px;
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 12px;
+}
+
+.app-shell--admin .admin-photo-upload__back.action-button {
+  flex-shrink: 0;
+  min-height: 38px;
+  margin-top: 4px;
+  padding: 8px 14px;
+  border-color: var(--line-2);
+  background: transparent;
+  color: var(--neon-cyan);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+}
+
+.app-shell--admin .admin-photo-upload__back.action-button:hover {
+  border-color: var(--neon-pink);
+  background: transparent;
+  color: var(--neon-pink);
+  animation: admin-upload-glitch 240ms steps(4) 1;
+}
+
+.admin-photo-upload__form {
+  display: block;
+}
+
+.admin-photo-upload__grid {
+  display: grid;
+  grid-template-columns: 380px minmax(0, 1fr);
+  gap: var(--spacing-5);
+  align-items: start;
+}
+
+.admin-photo-upload__media-panel {
+  position: sticky;
+  top: 92px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.admin-photo-upload__drop-zone {
+  position: relative;
+  display: flex;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  background: var(--bg-1);
+  cursor: pointer;
+  transition:
+    border-color 120ms steps(1),
+    box-shadow 120ms steps(1);
+}
+
+.admin-photo-upload__drop-zone:hover,
+.admin-photo-upload__drop-zone:focus-within,
+.admin-photo-upload__drop-zone--active {
+  border-color: var(--neon-cyan);
+  box-shadow: var(--glow-cyan);
+}
+
+.admin-photo-upload__drop-zone input[type='file'] {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.admin-photo-upload__drop-zone input[type='file']:focus-visible + .admin-photo-upload__drop-empty,
+.admin-photo-upload__drop-zone:focus-within .admin-photo-upload__preview {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: -4px;
+}
+
+.admin-photo-upload__drop-empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: var(--spacing-5);
+  text-align: center;
+}
+
+.admin-photo-upload__drop-icon {
+  color: var(--fg-3);
+  font-family: var(--font-pixel);
+  font-size: 52px;
+  line-height: 1;
+}
+
+.admin-photo-upload__drop-label,
+.admin-photo-upload__drop-hint,
+.admin-photo-upload__file-info,
+.admin-photo-upload__status,
+.admin-photo-upload__footer p {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.admin-photo-upload__drop-label {
+  color: var(--fg-3);
+}
+
+.admin-photo-upload__drop-hint {
+  color: var(--fg-3);
+  letter-spacing: 0.12em;
 }
 
 .admin-photo-upload__preview {
-  max-height: 320px;
-  border: 1px solid var(--surface-border-soft);
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-photo-upload__drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(7, 6, 11, 0.62);
+  color: var(--neon-cyan);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  opacity: 0;
+  text-transform: uppercase;
+  transition: opacity 120ms steps(2);
+}
+
+.admin-photo-upload__drop-zone:hover .admin-photo-upload__drop-overlay,
+.admin-photo-upload__drop-zone:focus-within .admin-photo-upload__drop-overlay {
+  opacity: 1;
+}
+
+.admin-photo-upload__drop-play {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.admin-photo-upload__file-info {
+  display: none;
+  align-items: center;
+  gap: var(--spacing-4);
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 1px solid var(--line-1);
+  background: var(--bg-2);
+  color: var(--fg-3);
+}
+
+.admin-photo-upload__file-info.is-visible {
+  display: flex;
+  color: var(--fg-2);
+}
+
+.admin-photo-upload__file-status {
+  flex-shrink: 0;
+  color: var(--neon-lime);
+}
+
+.admin-photo-upload__file-name {
+  flex: 1;
+  overflow: hidden;
+  color: var(--fg-0);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-photo-upload__file-size {
+  flex-shrink: 0;
+  color: var(--fg-3);
+  white-space: nowrap;
+}
+
+.admin-photo-upload__status {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--line-2);
+  background: var(--bg-2);
+}
+
+.admin-photo-upload__status--error {
+  border-color: var(--neon-pink);
+  color: var(--neon-pink);
+}
+
+.admin-photo-upload__status--success {
+  border-color: var(--neon-lime);
+  color: var(--neon-lime);
+}
+
+.admin-photo-upload__meta-panel {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line-2);
+  background: var(--bg-1);
+}
+
+.admin-photo-upload__section {
+  padding: var(--spacing-5);
+  border-bottom: 1px solid var(--line-1);
+}
+
+.admin-photo-upload__section-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  color: var(--fg-3);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.admin-photo-upload__section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line-1);
+}
+
+.admin-photo-upload__field-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.admin-photo-upload__fields-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-4);
+}
+
+.admin-photo-upload__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+}
+
+.admin-photo-upload__field-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg-2);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.admin-photo-upload__required {
+  color: var(--neon-pink);
+}
+
+.admin-photo-upload__optional {
+  color: var(--fg-3);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+
+.admin-photo-upload__input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line-2);
+  background: var(--bg-0);
+  transition:
+    border-color 120ms steps(1),
+    box-shadow 120ms steps(1);
+}
+
+.admin-photo-upload__input-wrap:focus-within {
+  border-color: var(--neon-cyan);
+  box-shadow: var(--glow-cyan);
+}
+
+.admin-photo-upload__prompt {
+  flex-shrink: 0;
+  padding: 0 8px 0 12px;
+  color: var(--fg-3);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.admin-photo-upload__input-wrap:focus-within .admin-photo-upload__prompt {
+  color: var(--neon-cyan);
+}
+
+.admin-photo-upload__input-wrap input,
+.admin-photo-upload__field textarea {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--fg-0);
+  font-size: 13px;
+  outline: none;
+}
+
+.admin-photo-upload__input-wrap input {
+  min-height: 38px;
+  padding: 10px 12px 10px 0;
+}
+
+.admin-photo-upload__input-wrap input::placeholder,
+.admin-photo-upload__field textarea::placeholder {
+  color: var(--fg-3);
+}
+
+.admin-photo-upload__input-wrap input[type='date'] {
+  color-scheme: dark;
+}
+
+.admin-photo-upload__input-wrap--tags {
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 12px;
+}
+
+.admin-photo-upload__input-wrap--tags input {
+  flex: 1;
+  min-width: 120px;
+  min-height: auto;
+  padding: 2px 0;
+}
+
+.admin-photo-upload__tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  border: 1px solid var(--line-2);
+  background: var(--bg-2);
+  color: var(--neon-cyan);
+  padding: 3px 8px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.admin-photo-upload__tag-chip button {
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg-3);
+  cursor: pointer;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.admin-photo-upload__tag-chip button:hover:not(:disabled),
+.admin-photo-upload__tag-chip button:focus-visible {
+  color: var(--neon-pink);
+}
+
+.admin-photo-upload__tag-chip button:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 2px;
+}
+
+.admin-photo-upload__hint {
+  color: var(--fg-3);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.admin-photo-upload__field textarea {
+  min-height: 86px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-2);
+  background: var(--bg-0);
+  resize: vertical;
+  transition:
+    border-color 120ms steps(1),
+    box-shadow 120ms steps(1);
+}
+
+.admin-photo-upload__field textarea:focus {
+  border-color: var(--neon-cyan);
+  box-shadow: var(--glow-cyan);
+}
+
+.admin-photo-upload__tone-field legend {
+  margin-bottom: 6px;
+}
+
+.admin-photo-upload__tone-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-photo-upload__tone-option {
+  position: relative;
+  cursor: pointer;
+}
+
+.admin-photo-upload__tone-option input {
+  position: absolute;
+  opacity: 0;
+}
+
+.admin-photo-upload__tone-option span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 7px 14px;
+  border: 1px solid var(--line-2);
+  background: var(--bg-0);
+  color: var(--fg-2);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition:
+    background-color 80ms steps(1),
+    border-color 80ms steps(1),
+    color 80ms steps(1),
+    box-shadow 80ms steps(1);
+}
+
+.admin-photo-upload__tone-option:hover span {
+  border-color: var(--line-2);
+  background: var(--bg-2);
+  color: var(--fg-0);
+}
+
+.admin-photo-upload__tone-option input:checked + span {
+  border-color: var(--neon-pink);
+  background: var(--neon-pink);
+  box-shadow: var(--block-pink);
+  color: var(--bg-0);
+}
+
+.admin-photo-upload__tone-option input:focus-visible + span {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 2px;
+}
+
+.admin-photo-upload__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-4);
+  padding: 20px var(--spacing-5);
+  border-top: 1px solid var(--line-2);
+  background: var(--bg-2);
+}
+
+.admin-photo-upload__footer p {
+  margin: 0;
+  color: var(--fg-3);
+  letter-spacing: 0.12em;
+}
+
+.admin-photo-upload__footer p span {
+  color: var(--neon-pink);
+}
+
+.admin-photo-upload__footer button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  border: 1px solid var(--neon-pink);
+  background: var(--bg-1);
+  box-shadow: var(--block-pink);
+  color: var(--fg-0);
+  cursor: pointer;
+  padding: 12px 28px;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transition:
+    background-color 80ms steps(1),
+    box-shadow 60ms steps(1),
+    color 80ms steps(1),
+    transform 60ms steps(1);
+}
+
+.admin-photo-upload__footer button:hover:not(:disabled) {
+  background: var(--neon-pink);
+  color: var(--bg-0);
+}
+
+.admin-photo-upload__footer button:active:not(:disabled) {
+  box-shadow: none;
+  transform: translate(4px, 4px);
+}
+
+.admin-photo-upload__footer button:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 2px;
+}
+
+.admin-photo-upload__footer button:disabled {
+  border-color: var(--fg-3);
+  box-shadow: none;
+  color: var(--fg-3);
+  cursor: not-allowed;
+}
+
+@keyframes admin-upload-glitch {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  20% {
+    transform: translate(-1px, 0.5px);
+  }
+
+  40% {
+    transform: translate(1px, -0.5px);
+  }
+
+  60% {
+    transform: translate(-0.5px, 0);
+  }
+
+  80% {
+    transform: translate(0.5px, 0);
+  }
 }
 
 .admin-moderation button {
@@ -3491,6 +4087,10 @@ button {
     padding-top: 108px;
   }
 
+  .admin-photo-upload__grid {
+    grid-template-columns: 340px minmax(0, 1fr);
+  }
+
   .admin-photo-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -3513,6 +4113,23 @@ button {
 }
 
 @media (max-width: 880px) {
+  .admin-photo-upload__header {
+    flex-direction: column;
+    gap: var(--spacing-4);
+  }
+
+  .app-shell--admin .admin-photo-upload__back.action-button {
+    align-self: flex-start;
+  }
+
+  .admin-photo-upload__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-photo-upload__media-panel {
+    position: static;
+  }
+
   .admin-photo-gallery__header {
     flex-direction: column;
     gap: var(--spacing-4);
@@ -3589,9 +4206,29 @@ button {
     width: min(calc(100% - 20px), var(--shell-max-width));
   }
 
+  .admin-photo-upload__fields-row,
   .admin-photo-gallery__filters-row,
   .admin-photo-grid {
     grid-template-columns: 1fr;
+  }
+
+  .admin-photo-upload__header {
+    margin-bottom: var(--spacing-4);
+  }
+
+  .admin-photo-upload__title {
+    font-size: 34px;
+  }
+
+  .admin-photo-upload__section,
+  .admin-photo-upload__footer {
+    padding-right: var(--spacing-4);
+    padding-left: var(--spacing-4);
+  }
+
+  .admin-photo-upload__footer {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .admin-photo-gallery__filters.screen-frame {

@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 
 import { AdminPhotoDetailPage } from './AdminPhotoDetailPage'
@@ -149,7 +149,7 @@ describe('admin photo split screens', () => {
     expect(router.state.location.search).toContain('status=draft')
   })
 
-  it('renders the upload form as its own screen', async () => {
+  it('keeps upload interactions wired to the production form contract', async () => {
     const router = createMemoryRouter([
       {
         element: <AdminPhotoUploadPage />,
@@ -158,12 +158,81 @@ describe('admin photo split screens', () => {
     ], {
       initialEntries: ['/admin/photos/upload'],
     })
+    let objectUrlIndex = 0
+    const createObjectURL = vi.fn(() => {
+      objectUrlIndex += 1
+      return `blob:photo-${objectUrlIndex}`
+    })
+    const revokeObjectURL = vi.fn()
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: createObjectURL,
+    })
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: revokeObjectURL,
+    })
+    const user = userEvent.setup()
 
-    render(<RouterProvider router={router} />)
+    const { container, unmount } = render(<RouterProvider router={router} />)
 
     expect(await screen.findByRole('heading', { name: 'upload original' })).toBeInTheDocument()
-    expect(screen.getByLabelText('file')).toHaveAttribute('accept', 'image/jpeg,image/png,image/webp')
+    const fileInput = screen.getByLabelText('file')
+    expect(fileInput).toHaveAttribute('accept', 'image/jpeg,image/png,image/webp')
+    expect(fileInput).toBeRequired()
+
+    const form = screen.getByRole('button', { name: 'upload draft' }).closest('form')
+    expect(form).toHaveAttribute('method', 'post')
+    expect(form).toHaveAttribute('enctype', 'multipart/form-data')
+    expect(container.querySelector('input[name="intent"]')).toHaveAttribute('value', 'upload_photo')
+    ;['file', 'title', 'frame', 'date', 'location', 'tone', 'tags', 'caption', 'camera', 'film'].forEach((name) => {
+      expect(form?.querySelector(`[name="${name}"]`)).toBeInTheDocument()
+    })
+    expect(screen.getByLabelText(/title/i)).toBeRequired()
+    expect(screen.getByLabelText(/date/i)).toBeRequired()
+    expect(screen.getByLabelText(/frame/i)).toBeRequired()
+    expect(screen.getByLabelText(/location/i)).toBeRequired()
+    expect(screen.getByLabelText(/tags/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/caption/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/camera/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/film/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'upload draft' })).toHaveAttribute('type', 'submit')
+
+    const firstFile = new File(['first photo'], 'first.webp', { type: 'image/webp' })
+    await user.upload(fileInput, firstFile)
+
+    expect(createObjectURL).toHaveBeenCalledWith(firstFile)
+    expect(screen.getByAltText('Selected photo preview')).toHaveAttribute('src', 'blob:photo-1')
+    expect(screen.getByText('first.webp')).toBeInTheDocument()
+    expect(screen.getByText('11 B')).toBeInTheDocument()
+
+    const secondFile = new File(['second photo'], 'second.jpg', { type: 'image/jpeg' })
+    await user.upload(fileInput, secondFile)
+
+    expect(createObjectURL).toHaveBeenCalledWith(secondFile)
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:photo-1')
+    expect(screen.getByAltText('Selected photo preview')).toHaveAttribute('src', 'blob:photo-2')
+    expect(screen.getByText('second.jpg')).toBeInTheDocument()
+
+    const toneInputs = screen.getAllByRole('radio') as HTMLInputElement[]
+    expect(toneInputs.map((input) => input.value)).toEqual(['amber', 'cyan', 'mono', 'sunset', 'violet'])
+    expect(toneInputs.map((input) => input.name)).toEqual(['tone', 'tone', 'tone', 'tone', 'tone'])
+    expect(toneInputs.find((input) => input.value === 'amber')).toBeChecked()
+    await user.click(toneInputs.find((input) => input.value === 'cyan')!)
+    expect(toneInputs.find((input) => input.value === 'cyan')).toBeChecked()
+    expect(toneInputs.filter((input) => input.checked)).toHaveLength(1)
+
+    const tagEntry = screen.getByLabelText(/tags/i)
+    const submittedTags = form?.querySelector('input[name="tags"]') as HTMLInputElement
+    await user.type(tagEntry, 'street{enter}night,')
+    expect(submittedTags.value).toBe('street, night')
+    await user.click(screen.getByRole('button', { name: 'remove street tag' }))
+    expect(submittedTags.value).toBe('night')
+
     expect(screen.getByRole('button', { name: 'upload draft' })).toBeInTheDocument()
+
+    unmount()
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:photo-2')
   })
 
   it('renders the detail editor with protected image and visibility controls', async () => {

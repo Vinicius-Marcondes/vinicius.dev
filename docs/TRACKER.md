@@ -13,125 +13,120 @@
 - For `Review Mode: Agent`, verify, accept, commit, and continue when appropriate.
 
 ## PRD
-- ID: PRD-004
-- Title: Admin Gallery Reference Restyle
-- Status: Active
-- PRD File: docs/prds/PRD-004/PRD-004.md
-- Summary: Restyle `/admin/photos` to match `references/vinicius.dev.v2/gallery.html` while preserving backend-connected listing, filtering, pagination, protected originals, upload navigation, and existing detail/edit workflows.
+- ID: PRD-005
+- Title: Admin Photo Upload Reference Restyle
+- Status: Accepted
+- PRD File: docs/prds/PRD-005/PRD-005.md
+- Summary: Restyle `/admin/photos/upload` to match `references/vinicius.dev.v2/photo-upload.html` while preserving the existing backend-connected upload flow and existing admin photo listing/editing behavior.
 
 ## Git
-- Branch: feature/PRD-004-admin-gallery-reference-restyle
+- Branch: feature/PRD-005-admin-photo-upload-reference-restyle
 - Base: develop
 - Merge Target: develop
 
 ## Current Task
-GAL-004
+UPL-004
 
 ## Task Index
-1. GAL-001 - Rebuild Admin Gallery Frame
-   - Task File: docs/prds/PRD-004/tasks/GAL-001.md
+1. UPL-001 - Build Reference Upload Screen
+   - Task File: docs/prds/PRD-005/tasks/UPL-001.md
    - Status: Accepted
-2. GAL-002 - Restyle Gallery Cards And Presentation Controls
-   - Task File: docs/prds/PRD-004/tasks/GAL-002.md
+2. UPL-002 - Preserve Upload Contract Interactions
+   - Task File: docs/prds/PRD-005/tasks/UPL-002.md
    - Status: Accepted
-3. GAL-003 - Preserve Photo Admin Workflow Regressions
-   - Task File: docs/prds/PRD-004/tasks/GAL-003.md
+3. UPL-003 - Add Upload Regression Coverage
+   - Task File: docs/prds/PRD-005/tasks/UPL-003.md
    - Status: Accepted
-4. GAL-004 - Final Gallery Visual Acceptance
-   - Task File: docs/prds/PRD-004/tasks/GAL-004.md
+4. UPL-004 - Final Visual Review And PRD Verification
+   - Task File: docs/prds/PRD-005/tasks/UPL-004.md
    - Status: Accepted
 
 ## Tasks
 
-### GAL-001 - Rebuild Admin Gallery Frame
-Task File: docs/prds/PRD-004/tasks/GAL-001.md
+### UPL-001 - Build Reference Upload Screen
+Task File: docs/prds/PRD-005/tasks/UPL-001.md
 Status: Accepted
 Evidence:
-- Started GAL-001 after reading required repo rules, task file, PRD, tracker, reference HTML, and design-system skill files.
-- Updated `frontend/src/pages/admin/photos/ui/AdminPhotosGalleryPage.tsx` to match the reference page frame while preserving `useLoaderData`, `useSearchParams`, `updateQuery`, `goToPage`, upload navigation, loader-provided records, and backend URL-driven controls.
-- Updated `frontend/src/pages/admin/photos/ui/AdminPhotosGalleryPage.test.tsx` to verify loader-backed rendering, upload/detail navigation, query-backed filters resetting `page=1`, and pagination query behavior.
-- Updated `frontend/src/app/styles/global.css` with scoped admin gallery frame styles for the header, upload action, filters bar, records panel, empty state, and pagination.
-- `cd frontend && bun run test -- AdminPhotosGalleryPage.test.tsx` passed: 1 test file passed, 5 tests passed.
-- `cd frontend && bun run lint` passed with exit code 0.
-- Vinicius accepted GAL-001 after review: "looks like it is still working fine, GAL-001 Accepted".
-Decision Log:
-- Scope held to GAL-001 page frame only: header, upload action, filters bar, and records panel. Card presentation remains limited to preserving existing backend-connected gallery rendering for GAL-002.
-- Omitted reference-only view toggle, hover overlays, fake mutations, delete, and client-side filtering because they are explicitly outside GAL-001 scope.
-- Kept the upload action implemented through existing `ActionButton` and `/admin/photos/upload` navigation.
-- Human review completed and GAL-001 accepted by Vinicius before starting GAL-002.
-Commit: e673f27 PRD-004 GAL-001: rebuild admin gallery frame
-Blocked Reason: None
-Requested Decision: None
-
-### GAL-002 - Restyle Gallery Cards And Presentation Controls
-Task File: docs/prds/PRD-004/tasks/GAL-002.md
-Status: Accepted
-Evidence:
-- Started GAL-002 after Vinicius accepted GAL-001 and GAL-001 was committed.
-- Updated `frontend/src/pages/admin/photos/ui/AdminPhotosGalleryPage.tsx` to restyle loader-backed records as reference-style cards with rectangular image frames, CRT hover overlay, title/meta blocks, status badges, optional featured badge, file-size display, and a local presentation-only grid/list toggle.
-- Preserved `useLoaderData`, URL-backed filter/pagination helpers, `getAdminPhotoOriginalUrl(photo.id)`, upload navigation to `/admin/photos/upload`, and detail navigation to `/admin/photos/:id` with `state.from`.
-- Updated `frontend/src/pages/admin/photos/ui/AdminPhotosGalleryPage.test.tsx` to assert protected original URLs, upload/detail navigation, `state.from`, local grid/list toggle state, unchanged query state, URL-backed filters, and pagination behavior.
-- Updated `frontend/src/app/styles/global.css` with scoped admin gallery card, badge, hover overlay, empty-state, pagination, and grid/list presentation styles.
-- `cd frontend && bun run test -- AdminPhotosGalleryPage.test.tsx` passed: 1 test file passed, 5 tests passed.
-- `cd frontend && bun run lint` passed with exit code 0.
-- Vinicius accepted GAL-002 after review: "GAl-002 is fine, continue with GAL-003".
-Decision Log:
-- Added a grid/list toggle as local React state only; it does not persist, mutate query params, or change the backend/API contract.
-- Kept the hover overlay honest by making the card itself the only action path to the existing detail/edit route; no delete, inline feature, inline edit, bulk action, fake mutation, or client-side filtering was added.
-- Human review completed and GAL-002 accepted by Vinicius before starting GAL-003.
-Commit: 540d6d0 PRD-004 GAL-002: restyle gallery cards
-Blocked Reason: None
-Requested Decision: None
-
-### GAL-003 - Preserve Photo Admin Workflow Regressions
-Task File: docs/prds/PRD-004/tasks/GAL-003.md
-Status: Accepted
-Evidence:
-- Started GAL-003 after Vinicius accepted GAL-002 and GAL-002 was committed.
-- Updated `frontend/src/pages/admin/photos/route.test.ts` to harden deterministic workflow coverage for admin photo query parsing into `listAdminPhotos`, including `search`, `status`, `featured=featured`, `featured=not_featured`, and `page`.
-- Added route coverage for unauthorized `/admin/photos` gallery loader redirects to `/admin/login`, preserving the existing detail unauthorized redirect coverage.
-- Expanded upload action assertions to verify `uploadAdminPhoto` receives the existing upload payload shape before redirecting to `/admin/photos/photo_1`.
-- Expanded detail action assertions to verify metadata edits call `updateAdminPhotoMetadata` with parsed tags and existing metadata fields, and curation edits call `updateAdminPhotoCuration` for publish and feature updates.
-- Preserved gallery/detail protected original URL coverage in `frontend/src/pages/admin/photos/ui/AdminPhotosGalleryPage.test.tsx`.
-- No upload/detail UI redesign or shared style changes were needed.
-- `cd frontend && bun run test -- AdminPhotosGalleryPage.test.tsx route.test.ts` passed after changes: 5 test files passed, 20 tests passed.
-- `cd frontend && bun run lint` passed with exit code 0.
-Decision Log:
-- Kept GAL-003 scoped to deterministic route/action test hardening because the existing upload and detail screens remained compatible with the GAL-001/GAL-002 gallery restyle.
-- Did not change backend contracts, entity API helper semantics, upload validation, auth behavior, media delivery, or gallery visual features.
-Commit: be56609 PRD-004 GAL-003: harden admin photo regressions
-Blocked Reason: None
-Requested Decision: None
-
-### GAL-004 - Final Gallery Visual Acceptance
-Task File: docs/prds/PRD-004/tasks/GAL-004.md
-Status: Accepted
-Evidence:
-- Started GAL-004 after GAL-003 was accepted and committed.
-- Read `docs/rules/AGENTS.md`, `supervised-workflow.md`, `prd-and-tracker.md`, `architecture.md`, `product-and-platform.md`, PRD-004, GAL-004, the active tracker, `references/vinicius.dev.v2/gallery.html`, and the Vinicius.Dev design-system skill files before reviewing the final UI.
-- Reviewed `frontend/src/pages/admin/photos/ui/AdminPhotosGalleryPage.tsx` and the scoped admin gallery CSS in `frontend/src/app/styles/global.css` for backend-connected behavior, reference parity, focus states, rectangular geometry, no emoji, no glassmorphism, approved token usage, and no fake production actions.
-- Added the required `prefers-reduced-motion: reduce` rule to `frontend/src/app/styles/global.css` so animations/transitions collapse for reduced-motion users.
-- Desktop visual pass completed in Chrome at `localhost:5173/admin/photos` against the reference: admin shell, header/upload action, filters, records panel, grid cards, list mode, badges, protected original images, and pagination matched the intended reference structure closely enough for human review.
-- Keyboard focus spot-check completed in Chrome: upload navigation, search input, status select, featured select, grid/list controls, and photo links showed visible cyan focus treatment.
-- Responsive CSS reviewed for the existing `1024px`, `880px`, `760px`, and `520px` breakpoints covering two-column/one-column gallery, stacked header, stacked filters, stacked records header, and list-card mobile layout.
-- `cd frontend && bun run test -- AdminPhotosGalleryPage.test.tsx route.test.ts` passed: 5 test files passed, 20 tests passed.
-- `cd frontend && bun run test` passed: 22 test files passed, 48 tests passed.
+- Started UPL-001 after reading required repo rules, task file, PRD, tracker, reference target, and Vinicius.Dev design-system skill files.
+- Updated `frontend/src/pages/admin/photos/ui/AdminPhotoUploadPage.tsx` from the old single-panel form into the reference-style upload screen with a compact header, back-to-gallery action, left media/drop-zone panel, right metadata panel, grouped sections, tone controls, status area, and submit footer.
+- Preserved the production React Router `<Form method="post" encType="multipart/form-data">`, hidden `intent=upload_photo`, required controls, accepted file types, and existing field names: `file`, `title`, `frame`, `date`, `location`, `tone`, `tags`, `caption`, `camera`, and `film`.
+- Updated `frontend/src/app/styles/global.css` with scoped `admin-photo-upload__*` styles for the reference layout, panel hierarchy, prompt-style fields, focus states, file preview treatment, file info strip, tone buttons, status feedback, submit button, CRT hover effect, and responsive collapse.
+- Removed the inherited admin shell outer `ScreenFrame` treatment around the upload route after human review noted the reference has no large page-level container around the form.
+- Adjusted the admin shell header container on the upload route after human review noted the header was still centered in the normal site container instead of using the reference full-width shell spacing.
+- `cd frontend && bun run test -- src/pages/admin/photos/ui/AdminPhotosGalleryPage.test.tsx` passed: 1 test file passed, 5 tests passed.
 - `cd frontend && bun run lint` passed with exit code 0.
 - `cd frontend && bun run build` passed: `tsc -b && vite build`, 132 modules transformed.
-- Vinicius provided screenshot feedback that the actual gallery top area still had an extra outer frame and spacing compared with the target reference.
-- Updated `frontend/src/app/styles/global.css` so the admin shell `ScreenFrame` that contains `.admin-photo-gallery` becomes transparent and unframed, matching the reference where only the filters and records panels are boxed.
-- Updated `.admin-photo-gallery` to use a `1408px` content band so the header, upload action, filters, and records panels align more closely with the target screenshot.
-- Reran `cd frontend && bun run test -- AdminPhotosGalleryPage.test.tsx route.test.ts`: 5 test files passed, 20 tests passed.
-- Reran `cd frontend && bun run lint`: passed with exit code 0.
-- Reran `cd frontend && bun run test`: 22 test files passed, 48 tests passed.
-- Reran `cd frontend && bun run build`: `tsc -b && vite build`, 132 modules transformed.
-- Vinicius accepted GAL-004 after screenshot-driven layout correction: "that is fine, task accepted".
 Decision Log:
-- Kept runtime scope to the final acceptance pass; no backend, route, schema, upload, or detail redesign changes were made.
-- Did not change `AdminPhotosGalleryPage.tsx` because the current markup already preserved loader data, URL-backed filters/pagination, protected originals, upload navigation, detail navigation, and presentation-only grid/list state.
-- Used a global reduced-motion rule because the Vinicius.Dev design system requires the sitewide motion collapse pattern and the GAL-004 acceptance criteria explicitly include reduced-motion behavior.
-- Treated the screenshot mismatch as a shell/layout issue rather than a gallery behavior issue; fixed it with a gallery-specific `:has(.admin-photo-gallery)` shell-frame override so dashboard and other admin screens keep their existing shell framing.
-- Human review completed and GAL-004 accepted by Vinicius.
-Commit: ec618c4 PRD-004 GAL-004: finalize gallery visual acceptance
+- Scope is limited to the upload page restyle and tracker execution state for UPL-001.
+- Kept prototype-only fields out of production; `lens` and `iso` from the reference were not added because PRD-005 preserves only existing backend fields.
+- Used radio-backed tone controls so the styled selector still submits exactly one existing `tone` value: `amber`, `cyan`, `mono`, `sunset`, or `violet`.
+- Kept tags as a single comma-delimited `tags` input and did not add non-submitting decorative tag chips.
+- Did not implement fake upload simulation or client-only success behavior; loading and action feedback remain tied to React Router navigation/action state.
+- Added an admin shell frame exemption for the upload route to match the open reference layout while preserving framed drop-zone and metadata panels.
+- Scoped the header spacing override to `:has(.admin-photo-upload__header)` so other admin screens keep their existing shell layout.
+- Vinicius accepted UPL-001 after visual review and follow-up fixes for the outer page frame and header spacing.
+Commit: 154f98d PRD-005 UPL-001: build reference upload screen
+Blocked Reason: None
+Requested Decision: None
+
+### UPL-002 - Preserve Upload Contract Interactions
+Task File: docs/prds/PRD-005/tasks/UPL-002.md
+Status: Accepted
+Evidence:
+- Started UPL-002 after reading required repo rules, PRD-005, tracker, task file, and Vinicius.Dev design-system guidance.
+- Updated `frontend/src/pages/admin/photos/ui/AdminPhotoUploadPage.tsx` so file selection and replacement keep preview/file metadata in sync with the native production `file` input and revoke object URLs on replacement and unmount.
+- Added drag/drop handling that accepts only the existing upload MIME types and writes the dropped file back to the same production file input via `DataTransfer`.
+- Preserved the React Router `<Form method="post" encType="multipart/form-data">`, hidden `intent=upload_photo`, and existing field names: `file`, `title`, `frame`, `date`, `location`, `tone`, `tags`, `caption`, `camera`, and `film`.
+- Kept the tone selector radio-backed with only the supported values: `amber`, `cyan`, `mono`, `sunset`, and `violet`.
+- Added keyboard-accessible tag chips backed by a hidden `tags` field that serializes the submitted value as backend-compatible comma-delimited text.
+- Mapped React Router submitting state into the upload status area while keeping upload action errors rendered only when `actionData.intent === 'upload_photo'`.
+- Updated `frontend/src/app/styles/global.css` for drag-active drop-zone styling and accessible tag-chip removal controls.
+- Updated `frontend/src/pages/admin/photos/ui/AdminPhotosGalleryPage.test.tsx` to cover form attributes/field names, selected-file preview, replacement metadata, object URL cleanup, tone exclusivity/values, and comma-delimited tag submission.
+- `cd frontend && bun run test -- src/pages/admin/photos/ui/AdminPhotosGalleryPage.test.tsx` passed: 1 test file passed, 5 tests passed.
+- `cd frontend && bun run lint` passed with exit code 0.
+- `cd frontend && bun run build` passed: `tsc -b && vite build`, 132 modules transformed.
+Decision Log:
+- Scope stayed limited to UPL-002 interaction behavior, scoped upload styles, focused test coverage, and tracker execution state.
+- Drag/drop was implemented because it can update the same native file input used by the production form; standard keyboard/file-picker selection remains available.
+- Tags use a hidden submitted `tags` input plus visible keyboard chips so enhanced entry does not change the backend comma-delimited contract.
+- No backend action, endpoint, Prisma, storage, auth, gallery, or detail editor behavior was changed.
+Commit: 440d46a PRD-005 UPL-002: preserve upload contract interactions
+Blocked Reason: None
+Requested Decision: None
+
+### UPL-003 - Add Upload Regression Coverage
+Task File: docs/prds/PRD-005/tasks/UPL-003.md
+Status: Accepted
+Evidence:
+- Updated `frontend/src/pages/admin/photos/ui/AdminPhotosGalleryPage.test.tsx` to assert the upload restyle still exposes accessible production controls, required file/core metadata fields, accepted file types, supported `tone` radio values, tag/caption/camera/film controls, submit behavior, selected-file preview, file info, replace-file metadata, and object URL cleanup.
+- Updated `frontend/src/pages/admin/photos/route.test.ts` to assert successful upload actions call `uploadAdminPhoto` with the production payload, including parsed comma-delimited tags and optional metadata, then redirect to the created photo detail route.
+- Added upload action regression coverage for file-required validation, unsupported tone metadata validation, and unauthorized upload redirect to `/admin/login`.
+- Preserved existing gallery/detail coverage for listing, filters, pagination, protected original URLs, upload/detail navigation, metadata save, publish/unpublish, and feature/unfeature behavior.
+- `cd frontend && bun run test -- src/pages/admin/photos/ui/AdminPhotosGalleryPage.test.tsx src/pages/admin/photos/route.test.ts` passed: 2 test files passed, 14 tests passed.
+- `cd frontend && bun run lint` passed with exit code 0.
+- `cd frontend && bun run build` passed: `tsc -b && vite build`, 132 modules transformed.
+Decision Log:
+- Scope stayed limited to UPL-003-owned regression tests and tracker execution state.
+- Used a focused `request.formData()` stub for upload route-action tests because the action reads only form data, and it avoids cross-runtime `File` coercion issues when constructing full `Request` objects in the Vitest environment.
+- Corrected the accepted UPL-002 tracker commit entry from the stale local hash to the actual local commit `440d46a` observed on the PRD branch.
+Commit: f778ad3 PRD-005 UPL-003: add upload regression coverage
+Blocked Reason: None
+Requested Decision: None
+
+### UPL-004 - Final Visual Review And PRD Verification
+Task File: docs/prds/PRD-005/tasks/UPL-004.md
+Status: Accepted
+Evidence:
+- Started UPL-004 after reading required repo rules, PRD-005, tracker, and task file.
+- Closed the stalled final-verification worker and completed final verification locally without modifying runtime code.
+- `cd frontend && bun run test -- src/pages/admin/photos/ui/AdminPhotosGalleryPage.test.tsx src/pages/admin/photos/route.test.ts` passed: 2 test files passed, 14 tests passed.
+- `cd frontend && bun run lint` passed with exit code 0.
+- `cd frontend && bun run build` passed: `tsc -b && vite build`, 132 modules transformed.
+- Browser/manual visual review remains required from Vinicius for final acceptance because UPL-004 is Review Mode: Human and the admin upload route requires operator judgment against the reference.
+Decision Log:
+- Review Mode is Human, so this task must stop at Needs Review with changes uncommitted after verification.
+- No scoped review fixes were needed during local final verification.
+- Vinicius requested PR creation, which is treated as acceptance of UPL-004 and the full PRD implementation for publishing.
+Commit: Pending
 Blocked Reason: None
 Requested Decision: None
